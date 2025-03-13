@@ -23,7 +23,16 @@ class Store {
   isLoading: boolean = false
 
   constructor() {
-    makeAutoObservable(this)
+    makeAutoObservable(this, {
+      setWalletAddress: action,
+      setWalletConnected: action,
+      setUserInfo: action,
+      setIsRegistered: action,
+      setContract: action,
+      clearWallet: action,
+      checkRegistrationStatus: action,
+      registerUser: action,
+    })
   }
 
   loadFromStorage() {
