@@ -34,6 +34,7 @@ class Store {
 
       if (savedAddress) {
         this.walletAddress = savedAddress
+        this.isWalletConnected = true
       }
       if (savedIsRegistered) {
         this.isRegistered = savedIsRegistered === "true"

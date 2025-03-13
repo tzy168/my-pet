@@ -23,7 +23,6 @@ function MyApp({ Component, pageProps }: AppProps) {
     checkRegistrationStatus,
   } = userStore.useContainer()
   const router = useRouter()
-  // const isLoginPage = router.pathname === "/login"
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -63,5 +62,6 @@ function MyApp({ Component, pageProps }: AppProps) {
     </WagmiProvider>
   )
 }
+
 const ConfigStoreContainer = withContainer(userStore)
 export default ConfigStoreContainer(MyApp)

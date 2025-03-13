@@ -28,25 +28,10 @@ const Login: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState("")
 
   useEffect(() => {
-    const checkWalletConnection = ({
-      account,
-      chain,
-      openConnectModal,
-      mounted,
-    }: {
-      account?: { address: string; displayName: string }
-      chain?: { id: number; name: string }
-      openConnectModal?: () => void
-      mounted: boolean
-    }) => {
-      if (account?.address) {
-        setWalletAddress(account.address)
-      }
+    if (walletAddress) {
+      checkRegistrationStatus(walletAddress)
     }
-
-    // 初始检查钱包连接状态
-    checkWalletConnection({ mounted: true })
-  }, [setWalletAddress])
+  }, [walletAddress, checkRegistrationStatus])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -56,14 +41,14 @@ const Login: React.FC = () => {
       setIsLoading(true)
       setErrorMessage("")
 
-      const tx = await registerUser(
+      const success = await registerUser(
         formData.name,
         formData.email,
         formData.phone,
         formData.password
       )
 
-      if (tx) {
+      if (success) {
         setIsRegistered(true)
         router.push("/")
       } else {
@@ -78,6 +63,7 @@ const Login: React.FC = () => {
       setIsLoading(false)
     }
   }
+
   return (
     <div className={styles.container}>
       <div className={styles.loginBox}>
@@ -96,6 +82,10 @@ const Login: React.FC = () => {
                   连接钱包
                 </button>
               )
+            }
+
+            if (account?.address) {
+              setWalletAddress(account.address)
             }
 
             return (
