@@ -23,6 +23,7 @@
     "next": "^15.1.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-router-dom": "^7.3.0",
     "unstated-next": "^1.1.0",
     "viem": "2.23.3",
     "wagmi": "^2.14.11"

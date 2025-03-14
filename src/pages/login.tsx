@@ -4,151 +4,161 @@ import { useRouter } from "next/router"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
 import { userStore } from "../stores/userStore"
 import styles from "../styles/Login.module.css"
+import { Button } from "@mui/material"
 
 const Login: React.FC = () => {
   const router = useRouter()
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    password: "",
-  })
+  const { isWalletConnected, walletAddress, isRegistered, setWalletAddress } =
+    userStore.useContainer()
 
-  const {
-    isWalletConnected,
-    isRegistered,
-    walletAddress,
-    registerUser,
-    checkRegistrationStatus,
-    setIsRegistered,
-    setWalletAddress,
-  } = userStore.useContainer()
-
-  const [isLoading, setIsLoading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState("")
-
-  useEffect(() => {
-    if (walletAddress) {
-      checkRegistrationStatus(walletAddress)
-    }
-  }, [walletAddress, checkRegistrationStatus])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!isWalletConnected || !walletAddress) return
-
-    try {
-      setIsLoading(true)
-      setErrorMessage("")
-
-      const success = await registerUser(
-        formData.name,
-        formData.email,
-        formData.phone,
-        formData.password
-      )
-
-      if (success) {
-        setIsRegistered(true)
-        router.push("/")
-      } else {
-        setErrorMessage("注册失败，请重试")
-      }
-    } catch (error) {
-      console.error("注册失败:", error)
-      setErrorMessage(
-        error instanceof Error ? error.message : "注册请求失败，请重试"
-      )
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  // useEffect(() => {
+  //   if (isWalletConnected && walletAddress && isRegistered) {
+  //     router.push("/")
+  //   }
+  // }, [isWalletConnected, walletAddress, isRegistered, router])
 
   return (
     <div className={styles.container}>
       <div className={styles.loginBox}>
         <h1>欢迎使用 MyPet</h1>
-        <ConnectButton.Custom>
-          {({ account, chain, openConnectModal, mounted }) => {
-            const ready = mounted
-            const connected = ready && account && chain
+        <div className={styles.walletConnect}>
+          <ConnectButton.Custom>
+            {({
+              account,
+              chain,
+              openAccountModal,
+              openChainModal,
+              openConnectModal,
+              authenticationStatus,
+              mounted,
+            }) => {
+              const ready = mounted && authenticationStatus !== "loading"
+              const connected =
+                ready &&
+                account &&
+                chain &&
+                (!authenticationStatus ||
+                  authenticationStatus === "authenticated")
 
-            if (!connected) {
+              useEffect(() => {
+                if (connected) {
+                  setWalletAddress(walletAddress)
+                  router.push("/")
+                }
+              }, [connected, walletAddress])
               return (
-                <button
-                  onClick={openConnectModal}
-                  className={styles.connectButton}
+                <div
+                  {...(!ready && {
+                    "aria-hidden": true,
+                    style: {
+                      opacity: 0,
+                      pointerEvents: "none",
+                      userSelect: "none",
+                    },
+                  })}
                 >
-                  连接钱包
-                </button>
+                  {(() => {
+                    if (!connected) {
+                      return (
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={openConnectModal}
+                          sx={{
+                            padding: "10px 20px",
+                            fontSize: "1rem",
+                            textTransform: "none",
+                            borderRadius: "8px",
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                            "&:hover": {
+                              boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+                            },
+                          }}
+                        >
+                          Connect Wallet
+                        </Button>
+                      )
+                    }
+
+                    if (chain.unsupported) {
+                      return (
+                        <Button
+                          variant="contained"
+                          color="error"
+                          onClick={openChainModal}
+                          sx={{
+                            padding: "10px 20px",
+                            fontSize: "1rem",
+                            textTransform: "none",
+                            borderRadius: "8px",
+                          }}
+                        >
+                          Wrong network
+                        </Button>
+                      )
+                    }
+
+                    return (
+                      <div style={{ display: "flex", gap: 12 }}>
+                        <Button
+                          variant="outlined"
+                          onClick={openChainModal}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            padding: "8px 16px",
+                            fontSize: "0.9rem",
+                            textTransform: "none",
+                            borderRadius: "8px",
+                            mr: 1,
+                          }}
+                        >
+                          {chain.hasIcon && (
+                            <div
+                              style={{
+                                background: chain.iconBackground,
+                                width: 12,
+                                height: 12,
+                                borderRadius: 999,
+                                overflow: "hidden",
+                                marginRight: 4,
+                              }}
+                            >
+                              {chain.iconUrl && (
+                                <img
+                                  alt={chain.name ?? "Chain icon"}
+                                  src={chain.iconUrl}
+                                  style={{ width: 12, height: 12 }}
+                                />
+                              )}
+                            </div>
+                          )}
+                          {chain.name}
+                        </Button>
+
+                        <Button
+                          variant="contained"
+                          onClick={openAccountModal}
+                          sx={{
+                            padding: "8px 16px",
+                            fontSize: "0.9rem",
+                            textTransform: "none",
+                            borderRadius: "8px",
+                          }}
+                        >
+                          {account.displayName}
+                          {account.displayBalance
+                            ? ` (${account.displayBalance})`
+                            : ""}
+                        </Button>
+                      </div>
+                    )
+                  })()}
+                </div>
               )
-            }
-
-            if (account?.address) {
-              setWalletAddress(account.address)
-            }
-
-            return (
-              <div className={styles.connectedInfo}>
-                <span>{account?.displayName}</span>
-              </div>
-            )
-          }}
-        </ConnectButton.Custom>
-        {isWalletConnected && !isRegistered && (
-          <form onSubmit={handleSubmit}>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              placeholder="姓名"
-              required
-            />
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-              placeholder="邮箱"
-              required
-            />
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={(e) =>
-                setFormData({ ...formData, phone: e.target.value })
-              }
-              placeholder="电话"
-              required
-            />
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-              placeholder="密码"
-              required
-            />
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={styles.submitButton}
-            >
-              {isLoading ? "处理中..." : "注册"}
-            </button>
-            {errorMessage && (
-              <div className={styles.errorAlert}>{errorMessage}</div>
-            )}
-          </form>
-        )}
+            }}
+          </ConnectButton.Custom>
+        </div>
       </div>
     </div>
   )

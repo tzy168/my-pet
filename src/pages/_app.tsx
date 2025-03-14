@@ -20,41 +20,24 @@ function MyApp({ Component, pageProps }: AppProps) {
     isRegistered,
     walletAddress,
     isWalletConnected,
-    checkRegistrationStatus,
+    // checkRegistrationStatus,
   } = userStore.useContainer()
   const router = useRouter()
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const isLoginPage = router.pathname === "/login"
-
-      if (!isWalletConnected) {
-        !isLoginPage && router.push("/login")
-        return
-      }
-
-      if (!walletAddress) {
-        !isLoginPage && router.push("/login")
-        return
-      }
-
-      const isRegistered = await checkRegistrationStatus(walletAddress)
-      
-      if (!isRegistered) {
-        !isLoginPage && router.push("/login")
-      } else if (isLoginPage) {
-        router.push("/")
-      }
+    if (walletAddress === "") {
+      router.push("/login")
     }
-    checkAuth()
-  }, [isWalletConnected, walletAddress, router, checkRegistrationStatus])
-
+    if (walletAddress !== "") {
+      router.push("/")
+    }
+  }, [walletAddress])
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={client}>
         <RainbowKitProvider>
           <userStore.Provider>
-            {isWalletConnected && router.pathname !== "/login" && <Header />}
+            {router.pathname !== "/login" && <Header />}
             <Component {...pageProps} />
           </userStore.Provider>
         </RainbowKitProvider>
