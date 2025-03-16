@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from "react"
 import { observer } from "mobx-react-lite"
-import { userStore } from "../../stores/userStore"
 import styles from "./styles.module.css"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
 import { useRouter } from "next/router"
-import { Button } from "@mui/material"
+import { useGlobalStore } from "../../stores/global"
 
 const Header: React.FC = observer(() => {
-  const { userInfo, walletAddress, setWalletAddress } = userStore.useContainer()
-
+  const { setWalletAddress, isRegistered } = useGlobalStore()
   const router = useRouter()
 
   return (
@@ -16,15 +14,7 @@ const Header: React.FC = observer(() => {
       <h2 className={styles.logo}>MyPet</h2>
       <div className={styles.rightSection}>
         <ConnectButton.Custom>
-          {({
-            account,
-            chain,
-            openAccountModal,
-            // openChainModal,
-            // openConnectModal,
-            authenticationStatus,
-            mounted,
-          }) => {
+          {({ account, chain, authenticationStatus, mounted }) => {
             const ready = mounted && authenticationStatus !== "loading"
             const connected =
               ready &&
@@ -33,16 +23,18 @@ const Header: React.FC = observer(() => {
               (!authenticationStatus ||
                 authenticationStatus === "authenticated")
             useEffect(() => {
-              if (connected) {
+              if (connected && isRegistered) {
                 setWalletAddress(account.address)
                 router.push("/")
-              } else {
+              } else if (!connected) {
                 router.push("/login")
+              } else if (connected && !isRegistered) {
+                router.push("/register")
               }
             }, [connected])
             return (
               <>
-                <ConnectButton accountStatus="avatar" chainStatus="none" />
+                <ConnectButton accountStatus="address" chainStatus="none" />
               </>
             )
           }}

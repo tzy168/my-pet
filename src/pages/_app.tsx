@@ -7,44 +7,36 @@ import { RainbowKitProvider } from "@rainbow-me/rainbowkit"
 import { config } from "../wagmi"
 import { useRouter } from "next/router"
 import Header from "../components/Header"
-import { userStore } from "../stores/userStore"
-import { useEffect } from "react"
-import { observer } from "mobx-react-lite"
-import withContainer from "../utils/with-container"
+import WalletInitializer from "../components/WalletInitializer"
 
 const client = new QueryClient()
 
 function MyApp({ Component, pageProps }: AppProps) {
-  const {
-    userInfo,
-    isRegistered,
-    walletAddress,
-    isWalletConnected,
-    // checkRegistrationStatus,
-  } = userStore.useContainer()
   const router = useRouter()
+  const isLoginPage = router.pathname === "/login"
 
-  useEffect(() => {
-    if (walletAddress === "") {
-      router.push("/login")
-    }
-    if (walletAddress !== "") {
-      router.push("/")
-    }
-  }, [walletAddress])
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={client}>
         <RainbowKitProvider>
-          <userStore.Provider>
-            {router.pathname !== "/login" && <Header />}
-            <Component {...pageProps} />
-          </userStore.Provider>
+          <WalletInitializer>
+            {!isLoginPage && <Header />}
+            <div
+              style={{
+                width: "100%",
+                height: "calc(100vh - 64px)",
+                minWidth: "1200px",
+                padding: "10px",
+                borderRadius: "8px",
+              }}
+            >
+              <Component {...pageProps} />
+            </div>
+          </WalletInitializer>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
   )
 }
 
-const ConfigStoreContainer = withContainer(userStore)
-export default ConfigStoreContainer(MyApp)
+export default MyApp
