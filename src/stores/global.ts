@@ -8,6 +8,7 @@ class GlobalStore {
   isRegistered: boolean = false
   walletAddress: `0x${string}` = "0x0000000000000000000000000000000000000000"
   isLoading: boolean = false
+  isContractDeployer: boolean = false
 
   constructor() {
     makeAutoObservable(this)
@@ -21,7 +22,7 @@ class GlobalStore {
 
   initContract = async (signer: ethers.Signer) => {
     try {
-      const contractAddress = "0x47Fea531317ee236E31b1dEb7898e3060dAf295C" // 替换为您部署的合约地址
+      const contractAddress = "0x870f7de6cC6263628D08BC3141F64010BEde069a" // 替换为您部署的合约地址
       runInAction(() => {
         this.contract = new ethers.Contract(
           contractAddress,
@@ -29,6 +30,12 @@ class GlobalStore {
           signer
         )
       })
+
+      // 检查当前用户是否为合约创建者
+      const deployer = await this.contract!.deployer()
+      this.isContractDeployer =
+        deployer.toLowerCase() === this.walletAddress.toLowerCase()
+
       return true
     } catch (error) {
       console.error("初始化合约失败:", error)
@@ -118,6 +125,42 @@ class GlobalStore {
       return institutions
     } catch (error) {
       console.error("获取机构列表失败:", error)
+      throw error
+    }
+  }
+
+  // 添加机构
+  addInstitution = async (
+    name: string,
+    institutionType: number,
+    responsiblePerson: string
+  ) => {
+    if (!this.contract) {
+      throw new Error("合约未初始化")
+    }
+    if (!this.isContractDeployer) {
+      throw new Error("只有合约创建者才能添加机构")
+    }
+    try {
+      this.setLoading(true)
+      const tx = await this.contract.addInstitution(
+        name,
+        institutionType,
+        responsiblePerson
+      )
+      await tx.wait()
+      this.setLoading(false)
+      return true
+    } catch (error: any) {
+      this.setLoading(false)
+      console.error("添加机构失败:", error)
+      if (error.code === "INSUFFICIENT_FUNDS") {
+        throw new Error("钱包中的ETH余额不足以支付gas费用")
+      } else if (error.code === "UNPREDICTABLE_GAS_LIMIT") {
+        throw new Error("无法估算gas限制，请检查合约地址是否正确")
+      } else if (error.code === -32603) {
+        throw new Error("交易执行失败，请确保您的钱包中有足够的ETH支付gas费用")
+      }
       throw error
     }
   }

@@ -132,9 +132,23 @@ const Profile: React.FC = observer(() => {
             <Box className={styles.infoItem}>
               <Typography variant="subtitle1">用户类型：</Typography>
               <Typography>
-                {Number(userInfo[4]) === 0 ? "个人用户" : "机构用户"}
+                {Number(userInfo[5]) === 0 ? "个人用户" : "机构用户"}
               </Typography>
             </Box>
+            {Number(userInfo[5]) === 1 && (
+              <>
+                <Box className={styles.infoItem}>
+                  <Typography variant="subtitle1">所属机构：</Typography>
+                  <Typography>{userInfo[7]}</Typography>
+                </Box>
+                <Box className={styles.infoItem}>
+                  <Typography variant="subtitle1">机构类型：</Typography>
+                  <Typography>
+                    {Number(userInfo[8]) === 0 ? "宠物医院" : "宠物收容所"}
+                  </Typography>
+                </Box>
+              </>
+            )}
             {Number(userInfo[4]) === 1 && (
               <Box className={styles.infoItem}>
                 <Typography variant="subtitle1">所属机构ID：</Typography>

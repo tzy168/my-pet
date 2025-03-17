@@ -8,10 +8,11 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.logo h1 {
+.logo {
   margin: 0;
   font-size: 1.5rem;
   color: #333;
+  cursor: pointer;
 }
 
 .userInfo {
@@ -37,4 +38,20 @@
   display: flex;
   gap: 1rem;
   align-items: center;
+}
+
+.userType {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+  color: #fff;
+}
+
+.personal {
+  background-color: #4caf50;
+}
+
+.institutional {
+  background-color: #2196f3;
 }

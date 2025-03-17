@@ -4,14 +4,41 @@ import styles from "./styles.module.css"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
 import { useRouter } from "next/router"
 import { useGlobalStore } from "../../stores/global"
-import { Menu, MenuItem } from "@mui/material"
+import {
+  Menu,
+  MenuItem,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Select,
+  FormControl,
+  InputLabel,
+  FormHelperText,
+} from "@mui/material"
 
 const Header: React.FC = observer(() => {
-  const { setWalletAddress, isRegistered, getUserInfo, userInfo } =
-    useGlobalStore()
+  const {
+    setWalletAddress,
+    isRegistered,
+    getUserInfo,
+    userInfo,
+    isContractDeployer,
+    addInstitution,
+    isLoading,
+  } = useGlobalStore()
   const router = useRouter()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
+  const [openDialog, setOpenDialog] = useState(false)
+  const [institutionData, setInstitutionData] = useState({
+    name: "",
+    institutionType: 0,
+    responsiblePerson: "",
+  })
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     getUserInfo()
@@ -30,10 +57,63 @@ const Header: React.FC = observer(() => {
     handleClose()
   }
 
+  const handleOpenDialog = () => {
+    setOpenDialog(true)
+  }
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false)
+    setInstitutionData({
+      name: "",
+      institutionType: 0,
+      responsiblePerson: "",
+    })
+    setError(null)
+  }
+
+  const handleSubmit = async () => {
+    try {
+      if (!institutionData.name || !institutionData.responsiblePerson) {
+        setError("请填写所有必填字段")
+        return
+      }
+      setError(null)
+      const success = await addInstitution(
+        institutionData.name,
+        institutionData.institutionType,
+        institutionData.responsiblePerson
+      )
+      if (success) {
+        // 显示成功提示
+        alert("添加机构成功！")
+        // 关闭对话框
+        handleCloseDialog()
+      }
+    } catch (error: any) {
+      setError(error.message)
+    }
+  }
+
   return (
     <header className={styles.header}>
-      <h2 className={styles.logo}>MyPet</h2>{" "}
+      <h2
+        className={styles.logo}
+        onClick={() => {
+          router.push("/")
+        }}
+      >
+        MyPet
+      </h2>
       <div className={styles.rightSection}>
+        {/* {isContractDeployer && (
+          <Button
+            variant="contained"
+            onClick={() => router.push('/admin')}
+            style={{ marginRight: "16px" }}
+          >
+            系统管理
+          </Button>
+        )} */}
         <ConnectButton.Custom>
           {({ account, chain, authenticationStatus, mounted }) => {
             const ready = mounted && authenticationStatus !== "loading"
@@ -66,7 +146,14 @@ const Header: React.FC = observer(() => {
               onClick={handleClick}
               style={{ cursor: "pointer" }}
             >
-              {userInfo[1]}
+              {isContractDeployer ? "系统管理员" : userInfo[1]}
+              {!isContractDeployer && (
+                <span
+                  className={`${styles.userType} ${userInfo[5] === 0 ? styles.personal : styles.institutional}`}
+                >
+                  {userInfo[5] === 0 ? `机构用户` : `个人用户`}
+                </span>
+              )}
             </div>
             <Menu
               anchorEl={anchorEl}
@@ -81,16 +168,77 @@ const Header: React.FC = observer(() => {
                 horizontal: "right",
               }}
             >
-              <MenuItem onClick={() => handleMenuItemClick("/profile")}>
-                个人信息
-              </MenuItem>
-              <MenuItem onClick={() => handleMenuItemClick("/my-pets")}>
-                我的宠物
-              </MenuItem>
+              {isContractDeployer ? (
+                <>
+                  <MenuItem onClick={() => handleMenuItemClick("/admin")}>
+                    系统管理
+                  </MenuItem>
+                  <MenuItem onClick={handleOpenDialog}>添加机构</MenuItem>
+                </>
+              ) : (
+                <>
+                  <MenuItem onClick={() => handleMenuItemClick("/profile")}>
+                    个人信息
+                  </MenuItem>
+                  <MenuItem onClick={() => handleMenuItemClick("/my-pets")}>
+                    我的宠物
+                  </MenuItem>
+                </>
+              )}
             </Menu>
           </>
         )}
       </div>
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>添加新机构</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="机构名称"
+            fullWidth
+            value={institutionData.name}
+            onChange={(e) =>
+              setInstitutionData({ ...institutionData, name: e.target.value })
+            }
+          />
+          <FormControl fullWidth margin="dense">
+            <InputLabel>机构类型</InputLabel>
+            <Select
+              value={institutionData.institutionType}
+              label="机构类型"
+              onChange={(e) =>
+                setInstitutionData({
+                  ...institutionData,
+                  institutionType: Number(e.target.value),
+                })
+              }
+            >
+              <MenuItem value={0}>宠物医院</MenuItem>
+              <MenuItem value={1}>宠物收容所</MenuItem>
+            </Select>
+          </FormControl>
+          <TextField
+            margin="dense"
+            label="负责人钱包地址"
+            fullWidth
+            value={institutionData.responsiblePerson}
+            onChange={(e) =>
+              setInstitutionData({
+                ...institutionData,
+                responsiblePerson: e.target.value,
+              })
+            }
+          />
+          {error && <FormHelperText error>{error}</FormHelperText>}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>取消</Button>
+          <Button onClick={handleSubmit} variant="contained">
+            添加
+          </Button>
+        </DialogActions>
+      </Dialog>
     </header>
   )
 })

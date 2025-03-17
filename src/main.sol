@@ -83,9 +83,9 @@ contract MyPet {
   }
   Pet[] public pets;
 
-  // 机构与用户的存储映射
-  mapping(address => Institution) public institutions; // 机构地址映射到机构信息
-  mapping(uint => address) public institutionIds; // 机构id映射到机构地址
+  // 机构与用户的存储
+  Institution[] public institutions; // 机构数组
+  mapping(address => uint) public institutionAddressToId; // 机构地址映射到机构ID
   mapping(address => address) public staffToInstitution; // 员工地址映射到所属机构
   mapping(address => uint256) public userIds; // 用户地址映射到用户ID
   User[] public users;
@@ -112,12 +112,13 @@ contract MyPet {
   function _isInstitutionRegistered(
     address _inst
   ) internal view returns (bool) {
-    return institutions[_inst].id != 0;
+    uint institutionId = institutionAddressToId[_inst];
+    return institutionId != 0;
   }
 
   // 内部函数：检查机构是否存在
   function _isInstitutionExists(uint _orgId) internal view returns (bool) {
-    return institutionIds[_orgId] != address(0);
+    return _orgId > 0 && _orgId < institutionIdCounter;
   }
 
   /***********************************
@@ -177,41 +178,50 @@ contract MyPet {
     address _responsiblePerson
   ) public {
     require(msg.sender == deployer, "Only deployer can add institutions");
+    require(
+      institutionAddressToId[_responsiblePerson] == 0,
+      "Address already associated with an institution"
+    );
 
     uint newId = institutionIdCounter;
     institutionIdCounter++;
 
-    Institution storage inst = institutions[_responsiblePerson];
+    institutions.push();
+    Institution storage inst = institutions[newId - 1];
     inst.id = newId;
     inst.name = _name;
     inst.institutionType = _institutionType;
     inst.wallet = _responsiblePerson;
     inst.responsiblePerson = _responsiblePerson;
-    institutionIds[newId] = _responsiblePerson;
+    institutionAddressToId[_responsiblePerson] = newId;
   }
 
   /***********************************
    * 机构负责人添加员工
    ***********************************/
   function addStaffToInstitution(uint _orgId, address _staff) public {
-    address instAddress = institutionIds[_orgId];
-    require(instAddress != address(0), "Institution does not exist");
-    Institution storage inst = institutions[instAddress];
+    require(
+      _orgId > 0 && _orgId < institutionIdCounter,
+      "Institution does not exist"
+    );
+    Institution storage inst = institutions[_orgId - 1];
     require(
       msg.sender == inst.responsiblePerson,
       "Only institution responsible person can add staff"
     );
     inst.staff[_staff] = true;
-    staffToInstitution[_staff] = instAddress;
+    staffToInstitution[_staff] = inst.wallet;
   }
 
   /***********************************
    * 机构负责人移除员工
    ***********************************/
   function removeStaffFromInstitution(uint _orgId, address _staff) public {
-    address instAddress = institutionIds[_orgId];
-    require(instAddress != address(0), "Institution does not exist");
-    Institution storage inst = institutions[instAddress];
+    require(
+      _orgId > 0 && _orgId < institutionIdCounter,
+      "Institution does not exist"
+    );
+    Institution storage inst = institutions[_orgId - 1];
     require(
       msg.sender == inst.responsiblePerson,
       "Only institution responsible person can remove staff"
@@ -227,11 +237,10 @@ contract MyPet {
     uint _orgId,
     address _staff
   ) public view returns (bool) {
-    address instAddress = institutionIds[_orgId];
-    if (instAddress == address(0)) {
+    if (_orgId == 0 || _orgId >= institutionIdCounter) {
       return false;
     }
-    Institution storage inst = institutions[instAddress];
+    Institution storage inst = institutions[_orgId - 1];
     return inst.staff[_staff];
   }
 
@@ -256,8 +265,7 @@ contract MyPet {
     address[] memory wallets = new address[](institutionIdCounter - 1);
 
     for (uint i = 1; i < institutionIdCounter; i++) {
-      address instAddress = institutionIds[i];
-      Institution storage inst = institutions[instAddress];
+      Institution storage inst = institutions[i - 1];
       ids[i - 1] = inst.id;
       names[i - 1] = inst.name;
       types[i - 1] = inst.institutionType;
@@ -277,24 +285,30 @@ contract MyPet {
   /***********************************
    * 获取用户注册信息
    ***********************************/
-  function getUserInfo(address _user) public view returns (
-    uint256 id,
-    string memory name,
-    string memory email,
-    string memory phone,
-    address wallet,
-    UserType userType,
-    uint256 orgId,
-    string memory orgName,
-    InstitutionType orgType
-  ) {
+  function getUserInfo(
+    address _user
+  )
+    public
+    view
+    returns (
+      uint256 id,
+      string memory name,
+      string memory email,
+      string memory phone,
+      address wallet,
+      UserType userType,
+      uint256 orgId,
+      string memory orgName,
+      InstitutionType orgType
+    )
+  {
     require(_isUserRegistered(_user), "User not registered");
-    
+
     // 获取用户ID
     uint256 userId = userIds[_user];
     // 获取用户信息
     User storage user = users[userId - 1];
-    
+
     // 获取基本信息
     id = user.id;
     name = user.name;
@@ -303,16 +317,78 @@ contract MyPet {
     wallet = user.wallet;
     userType = user.userType;
     orgId = user.orgId;
-    
+
     // 如果是机构用户，获取关联的机构信息
     if (userType == UserType.Institutional && orgId != 0) {
-      address instAddress = institutionIds[orgId];
-      Institution storage inst = institutions[instAddress];
+      Institution storage inst = institutions[orgId - 1];
       orgName = inst.name;
       orgType = inst.institutionType;
     } else {
       orgName = "";
       orgType = InstitutionType.Hospital; // 默认值
     }
+  }
+
+  /***********************************
+   * 获取机构详细信息
+   ***********************************/
+  function getInstitutionDetail(
+    uint _orgId
+  )
+    public
+    view
+    returns (
+      uint id,
+      string memory name,
+      InstitutionType institutionType,
+      address wallet,
+      address responsiblePerson
+    )
+  {
+    require(
+      _orgId > 0 && _orgId < institutionIdCounter,
+      "Institution does not exist"
+    );
+
+    Institution storage inst = institutions[_orgId - 1];
+    return (
+      inst.id,
+      inst.name,
+      inst.institutionType,
+      inst.wallet,
+      inst.responsiblePerson
+    );
+  }
+
+  /***********************************
+   * 获取机构员工列表
+   ***********************************/
+  function getInstitutionStaff(
+    uint _orgId
+  ) public view returns (address[] memory) {
+    require(
+      _orgId > 0 && _orgId < institutionIdCounter,
+      "Institution does not exist"
+    );
+    Institution storage inst = institutions[_orgId - 1];
+
+    // 遍历所有用户找到属于该机构的员工
+    uint staffCount = 0;
+    for (uint i = 0; i < userIdCounter - 1; i++) {
+      if (staffToInstitution[users[i].wallet] == inst.wallet) {
+        staffCount++;
+      }
+    }
+
+    address[] memory staffList = new address[](staffCount);
+    uint currentIndex = 0;
+    for (uint i = 0; i < userIdCounter - 1; i++) {
+      if (staffToInstitution[users[i].wallet] == inst.wallet) {
+        staffList[currentIndex] = users[i].wallet;
+        currentIndex++;
+      }
+    }
+
+    return staffList;
   }
 }
