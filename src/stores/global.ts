@@ -6,13 +6,22 @@ class GlobalStore {
   contract: ethers.Contract | null = null
   userInfo: any = null
   isRegistered: boolean = false
-  walletAddress: string = ""
+  walletAddress: `0x${string}` = "0x0000000000000000000000000000000000000000"
+  isLoading: boolean = false
+
   constructor() {
     makeAutoObservable(this)
   }
+
+  setLoading = (loading: boolean) => {
+    runInAction(() => {
+      this.isLoading = loading
+    })
+  }
+
   initContract = async (signer: ethers.Signer) => {
     try {
-      const contractAddress = "0x11373013dE192D1fA7863418621671e326F3D840" // 替换为您部署的合约地址
+      const contractAddress = "0x47Fea531317ee236E31b1dEb7898e3060dAf295C" // 替换为您部署的合约地址
       runInAction(() => {
         this.contract = new ethers.Contract(
           contractAddress,
@@ -20,14 +29,13 @@ class GlobalStore {
           signer
         )
       })
-
       return true
     } catch (error) {
       console.error("初始化合约失败:", error)
       return false
     }
   }
-  setWalletAddress = (address: string) => {
+  setWalletAddress = (address: `0x${string}`) => {
     runInAction(() => {
       this.walletAddress = address
     })
@@ -110,6 +118,27 @@ class GlobalStore {
       return institutions
     } catch (error) {
       console.error("获取机构列表失败:", error)
+      throw error
+    }
+  }
+
+  //获取用户信息
+  getUserInfo = async () => {
+    if (!this.contract) {
+      throw new Error("合约未初始化")
+    }
+    try {
+      const isRegistered = await this.checkRegisteredAddress()
+      if (!isRegistered) {
+        throw new Error("用户不存在")
+      }
+      // 直接获取用户信息
+      const userInfo = await this.contract.getUserInfo(this.walletAddress)
+      runInAction(() => {
+        this.userInfo = userInfo
+      })
+    } catch (error) {
+      console.error("获取用户信息失败:", error)
       throw error
     }
   }

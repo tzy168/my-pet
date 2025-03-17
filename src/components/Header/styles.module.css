@@ -33,3 +33,8 @@
   border-radius: 4px;
   font-size: 0.875rem;
 }
+.rightSection {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}

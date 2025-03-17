@@ -9,10 +9,10 @@ import { useGlobalStore } from "../stores/global"
 const Login: React.FC = () => {
   const router = useRouter()
   const { isRegistered, walletAddress, setWalletAddress } = useGlobalStore()
-  const { isConnected } = useAccount()
+  const { isConnected, address } = useAccount()
   useEffect(() => {
     if (isConnected && !isRegistered) {
-      setWalletAddress(walletAddress)
+      setWalletAddress(address!)
       router.push("/register")
     }
   }, [isConnected])

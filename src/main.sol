@@ -273,4 +273,46 @@ contract MyPet {
   function checkUserIsRegistered(address _user) public view returns (bool) {
     return _isUserRegistered(_user);
   }
+
+  /***********************************
+   * 获取用户注册信息
+   ***********************************/
+  function getUserInfo(address _user) public view returns (
+    uint256 id,
+    string memory name,
+    string memory email,
+    string memory phone,
+    address wallet,
+    UserType userType,
+    uint256 orgId,
+    string memory orgName,
+    InstitutionType orgType
+  ) {
+    require(_isUserRegistered(_user), "User not registered");
+    
+    // 获取用户ID
+    uint256 userId = userIds[_user];
+    // 获取用户信息
+    User storage user = users[userId - 1];
+    
+    // 获取基本信息
+    id = user.id;
+    name = user.name;
+    email = user.email;
+    phone = user.phone;
+    wallet = user.wallet;
+    userType = user.userType;
+    orgId = user.orgId;
+    
+    // 如果是机构用户，获取关联的机构信息
+    if (userType == UserType.Institutional && orgId != 0) {
+      address instAddress = institutionIds[orgId];
+      Institution storage inst = institutions[instAddress];
+      orgName = inst.name;
+      orgType = inst.institutionType;
+    } else {
+      orgName = "";
+      orgType = InstitutionType.Hospital; // 默认值
+    }
+  }
 }

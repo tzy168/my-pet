@@ -30,11 +30,14 @@ const Register: React.FC = () => {
   useEffect(() => {
     const checkRegistration = async () => {
       if (!walletAddress) {
+        console.log("钱包地址为空")
         return
       }
       try {
         const isRegistered = await checkRegisteredAddress()
         if (isRegistered) {
+          console.log(isRegistered)
+
           router.push("/")
         }
       } catch (error) {
@@ -42,7 +45,7 @@ const Register: React.FC = () => {
       }
     }
     checkRegistration()
-  }, [walletAddress])
+  }, [])
   // 机构列表状态
   const [orgList, setOrgList] = useState<{ id: number; name: string }[]>([])
 

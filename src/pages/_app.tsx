@@ -8,18 +8,39 @@ import { config } from "../wagmi"
 import { useRouter } from "next/router"
 import Header from "../components/Header"
 import WalletInitializer from "../components/WalletInitializer"
+import Spin from "../components/Spin"
+import { useGlobalStore } from "../stores/global"
+import { useEffect } from "react"
 
 const client = new QueryClient()
 
 function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter()
+  const { setLoading } = useGlobalStore()
   const isLoginPage = router.pathname === "/login"
+  const isRegisterPage = router.pathname === "/register"
+
+  useEffect(() => {
+    const handleStart = () => setLoading(true)
+    const handleComplete = () => setLoading(false)
+
+    router.events.on("routeChangeStart", handleStart)
+    router.events.on("routeChangeComplete", handleComplete)
+    router.events.on("routeChangeError", handleComplete)
+
+    return () => {
+      router.events.off("routeChangeStart", handleStart)
+      router.events.off("routeChangeComplete", handleComplete)
+      router.events.off("routeChangeError", handleComplete)
+    }
+  }, [router, setLoading])
 
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={client}>
         <RainbowKitProvider>
           <WalletInitializer>
+            <Spin />
             {!isLoginPage && <Header />}
             <div
               style={{
