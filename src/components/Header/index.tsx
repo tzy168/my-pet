@@ -28,6 +28,7 @@ const Header: React.FC = observer(() => {
     isContractDeployer,
     addInstitution,
     isLoading,
+    contract,
   } = useGlobalStore()
   const router = useRouter()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
@@ -41,8 +42,13 @@ const Header: React.FC = observer(() => {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    getUserInfo()
-  }, [])
+    // 确保合约已初始化后再获取用户信息
+    if (contract) {
+      getUserInfo().catch((err) => {
+        console.error("获取用户信息失败:", err)
+      })
+    }
+  }, [contract])
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)
@@ -123,18 +129,9 @@ const Header: React.FC = observer(() => {
               chain &&
               (!authenticationStatus ||
                 authenticationStatus === "authenticated")
-            useEffect(() => {
-              if (connected && isRegistered) {
-                router.push("/")
-              } else if (!connected) {
-                router.push("/login")
-              } else if (connected && !isRegistered) {
-                router.push("/register")
-              }
-            }, [connected])
             return (
               <>
-                <ConnectButton accountStatus="avatar" chainStatus="none" />
+                <ConnectButton />
               </>
             )
           }}
@@ -151,7 +148,7 @@ const Header: React.FC = observer(() => {
                 <span
                   className={`${styles.userType} ${userInfo[5] === 0 ? styles.personal : styles.institutional}`}
                 >
-                  {userInfo[5] === 0 ? `机构用户` : `个人用户`}
+                  {userInfo[5] === 0 ? `个人用户` : `机构用户`}
                 </span>
               )}
             </div>

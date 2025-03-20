@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { observer } from "mobx-react-lite";
-import { useGlobalStore } from "../stores/global";
+import React, { useEffect, useState } from "react"
+import { observer } from "mobx-react-lite"
+import { useGlobalStore } from "../stores/global"
 import {
   Box,
   Table,
@@ -24,116 +24,116 @@ import {
   IconButton,
   Snackbar,
   Alert,
-} from "@mui/material";
-import { Delete as DeleteIcon, Edit as EditIcon } from "@mui/icons-material";
-import { useRouter } from "next/router";
+} from "@mui/material"
+import { Delete as DeleteIcon, Edit as EditIcon } from "@mui/icons-material"
+import { useRouter } from "next/router"
 
 const Admin: React.FC = observer(() => {
-  const router = useRouter();
-  const { contract, isContractDeployer } = useGlobalStore();
-  const [institutions, setInstitutions] = useState<any[]>([]);
-  const [selectedInstitution, setSelectedInstitution] = useState<any>(null);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
+  const router = useRouter()
+  const { contract, isContractDeployer } = useGlobalStore()
+  const [institutions, setInstitutions] = useState<any[]>([])
+  const [selectedInstitution, setSelectedInstitution] = useState<any>(null)
+  const [openDialog, setOpenDialog] = useState(false)
+  const [dialogMode, setDialogMode] = useState<"add" | "edit">("add")
   const [institutionData, setInstitutionData] = useState({
     name: "",
     institutionType: 0,
     responsiblePerson: "",
-  });
-  const [staffList, setStaffList] = useState<string[]>([]);
+  })
+  const [staffList, setStaffList] = useState<string[]>([])
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success" as "success" | "error",
-  });
+  })
 
   useEffect(() => {
     if (!isContractDeployer) {
-      router.push("/");
-      return;
+      router.push("/")
+      return
     }
-    fetchInstitutions();
-  }, [isContractDeployer]);
+    fetchInstitutions()
+  }, [isContractDeployer])
 
   const fetchInstitutions = async () => {
     try {
-      const result = await contract?.getAllInstitutions();
+      const result = await contract?.getAllInstitutions()
       if (result && result.length >= 4) {
-        const [ids, names, types, wallets] = result;
+        const [ids, names, types, wallets] = result
         const formattedInstitutions = ids.map((id: any, index: number) => ({
           id: Number(id),
           name: names[index],
           type: Number(types[index]),
           wallet: wallets[index],
-        }));
-        setInstitutions(formattedInstitutions);
+        }))
+        setInstitutions(formattedInstitutions)
       }
     } catch (error: any) {
-      console.error("获取机构列表失败:", error);
+      console.error("获取机构列表失败:", error)
       setSnackbar({
         open: true,
         message: "获取机构列表失败",
         severity: "error",
-      });
+      })
     }
-  };
+  }
 
   const fetchInstitutionDetail = async (id: number) => {
     try {
-      const detail = await contract?.getInstitutionDetail(id);
+      const detail = await contract?.getInstitutionDetail(id)
       setSelectedInstitution({
         id: Number(detail[0]),
         name: detail[1],
         type: Number(detail[2]),
         wallet: detail[3],
         responsiblePerson: detail[4],
-      });
+      })
 
-      const staff = await contract?.getInstitutionStaff(id);
-      setStaffList(staff);
+      const staff = await contract?.getInstitutionStaff(id)
+      setStaffList(staff)
     } catch (error) {
-      console.error("获取机构详情失败:", error);
+      console.error("获取机构详情失败:", error)
     }
-  };
+  }
 
   const handleAddInstitution = () => {
-    setDialogMode("add");
+    setDialogMode("add")
     setInstitutionData({
       name: "",
       institutionType: 0,
       responsiblePerson: "",
-    });
-    setOpenDialog(true);
-  };
+    })
+    setOpenDialog(true)
+  }
 
   const handleEditInstitution = (institution: any) => {
-    setDialogMode("edit");
+    setDialogMode("edit")
     setInstitutionData({
       name: institution.name,
       institutionType: institution.type,
       responsiblePerson: institution.responsiblePerson,
-    });
-    setSelectedInstitution(institution);
-    setOpenDialog(true);
-  };
+    })
+    setSelectedInstitution(institution)
+    setOpenDialog(true)
+  }
 
   const handleDeleteInstitution = async (id: number) => {
     try {
-      await contract?.deleteInstitution(id);
+      await contract?.deleteInstitution(id)
       setSnackbar({
         open: true,
         message: "删除机构成功",
         severity: "success",
-      });
-      fetchInstitutions();
+      })
+      fetchInstitutions()
     } catch (error: any) {
       setSnackbar({
         open: true,
         message: error.message || "删除机构失败",
         severity: "error",
-      });
+      })
     }
-  };
+  }
 
   const handleSubmit = async () => {
     try {
@@ -142,35 +142,35 @@ const Admin: React.FC = observer(() => {
           institutionData.name,
           institutionData.institutionType,
           institutionData.responsiblePerson
-        );
+        )
         setSnackbar({
           open: true,
           message: "添加机构成功",
           severity: "success",
-        });
+        })
       } else {
         await contract?.updateInstitution(
           selectedInstitution.id,
           institutionData.name,
           institutionData.institutionType,
           institutionData.responsiblePerson
-        );
+        )
         setSnackbar({
           open: true,
           message: "更新机构成功",
           severity: "success",
-        });
+        })
       }
-      setOpenDialog(false);
-      fetchInstitutions();
+      setOpenDialog(false)
+      fetchInstitutions()
     } catch (error: any) {
       setSnackbar({
         open: true,
         message: error.message || "操作失败",
         severity: "error",
-      });
+      })
     }
-  };
+  }
 
   return (
     <Box sx={{ padding: 3 }}>
@@ -287,7 +287,7 @@ const Admin: React.FC = observer(() => {
         </Alert>
       </Snackbar>
     </Box>
-  );
-});
+  )
+})
 
-export default Admin;
+export default Admin

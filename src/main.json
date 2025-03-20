@@ -46,9 +46,14 @@
         "internalType": "uint256",
         "name": "_orgId",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "_staff",
+        "type": "address"
       }
     ],
-    "name": "deleteInstitution",
+    "name": "removeStaffFromInstitution",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -71,11 +76,6 @@
         "type": "string"
       },
       {
-        "internalType": "string",
-        "name": "_password",
-        "type": "string"
-      },
-      {
         "internalType": "enum MyPet.UserType",
         "name": "_userType",
         "type": "uint8"
@@ -86,25 +86,7 @@
         "type": "uint256"
       }
     ],
-    "name": "registerUser",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_orgId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_staff",
-        "type": "address"
-      }
-    ],
-    "name": "removeStaffFromInstitution",
+    "name": "setUserProfile",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -113,34 +95,6 @@
     "inputs": [],
     "stateMutability": "nonpayable",
     "type": "constructor"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_orgId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "string",
-        "name": "_name",
-        "type": "string"
-      },
-      {
-        "internalType": "enum MyPet.InstitutionType",
-        "name": "_institutionType",
-        "type": "uint8"
-      },
-      {
-        "internalType": "address",
-        "name": "_responsiblePerson",
-        "type": "address"
-      }
-    ],
-    "name": "updateInstitution",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
   },
   {
     "inputs": [],
@@ -708,11 +662,6 @@
         "type": "string"
       },
       {
-        "internalType": "string",
-        "name": "password",
-        "type": "string"
-      },
-      {
         "internalType": "address",
         "name": "wallet",
         "type": "address"
@@ -726,6 +675,11 @@
         "internalType": "uint256",
         "name": "orgId",
         "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "isProfileSet",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",

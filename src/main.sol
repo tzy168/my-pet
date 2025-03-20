@@ -30,11 +30,11 @@ contract MyPet {
     string name;
     string email;
     string phone;
-    string password;
     address wallet;
     mapping(uint => bool) ownedPets; // 用户拥有宠物映射
     UserType userType; // 用户类型：个人或机构用户
     uint orgId; // 机构用户需关联机构id，个人用户传入 0
+    bool isProfileSet; // 标记用户是否已设置个人资料
   }
 
   // 领养事件结构体
@@ -122,19 +122,18 @@ contract MyPet {
   }
 
   /***********************************
-   * 用户注册功能（个人/机构用户）
+   * 用户资料设置功能（个人/机构用户）
    ***********************************/
-  function registerUser(
+  function setUserProfile(
     string memory _name,
     string memory _email,
     string memory _phone,
-    string memory _password,
     UserType _userType,
     uint _orgId // 若为机构用户，此处传入机构id；个人用户传入 0
   ) public {
-    // 检查当前地址是否已注册用户
-    require(!_isUserRegistered(msg.sender), "User already registered");
-
+    // 检查用户是否已设置资料
+    bool isNewUser = !_isUserRegistered(msg.sender);
+    
     if (_userType == UserType.Institutional) {
       // 机构用户必须关联一个已注册机构
       require(
@@ -153,20 +152,32 @@ contract MyPet {
       );
     }
 
-    // 分配用户ID并保存映射
-    userIds[msg.sender] = userIdCounter;
-    users.push();
-    uint index = users.length - 1;
-    User storage newUser = users[index];
-    newUser.id = userIdCounter;
-    newUser.name = _name;
-    newUser.email = _email;
-    newUser.phone = _phone;
-    newUser.password = _password;
-    newUser.wallet = msg.sender;
-    newUser.userType = _userType;
-    newUser.orgId = _orgId;
-    userIdCounter++;
+    if (isNewUser) {
+      // 新用户：分配用户ID并保存映射
+      userIds[msg.sender] = userIdCounter;
+      users.push();
+      uint index = users.length - 1;
+      User storage newUser = users[index];
+      newUser.id = userIdCounter;
+      newUser.name = _name;
+      newUser.email = _email;
+      newUser.phone = _phone;
+      newUser.wallet = msg.sender;
+      newUser.userType = _userType;
+      newUser.orgId = _orgId;
+      newUser.isProfileSet = true;
+      userIdCounter++;
+    } else {
+      // 已有用户：更新资料
+      uint userId = userIds[msg.sender];
+      User storage user = users[userId - 1];
+      user.name = _name;
+      user.email = _email;
+      user.phone = _phone;
+      user.userType = _userType;
+      user.orgId = _orgId;
+      user.isProfileSet = true;
+    }
   }
 
   /***********************************
@@ -390,5 +401,112 @@ contract MyPet {
     }
 
     return staffList;
+  }
+
+  /***********************************
+   * 获取用户的宠物列表
+   ***********************************/
+  function getUserPets(address _user) public view returns (Pet[] memory) {
+    require(_isUserRegistered(_user), "User not registered");
+    
+    // 计算用户拥有的宠物数量
+    uint petCount = 0;
+    for (uint i = 1; i < petIdCounter; i++) {
+      if (pets[i - 1].owner == _user) {
+        petCount++;
+      }
+    }
+
+    // 创建返回数组
+    Pet[] memory userPets = new Pet[](petCount);
+    uint currentIndex = 0;
+
+    // 填充用户的宠物信息
+    for (uint i = 1; i < petIdCounter; i++) {
+      if (pets[i - 1].owner == _user) {
+        userPets[currentIndex] = pets[i - 1];
+        currentIndex++;
+      }
+    }
+
+    return userPets;
+  }
+
+  /***********************************
+   * 添加宠物
+   ***********************************/
+  function addPet(
+    string memory _name,
+    string memory _species,
+    string memory _breed,
+    string memory _gender,
+    uint _age,
+    string memory _description,
+    string memory _image
+  ) public {
+    require(_isUserRegistered(msg.sender), "User not registered");
+
+    uint newId = petIdCounter;
+    petIdCounter++;
+
+    Pet memory newPet = Pet({
+      id: newId,
+      name: _name,
+      species: _species,
+      breed: _breed,
+      gender: _gender,
+      age: _age,
+      description: _description,
+      image: _image,
+      status: "active",
+      owner: msg.sender
+    });
+
+    pets.push(newPet);
+    User storage user = users[userIds[msg.sender] - 1];
+    user.ownedPets[newId] = true;
+  }
+
+  /***********************************
+   * 更新宠物信息
+   ***********************************/
+  function updatePet(
+    uint _petId,
+    string memory _name,
+    string memory _species,
+    string memory _breed,
+    string memory _gender,
+    uint _age,
+    string memory _description,
+    string memory _image
+  ) public {
+    require(_petId > 0 && _petId < petIdCounter, "Pet does not exist");
+    require(pets[_petId - 1].owner == msg.sender, "Not the pet owner");
+
+    Pet storage pet = pets[_petId - 1];
+    pet.name = _name;
+    pet.species = _species;
+    pet.breed = _breed;
+    pet.gender = _gender;
+    pet.age = _age;
+    pet.description = _description;
+    pet.image = _image;
+  }
+
+  /***********************************
+   * 删除宠物
+   ***********************************/
+  function removePet(uint _petId) public {
+    require(_petId > 0 && _petId < petIdCounter, "Pet does not exist");
+    require(pets[_petId - 1].owner == msg.sender, "Not the pet owner");
+
+    // 将宠物状态设置为已删除
+    Pet storage pet = pets[_petId - 1];
+    pet.status = "removed";
+    pet.owner = address(0);
+
+    // 从用户的宠物映射中移除
+    User storage user = users[userIds[msg.sender] - 1];
+    user.ownedPets[_petId] = false;
   }
 }

@@ -18,7 +18,6 @@ function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter()
   const { setLoading } = useGlobalStore()
   const isLoginPage = router.pathname === "/login"
-  const isRegisterPage = router.pathname === "/register"
 
   useEffect(() => {
     const handleStart = () => setLoading(true)
