@@ -21,9 +21,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  CircularProgress,
 } from "@mui/material"
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material"
 import styles from "../styles/MyPets.module.css"
+import { uploadToIPFS, getIPFSGatewayUrl } from "../utils/ipfs"
 
 interface Pet {
   id: number
@@ -58,6 +60,7 @@ const MyPets: React.FC = observer(() => {
     message: "",
     severity: "success" as "success" | "error",
   })
+  const [isUploading, setIsUploading] = useState(false)
 
   useEffect(() => {
     // 当用户信息加载完成后，获取用户的宠物列表
@@ -184,8 +187,31 @@ const MyPets: React.FC = observer(() => {
 
       let imageUrl = petForm.imageUrl
       if (imageFile) {
-        // TODO: 实现IPFS上传逻辑
-        // imageUrl = await uploadToIPFS(imageFile);
+        try {
+          setIsUploading(true)
+          // 上传图片到IPFS
+          const cid = await uploadToIPFS(imageFile)
+          // 获取IPFS网关URL
+          imageUrl = getIPFSGatewayUrl(cid)
+          console.log("图片已上传到IPFS:", imageUrl)
+          setSnackbar({
+            open: true,
+            message: "上传成功",
+            severity: "success",
+          })
+          setIsUploading(false)
+        } catch (error) {
+          // console.error('上传图片到IPFS失败:', error)
+          setSnackbar({
+            open: true,
+            message: "上传图片失败，请重试",
+            severity: "error",
+          })
+          setIsUploading(false)
+          return
+        } finally {
+          setIsUploading(false)
+        }
       }
 
       if (selectedPet) {
@@ -247,6 +273,12 @@ const MyPets: React.FC = observer(() => {
                   image={pet.image}
                   alt={pet.name}
                   sx={{ objectFit: "cover" }}
+                  onError={(e) => {
+                    // 图片加载失败时的处理
+                    const target = e.target as HTMLImageElement
+                    target.onerror = null // 防止无限循环
+                    target.src = "/images/pet-placeholder.png" // 使用默认图片
+                  }}
                 />
               )}
               <CardContent>
@@ -392,9 +424,16 @@ const MyPets: React.FC = observer(() => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>取消</Button>
-          <Button onClick={handleSubmit} variant="contained">
-            {selectedPet ? "保存" : "添加"}
+          <Button onClick={handleCloseDialog} disabled={isUploading}>
+            取消
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            variant="contained"
+            disabled={isUploading}
+            startIcon={isUploading ? <CircularProgress size={20} /> : null}
+          >
+            {isUploading ? "上传中..." : selectedPet ? "保存" : "添加"}
           </Button>
         </DialogActions>
       </Dialog>

@@ -13,9 +13,9 @@ export const config = getDefaultConfig({
   projectId: "YOUR_PROJECT_ID",
   chains: [
     {
-      id: 1337,
-      name: "Ganache",
-      network: "ganache",
+      id: 31337,
+      name: "Hardhat",
+      network: "hardhat",
       nativeCurrency: {
         decimals: 18,
         name: "Ether",

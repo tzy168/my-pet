@@ -47,6 +47,9 @@ const WalletInitializer: React.FC<WalletInitializerProps> = ({ children }) => {
         const isUserRegistered = await checkRegisteredAddress()
         if (isUserRegistered) {
           await getUserInfo()
+        } else if (router.pathname !== '/profile') {
+          // 未注册用户直接跳转到个人资料页面
+          router.push('/profile')
         }
       } catch (error) {
         console.error("检查用户状态失败:", error)
@@ -54,40 +57,7 @@ const WalletInitializer: React.FC<WalletInitializerProps> = ({ children }) => {
     }
 
     checkUserStatus()
-  }, [contract, isConnected, checkRegisteredAddress, getUserInfo])
-
-  useEffect(() => {
-    const isProfilePage = router.pathname === "/profile"
-    const hasConnectedBefore = localStorage.getItem('hasConnectedBefore')
-
-    if (isConnected && !isRegistered && !isProfilePage && !hasConnectedBefore && router.pathname !== '/') {
-      localStorage.setItem('hasConnectedBefore', 'true')
-      router.push("/profile")
-      return
-    }
-  }, [isConnected, isRegistered, router.pathname])
-
-  // 检测页面刷新
-  useEffect(() => {
-    // 页面加载时设置刷新标志
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('isPageRefresh', 'true')
-    }
-    
-    // 页面卸载前清除刷新标志
-    const handleBeforeUnload = () => {
-      // 如果是导航到其他页面，会在新页面加载时重新设置标志
-      // 如果是刷新，标志会保持为true
-    }
-    
-    if (typeof window !== 'undefined') {
-      window.addEventListener('beforeunload', handleBeforeUnload)
-      
-      return () => {
-        window.removeEventListener('beforeunload', handleBeforeUnload)
-      }
-    }
-  }, [])
+  }, [contract, isConnected, checkRegisteredAddress, getUserInfo, router])
 
   return <>{children}</>
 }

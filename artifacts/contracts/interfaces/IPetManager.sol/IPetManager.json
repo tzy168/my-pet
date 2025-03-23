@@ -1,0 +1,289 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IPetManager",
+  "sourceName": "contracts/interfaces/IPetManager.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_petId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_adopter",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "_notes",
+          "type": "string"
+        }
+      ],
+      "name": "addAdoptionEvent",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_petId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "_diagnosis",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_treatment",
+          "type": "string"
+        },
+        {
+          "internalType": "address",
+          "name": "_hospital",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_doctor",
+          "type": "address"
+        }
+      ],
+      "name": "addMedicalEvent",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_name",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_species",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_breed",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_gender",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_age",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "_description",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_image",
+          "type": "string"
+        }
+      ],
+      "name": "addPet",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_location",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_description",
+          "type": "string"
+        }
+      ],
+      "name": "addRescueRequest",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        }
+      ],
+      "name": "getUserPets",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "species",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "breed",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "gender",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "age",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "description",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "image",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "status",
+              "type": "string"
+            },
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IMyPetBase.Pet[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_petId",
+          "type": "uint256"
+        }
+      ],
+      "name": "removePet",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_petId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "_name",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_species",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_breed",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_gender",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_age",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "_description",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_image",
+          "type": "string"
+        }
+      ],
+      "name": "updatePet",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_requestId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "_status",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_responderOrgId",
+          "type": "uint256"
+        }
+      ],
+      "name": "updateRescueRequestStatus",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

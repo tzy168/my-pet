@@ -17,8 +17,6 @@ const client = new QueryClient()
 function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter()
   const { setLoading } = useGlobalStore()
-  const isLoginPage = router.pathname === "/login"
-
   useEffect(() => {
     const handleStart = () => setLoading(true)
     const handleComplete = () => setLoading(false)
@@ -40,7 +38,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         <RainbowKitProvider>
           <WalletInitializer>
             <Spin />
-            {!isLoginPage && <Header />}
+            <Header />
             <div
               style={{
                 width: "100%",

@@ -6,6 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "npx hardhat test",
+    "hardhat": "npx hardhat node",
+    "compile": "npx hardhat run scripts/deploy.js --network localhost",
     "lint": "eslint . --ext .ts,.tsx",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\""
   },
@@ -14,9 +17,12 @@
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.4.7",
     "@mui/material": "^6.4.7",
+    "@openzeppelin/contracts": "^5.2.0",
     "@rainbow-me/rainbowkit": "^2.2.4",
     "@tanstack/react-query": "^5.55.3",
+    "buffer": "^6.0.3",
     "ethers": "^6.13.5",
+    "ipfs-http-client": "^60.0.1",
     "mobx": "^6.13.6",
     "mobx-react-lite": "^4.1.0",
     "my-pet": "file:",
@@ -29,13 +35,16 @@
     "wagmi": "^2.14.11"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@types/node": "^20.14.8",
     "@types/react": "^19.0.6",
     "@typescript-eslint/eslint-plugin": "^8.26.1",
     "@typescript-eslint/parser": "^8.26.1",
+    "dotenv": "^16.4.7",
     "eslint-config-next": "^15.1.7",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.3",
+    "hardhat": "^2.22.19",
     "prettier": "^3.5.3",
     "typescript": "5.5.4"
   }

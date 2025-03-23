@@ -8,6 +8,12 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
 .logo {
   margin: 0;
   font-size: 1.5rem;

@@ -1,9 +1,11 @@
 import { useContext, createContext } from "react"
 import { makeAutoObservable, runInAction } from "mobx"
 import { ethers } from "ethers"
-import MyPetContractABI from "../main.json"
+import { ContractConfig } from "../config/contracts"
 class GlobalStore {
   contract: ethers.Contract | null = null
+  petContract: ethers.Contract | null = null
+  userContract: ethers.Contract | null = null
   userInfo: any = null
   isRegistered: boolean = false
   walletAddress: `0x${string}` = "0x0000000000000000000000000000000000000000"
@@ -13,8 +15,8 @@ class GlobalStore {
   constructor() {
     makeAutoObservable(this)
     // 页面加载时尝试从localStorage恢复钱包地址
-    if (typeof window !== 'undefined') {
-      const savedAddress = localStorage.getItem('walletAddress')
+    if (typeof window !== "undefined") {
+      const savedAddress = localStorage.getItem("walletAddress")
       if (savedAddress) {
         this.walletAddress = savedAddress as `0x${string}`
       }
@@ -30,24 +32,27 @@ class GlobalStore {
   initContract = async (signer: ethers.Signer) => {
     try {
       // 如果合约已经初始化，则不需要重新初始化
-      if (this.contract) {
+      if (this.contract && this.petContract && this.userContract) {
         console.log("合约已初始化，无需重新初始化")
         return true
       }
-
-      const contractAddress = "0x4B6ab6AE58f93C98DBa03084b57b278250C3e665" // 替换为您部署的合约地址
       runInAction(() => {
         this.contract = new ethers.Contract(
-          contractAddress,
-          MyPetContractABI,
+          ContractConfig.InstitutionManager.address,
+          ContractConfig.InstitutionManager.abi,
+          signer
+        )
+        this.petContract = new ethers.Contract(
+          ContractConfig.PetManager.address,
+          ContractConfig.PetManager.abi,
+          signer
+        )
+        this.userContract = new ethers.Contract(
+          ContractConfig.UserManager.address,
+          ContractConfig.UserManager.abi,
           signer
         )
       })
-
-      // 检查当前用户是否为合约创建者
-      const deployer = await this.contract!.deployer()
-      this.isContractDeployer =
-        deployer.toLowerCase() === this.walletAddress.toLowerCase()
 
       console.log("合约初始化成功")
       return true
@@ -60,8 +65,8 @@ class GlobalStore {
     runInAction(() => {
       this.walletAddress = address
       // 将钱包地址保存到localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('walletAddress', address)
+      if (typeof window !== "undefined") {
+        localStorage.setItem("walletAddress", address)
       }
     })
   }
@@ -73,8 +78,8 @@ class GlobalStore {
     userType: "Personal" | "Institutional",
     orgId: number
   ) => {
-    if (!this.contract) {
-      throw new Error("合约未初始化")
+    if (!this.userContract) {
+      throw new Error("用户合约未初始化")
     }
     try {
       // 确保参数类型正确
@@ -82,7 +87,7 @@ class GlobalStore {
       const orgIdBN = ethers.getBigInt(orgId)
 
       // 调用合约方法
-      const tx = await this.contract.setUserProfile(
+      const tx = await this.userContract.setUserProfile(
         name,
         email,
         phone,
@@ -123,16 +128,16 @@ class GlobalStore {
     }
     try {
       console.log("检查用户注册状态 - 开始", { address: this.walletAddress })
-      const isRegistered = await this.contract.checkUserIsRegistered(
+      const isRegistered = await this.userContract?.checkUserIsRegistered(
         this.walletAddress
       )
       console.log("检查用户注册状态 - 结果:", isRegistered)
-      
+
       // 更新全局状态中的isRegistered值
       runInAction(() => {
         this.isRegistered = isRegistered
       })
-      
+
       return isRegistered
     } catch (error) {
       console.error("检查地址注册状态失败:", error)
@@ -165,8 +170,6 @@ class GlobalStore {
       throw new Error("合约未初始化")
     }
     if (!this.isContractDeployer) {
-      
-
     }
     try {
       this.setLoading(true)
@@ -194,12 +197,12 @@ class GlobalStore {
 
   // 获取用户的宠物列表
   getUserPets = async () => {
-    if (!this.contract) {
+    if (!this.petContract) {
       console.warn("合约未初始化，无法获取宠物列表")
       return []
     }
     try {
-      const pets = await this.contract.getUserPets(this.walletAddress)
+      const pets = await this.petContract.getUserPets(this.walletAddress)
       return pets
     } catch (error) {
       console.error("获取宠物列表失败:", error)
@@ -217,12 +220,12 @@ class GlobalStore {
     description: string,
     imageUrl: string
   ) => {
-    if (!this.contract) {
+    if (!this.petContract) {
       throw new Error("合约未初始化")
     }
     try {
       this.setLoading(true)
-      const tx = await this.contract.registerPet(
+      const tx = await this.petContract.addPet(
         name,
         species,
         breed,
@@ -259,12 +262,12 @@ class GlobalStore {
     description: string,
     imageUrl: string
   ) => {
-    if (!this.contract) {
+    if (!this.petContract) {
       throw new Error("合约未初始化")
     }
     try {
       this.setLoading(true)
-      const tx = await this.contract.updatePet(
+      const tx = await this.petContract.updatePet(
         petId,
         name,
         species,
@@ -286,12 +289,12 @@ class GlobalStore {
 
   // 解除与宠物的关系
   removePet = async (petId: number) => {
-    if (!this.contract) {
+    if (!this.petContract) {
       throw new Error("合约未初始化")
     }
     try {
       this.setLoading(true)
-      const tx = await this.contract.removePet(petId)
+      const tx = await this.petContract.removePet(petId)
       await tx.wait()
       this.setLoading(false)
       return true
@@ -304,29 +307,29 @@ class GlobalStore {
 
   //获取用户信息
   getUserInfo = async () => {
-    if (!this.contract) {
-      console.warn("合约未初始化，无法获取用户信息")
+    if (!this.userContract) {
+      console.warn("用户合约未初始化，无法获取用户信息")
       return null
     }
     try {
       console.log("获取用户信息 - 开始", { address: this.walletAddress })
       const isRegistered = await this.checkRegisteredAddress()
       console.log("获取用户信息 - 用户注册状态:", isRegistered)
-      
+
       if (!isRegistered) {
         console.warn("用户不存在，无法获取用户信息")
         return null
       }
-      
+
       // 直接获取用户信息
-      const userInfo = await this.contract.getUserInfo(this.walletAddress)
+      const userInfo = await this.userContract.getUserInfo(this.walletAddress)
       console.log("获取用户信息 - 成功获取用户数据")
-      
+
       runInAction(() => {
-        this.userInfo = userInfo;
-        this.isRegistered = true; // 确保isRegistered状态与获取到的用户信息一致
+        this.userInfo = userInfo
+        this.isRegistered = true // 确保isRegistered状态与获取到的用户信息一致
       })
-      
+
       return userInfo
     } catch (error) {
       console.error("获取用户信息失败:", error)

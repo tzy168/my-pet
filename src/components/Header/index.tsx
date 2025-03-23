@@ -4,6 +4,7 @@ import styles from "./styles.module.css"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
 import { useRouter } from "next/router"
 import { useGlobalStore } from "../../stores/global"
+import Navigation from "../Navigation"
 import {
   Menu,
   MenuItem,
@@ -102,14 +103,17 @@ const Header: React.FC = observer(() => {
 
   return (
     <header className={styles.header}>
-      <h2
-        className={styles.logo}
-        onClick={() => {
-          router.push("/")
-        }}
-      >
-        MyPet
-      </h2>
+      <div className={styles.leftSection}>
+        <h2
+          className={styles.logo}
+          onClick={() => {
+            router.push("/")
+          }}
+        >
+          MyPet
+        </h2>
+        {<Navigation />}
+      </div>
       <div className={styles.rightSection}>
         {/* {isContractDeployer && (
           <Button
@@ -129,6 +133,8 @@ const Header: React.FC = observer(() => {
               chain &&
               (!authenticationStatus ||
                 authenticationStatus === "authenticated")
+            console.log(userInfo)
+
             return (
               <>
                 <ConnectButton />
