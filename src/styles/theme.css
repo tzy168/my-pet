@@ -1,0 +1,145 @@
+/* 全局主题样式 */
+:root {
+  --primary-color: #3a9691; /* 柔和的蓝绿色作为主色调 */
+  --secondary-color: #f8c537; /* 温暖的黄色作为辅助色 */
+  --background-color: #f9f9f9; /* 浅灰色背景 */
+  --card-background: #ffffff; /* 卡片背景色 */
+  --text-primary: #333333; /* 主要文字颜色 */
+  --text-secondary: #666666; /* 次要文字颜色 */
+  --border-color: #e0e0e0; /* 边框颜色 */
+  --success-color: #4caf50; /* 成功状态颜色 */
+  --error-color: #f44336; /* 错误状态颜色 */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05); /* 小阴影 */
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1); /* 中等阴影 */
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.15); /* 大阴影 */
+  --radius-sm: 4px; /* 小圆角 */
+  --radius-md: 8px; /* 中等圆角 */
+  --radius-lg: 12px; /* 大圆角 */
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text-primary);
+  /* 添加宠物相关的背景图案 */
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233a9691' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* 卡片样式 */
+.card {
+  background-color: var(--card-background);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* 按钮样式 */
+button.primary {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button.primary:hover {
+  background-color: #2c7a76; /* 深一点的主色调 */
+}
+
+button.secondary {
+  background-color: white;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+button.secondary:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* 标题样式 */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--primary-color);
+  margin-bottom: 16px;
+}
+
+/* 导航样式 */
+.nav-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.nav-link:hover, .nav-link.active {
+  background-color: rgba(58, 150, 145, 0.1);
+  color: var(--primary-color);
+}
+
+/* 宠物卡片特殊样式 */
+.pet-card {
+  border-top: 4px solid var(--primary-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.pet-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0C9 0 0 9 0 20s9 20 20 20 20-9 20-20S31 0 20 0zm0 36c-8.8 0-16-7.2-16-16S11.2 4 20 4s16 7.2 16 16-7.2 16-16 16z' fill='%233a9691' fill-opacity='0.1'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: bottom right;
+  opacity: 0.5;
+}
+
+/* 表单元素样式 */
+input, select, textarea {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+/* 页面容器 */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+  
+  h1 {
+    font-size: 1.8rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+}

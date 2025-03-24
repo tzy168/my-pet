@@ -51,6 +51,16 @@ const Header: React.FC = observer(() => {
     }
   }, [contract])
 
+  useEffect(() => {
+    // 监听钱包地址变化
+    const handleAccountChange = (address: string | undefined) => {
+      setWalletAddress(address || "0x0000000000000000000000000000000000000000")
+    }
+    return () => {
+      handleAccountChange(undefined)
+    }
+  }, [])
+
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)
   }
@@ -115,15 +125,6 @@ const Header: React.FC = observer(() => {
         {<Navigation />}
       </div>
       <div className={styles.rightSection}>
-        {/* {isContractDeployer && (
-          <Button
-            variant="contained"
-            onClick={() => router.push('/admin')}
-            style={{ marginRight: "16px" }}
-          >
-            系统管理
-          </Button>
-        )} */}
         <ConnectButton.Custom>
           {({ account, chain, authenticationStatus, mounted }) => {
             const ready = mounted && authenticationStatus !== "loading"
@@ -133,8 +134,10 @@ const Header: React.FC = observer(() => {
               chain &&
               (!authenticationStatus ||
                 authenticationStatus === "authenticated")
-            console.log(userInfo)
 
+            if (account?.address) {
+              setWalletAddress(account.address)
+            }
             return (
               <>
                 <ConnectButton />
@@ -154,7 +157,7 @@ const Header: React.FC = observer(() => {
                 <span
                   className={`${styles.userType} ${userInfo[5] === 0 ? styles.personal : styles.institutional}`}
                 >
-                  {userInfo[5] === 0 ? `个人用户` : `机构用户`}
+                  {userInfo[5] === 0 ? `机构用户` : `个人用户`}
                 </span>
               )}
             </div>
@@ -174,7 +177,10 @@ const Header: React.FC = observer(() => {
               {isContractDeployer ? (
                 <>
                   <MenuItem onClick={() => handleMenuItemClick("/admin")}>
-                    系统管理
+                    机构管理
+                  </MenuItem>
+                  <MenuItem onClick={() => handleMenuItemClick("/system-info")}>
+                    系统信息
                   </MenuItem>
                   <MenuItem onClick={handleOpenDialog}>添加机构</MenuItem>
                 </>

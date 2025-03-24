@@ -18,16 +18,23 @@ const WalletInitializer: React.FC<WalletInitializerProps> = ({ children }) => {
     checkRegisteredAddress,
     isRegistered,
     getUserInfo,
-    contract
+    contract,
   } = useGlobalStore()
 
   useEffect(() => {
     if (walletClient) {
       const initializeContract = async () => {
-        const signer = await new ethers.BrowserProvider(
-          walletClient
-        ).getSigner()
-        await initContract(signer)
+        try {
+          const signer = await new ethers.BrowserProvider(
+            walletClient
+          ).getSigner()
+          const success = await initContract(signer)
+          if (!success) {
+            console.error("合约初始化失败，请刷新页面或重新连接钱包")
+          }
+        } catch (error) {
+          console.error("初始化合约时发生错误:", error)
+        }
       }
       initializeContract()
     }
@@ -47,9 +54,9 @@ const WalletInitializer: React.FC<WalletInitializerProps> = ({ children }) => {
         const isUserRegistered = await checkRegisteredAddress()
         if (isUserRegistered) {
           await getUserInfo()
-        } else if (router.pathname !== '/profile') {
+        } else if (router.pathname !== "/profile") {
           // 未注册用户直接跳转到个人资料页面
-          router.push('/profile')
+          router.push("/profile")
         }
       } catch (error) {
         console.error("检查用户状态失败:", error)

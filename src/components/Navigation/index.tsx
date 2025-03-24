@@ -13,6 +13,8 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
   const navItems = [
     { path: '/', label: '首页' },
     { path: '/my-pets', label: '我的宠物' },
+    { path: '/medical-records', label: '医疗记录' },
+    { path: '/rescue-requests', label: '动物救助' },
     { path: '/profile', label: '个人资料' },
   ];
 

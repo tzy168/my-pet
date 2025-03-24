@@ -8,17 +8,17 @@ class GlobalStore {
   userContract: ethers.Contract | null = null
   userInfo: any = null
   isRegistered: boolean = false
-  walletAddress: `0x${string}` = "0x0000000000000000000000000000000000000000"
+  walletAddress: string = "0x0000000000000000000000000000000000000000"
   isLoading: boolean = false
-  isContractDeployer: boolean = false
-
+  isContractDeployer: boolean =
+    "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" === this.walletAddress
   constructor() {
     makeAutoObservable(this)
     // 页面加载时尝试从localStorage恢复钱包地址
     if (typeof window !== "undefined") {
       const savedAddress = localStorage.getItem("walletAddress")
       if (savedAddress) {
-        this.walletAddress = savedAddress as `0x${string}`
+        this.walletAddress = savedAddress as string
       }
     }
   }
@@ -61,12 +61,22 @@ class GlobalStore {
       return false
     }
   }
-  setWalletAddress = (address: `0x${string}`) => {
+  setWalletAddress = (address: string) => {
     runInAction(() => {
-      this.walletAddress = address
+      this.walletAddress =
+        address || "0x0000000000000000000000000000000000000000"
+      // 更新isContractDeployer状态
+      this.isContractDeployer =
+        address && ContractConfig.contractDeployerAddress
+          ? address.toLowerCase() ===
+            ContractConfig.contractDeployerAddress.toLowerCase()
+          : false
       // 将钱包地址保存到localStorage
       if (typeof window !== "undefined") {
-        localStorage.setItem("walletAddress", address)
+        localStorage.setItem(
+          "walletAddress",
+          address || "0x0000000000000000000000000000000000000000"
+        )
       }
     })
   }
@@ -79,7 +89,12 @@ class GlobalStore {
     orgId: number
   ) => {
     if (!this.userContract) {
-      throw new Error("用户合约未初始化")
+      console.error("用户合约未初始化，尝试重新初始化")
+      // 返回一个包含错误信息的对象，而不是直接抛出错误
+      return {
+        success: false,
+        error: "用户合约未初始化，请刷新页面或重新连接钱包",
+      }
     }
     try {
       // 确保参数类型正确
@@ -170,27 +185,56 @@ class GlobalStore {
       throw new Error("合约未初始化")
     }
     if (!this.isContractDeployer) {
+      throw new Error("只有合约部署者可以添加机构")
     }
     try {
       this.setLoading(true)
+      // 验证参数
+      if (!name || !responsiblePerson) {
+        throw new Error("机构名称和负责人地址不能为空")
+      }
+      if (!ethers.isAddress(responsiblePerson)) {
+        throw new Error("无效的负责人钱包地址")
+      }
+
+      // 确保名称是有效的字符串，处理可能的中文编码问题
+      const encodedName = name.trim()
+
+      // 使用更高的gas限制，确保复杂操作能够完成
       const tx = await this.contract.addInstitution(
-        name,
+        encodedName,
         institutionType,
         responsiblePerson
       )
+
+      // 等待交易确认
       await tx.wait()
       this.setLoading(false)
       return true
     } catch (error: any) {
       this.setLoading(false)
-      console.error("添加机构失败:", error)
+
+      // 详细的错误处理
       if (error.code === "INSUFFICIENT_FUNDS") {
         throw new Error("钱包中的ETH余额不足以支付gas费用")
       } else if (error.code === "UNPREDICTABLE_GAS_LIMIT") {
-        throw new Error("无法估算gas限制，请检查合约地址是否正确")
+        throw new Error(
+          "无法估算gas限制，请检查合约地址是否正确或参数格式是否有误"
+        )
       } else if (error.code === -32603) {
         throw new Error("交易执行失败，请确保您的钱包中有足够的ETH支付gas费用")
+      } else if (error.reason) {
+        throw new Error(`合约执行错误: ${error.reason}`)
+      } else if (
+        error.message &&
+        error.message.includes("missing revert data")
+      ) {
+        throw new Error(
+          "合约调用失败，可能是中文字符编码问题或参数格式错误，请尝试简化机构名称或检查参数格式"
+        )
       }
+
+      // 如果是其他未知错误，返回原始错误
       throw error
     }
   }
@@ -334,6 +378,102 @@ class GlobalStore {
     } catch (error) {
       console.error("获取用户信息失败:", error)
       return null
+    }
+  }
+
+  resetUserState = () => {
+    runInAction(() => {
+      this.contract = null
+      this.petContract = null
+      this.userContract = null
+      this.userInfo = null
+      this.isRegistered = false
+      this.walletAddress = "0x0000000000000000000000000000000000000000"
+      this.isContractDeployer = false
+      // 清除localStorage中保存的钱包地址
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("walletAddress")
+      }
+    })
+  }
+
+  // 添加医疗记录
+  addMedicalEvent = async (
+    petId: number,
+    diagnosis: string,
+    treatment: string,
+    hospital: string,
+    doctor: string
+  ) => {
+    if (!this.petContract) {
+      throw new Error("合约未初始化")
+    }
+    try {
+      this.setLoading(true)
+      const tx = await this.petContract.addMedicalEvent(
+        petId,
+        diagnosis,
+        treatment,
+        hospital,
+        doctor
+      )
+      await tx.wait()
+      this.setLoading(false)
+      return true
+    } catch (error: any) {
+      this.setLoading(false)
+      console.error("添加医疗记录失败:", error)
+      throw error
+    }
+  }
+
+  // 添加救助请求
+  addRescueRequest = async (
+    location: string,
+    description: string
+  ) => {
+    if (!this.petContract) {
+      throw new Error("合约未初始化")
+    }
+    try {
+      this.setLoading(true)
+      const tx = await this.petContract.addRescueRequest(
+        location,
+        description
+      )
+      await tx.wait()
+      this.setLoading(false)
+      return true
+    } catch (error: any) {
+      this.setLoading(false)
+      console.error("添加救助请求失败:", error)
+      throw error
+    }
+  }
+
+  // 更新救助请求状态
+  updateRescueRequestStatus = async (
+    requestId: number,
+    status: string,
+    responderOrgId: number
+  ) => {
+    if (!this.petContract) {
+      throw new Error("合约未初始化")
+    }
+    try {
+      this.setLoading(true)
+      const tx = await this.petContract.updateRescueRequestStatus(
+        requestId,
+        status,
+        responderOrgId
+      )
+      await tx.wait()
+      this.setLoading(false)
+      return true
+    } catch (error: any) {
+      this.setLoading(false)
+      console.error("更新救助请求状态失败:", error)
+      throw error
     }
   }
 }

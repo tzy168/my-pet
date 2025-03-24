@@ -96,13 +96,24 @@ const Profile: React.FC = observer(() => {
   const handleSave = async () => {
     try {
       // 调用合约方法保存用户信息
-      await setUserProfile(
+      const result = await setUserProfile(
         formData.name,
         formData.email,
         formData.phone,
         formData.userType,
         formData.orgId
       )
+
+      // 检查返回结果是否为错误对象
+      if (result && typeof result === 'object' && 'success' in result && !result.success) {
+        // 处理合约未初始化等错误
+        setSnackbar({
+          open: true,
+          message: result.error || "保存失败，请刷新页面或重新连接钱包",
+          severity: "error",
+        })
+        return
+      }
 
       setIsEditing(false)
       setIsNewUser(false)

@@ -26,6 +26,7 @@ import {
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material"
 import styles from "../styles/MyPets.module.css"
 import { uploadToIPFS, getIPFSGatewayUrl } from "../utils/ipfs"
+import { getImageFromIndexedDB } from "../utils/ipfsStorage"
 
 interface Pet {
   id: number
@@ -192,7 +193,7 @@ const MyPets: React.FC = observer(() => {
           // 上传图片到IPFS
           const cid = await uploadToIPFS(imageFile)
           // 获取IPFS网关URL
-          imageUrl = getIPFSGatewayUrl(cid)
+          imageUrl = await getIPFSGatewayUrl(cid)
           console.log("图片已上传到IPFS:", imageUrl)
           setSnackbar({
             open: true,
@@ -252,7 +253,6 @@ const MyPets: React.FC = observer(() => {
       })
     }
   }
-
   return (
     <Box className={styles.container}>
       <Box className={styles.header}>
@@ -273,12 +273,12 @@ const MyPets: React.FC = observer(() => {
                   image={pet.image}
                   alt={pet.name}
                   sx={{ objectFit: "cover" }}
-                  onError={(e) => {
-                    // 图片加载失败时的处理
-                    const target = e.target as HTMLImageElement
-                    target.onerror = null // 防止无限循环
-                    target.src = "/images/pet-placeholder.png" // 使用默认图片
-                  }}
+                  // onError={(e) => {
+                  //   // 图片加载失败时的处理
+                  //   const target = e.target as HTMLImageElement
+                  //   target.onerror = null // 防止无限循环
+                  //   target.src = "/images/pet-placeholder.png" // 使用默认图片
+                  // }}
                 />
               )}
               <CardContent>
@@ -303,6 +303,10 @@ const MyPets: React.FC = observer(() => {
                     </IconButton>
                   </Box>
                 </Box>
+                {/* id */}
+                <Typography variant="body2" color="textSecondary">
+                  ID: {pet.id}
+                </Typography>
                 <Typography color="textSecondary">{pet.species}</Typography>
                 <Typography variant="body2" sx={{ mt: 1 }}>
                   品种：{pet.breed || "未知"}

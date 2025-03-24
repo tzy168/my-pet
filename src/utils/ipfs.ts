@@ -1,5 +1,6 @@
 import { create } from 'ipfs-http-client';
 import { Buffer } from 'buffer';
+import { saveImageToIndexedDB, getImageFromIndexedDB } from './ipfsStorage';
 
 // IPFS配置
 const projectId = process.env.NEXT_PUBLIC_INFURA_PROJECT_ID;
@@ -37,17 +38,17 @@ export const uploadToIPFS = async (file: File): Promise<string> => {
   try {
     const client = ipfsClient();
     
-    // 如果没有有效的IPFS客户端，使用本地存储作为备选方案
+    // 如果没有有效的IPFS客户端，使用IndexedDB存储作为备选方案
     if (!client) {
-      // 生成一个随机ID作为文件名
-      const randomId = Math.random().toString(36).substring(2, 15);
-      const fileName = `local_${randomId}_${file.name}`;
-      
-      // 创建一个本地URL（这只是临时的，页面刷新后会丢失）
-      const localUrl = URL.createObjectURL(file);
-      
-      console.log('使用本地存储:', localUrl);
-      return localUrl;
+      try {
+        // 保存到IndexedDB并返回图片ID
+        const imageId = await saveImageToIndexedDB(file);
+        console.log('使用IndexedDB存储，图片ID:', imageId);
+        return `local:${imageId}`;
+      } catch (error) {
+        console.error('保存到IndexedDB失败:', error);
+        throw new Error('无法保存图片');
+      }
     }
     
     // 正常上传到IPFS
@@ -59,11 +60,15 @@ export const uploadToIPFS = async (file: File): Promise<string> => {
   } catch (error) {
     console.error('上传到IPFS失败:', error);
     
-    // 出错时也使用本地存储作为备选方案
-    const randomId = Math.random().toString(36).substring(2, 15);
-    const localUrl = URL.createObjectURL(file);
-    console.log('IPFS上传失败，使用本地存储:', localUrl);
-    return localUrl;
+    // 出错时也使用IndexedDB存储作为备选方案
+    try {
+      const imageId = await saveImageToIndexedDB(file);
+      console.log('IPFS上传失败，使用IndexedDB存储，图片ID:', imageId);
+      return `local:${imageId}`;
+    } catch (storageError) {
+      console.error('保存到IndexedDB也失败:', storageError);
+      throw new Error('无法保存图片');
+    }
   }
 };
 
@@ -72,8 +77,20 @@ export const uploadToIPFS = async (file: File): Promise<string> => {
  * @param cid IPFS的CID或本地URL
  * @returns IPFS网关URL或本地URL
  */
-export const getIPFSGatewayUrl = (cid: string): string => {
-  // 如果是本地URL，直接返回
+export const getIPFSGatewayUrl = async (cid: string): Promise<string> => {
+  // 如果是本地存储的图片ID
+  if (cid.startsWith('local:')) {
+    try {
+      const imageId = cid.substring(6); // 去掉'local:'前缀
+      // 不直接返回Blob URL，而是返回一个特殊格式的URL，包含图片ID
+      // 这样在页面刷新后，我们仍然可以通过这个ID从IndexedDB获取图片
+      return `local:${imageId}`;
+    } catch (error) {
+      console.error('处理本地图片ID失败:', error);
+      return '/images/pet-placeholder.png'; // 返回默认图片
+    }
+  }
+  // 如果是blob URL（兼容旧数据），直接返回
   if (cid.startsWith('blob:')) {
     return cid;
   }
