@@ -39,8 +39,8 @@
       ]
     },
     "D:\\ABMS\\my-pet\\contracts\\interfaces\\IInstitutionManager.sol": {
-      "lastModificationDate": 1742737441524,
-      "contentHash": "08dcdb61fe5f679ee7f5d94e4cf02fcd",
+      "lastModificationDate": 1742906866750,
+      "contentHash": "4409ef7f7ebb69ac43ad37319480c851",
       "sourceName": "contracts/interfaces/IInstitutionManager.sol",
       "solcConfig": {
         "version": "0.8.19",
@@ -148,8 +148,8 @@
       ]
     },
     "D:\\ABMS\\my-pet\\contracts\\UserManager.sol": {
-      "lastModificationDate": 1742737449115,
-      "contentHash": "1aa8f9ad239f696fe5fda8e3c89e01ee",
+      "lastModificationDate": 1742912230094,
+      "contentHash": "bc9100a5baebc8555422b42c7924be12",
       "sourceName": "contracts/UserManager.sol",
       "solcConfig": {
         "version": "0.8.19",
@@ -185,8 +185,8 @@
       ]
     },
     "D:\\ABMS\\my-pet\\contracts\\interfaces\\IPetManager.sol": {
-      "lastModificationDate": 1742737443499,
-      "contentHash": "9928b7c46f05cfed5ea2e723ab97f6dc",
+      "lastModificationDate": 1742906616216,
+      "contentHash": "ea26e4573523bd00fc5e279aa9596cbe",
       "sourceName": "contracts/interfaces/IPetManager.sol",
       "solcConfig": {
         "version": "0.8.19",
@@ -222,8 +222,8 @@
       ]
     },
     "D:\\ABMS\\my-pet\\contracts\\PetManager.sol": {
-      "lastModificationDate": 1742737448010,
-      "contentHash": "61ce0650fd4ab92b148130f48f02ef88",
+      "lastModificationDate": 1742907471870,
+      "contentHash": "b9d03ed821ecb0e5cfffa66d8970bc60",
       "sourceName": "contracts/PetManager.sol",
       "solcConfig": {
         "version": "0.8.19",
@@ -249,7 +249,8 @@
         }
       },
       "imports": [
-        "./interfaces/IPetManager.sol"
+        "./interfaces/IPetManager.sol",
+        "./interfaces/IInstitutionManager.sol"
       ],
       "versionPragmas": [
         "^0.8.0"

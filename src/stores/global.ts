@@ -31,11 +31,20 @@ class GlobalStore {
 
   initContract = async (signer: ethers.Signer) => {
     try {
+      this.setLoading(true)
       // 如果合约已经初始化，则不需要重新初始化
       if (this.contract && this.petContract && this.userContract) {
         console.log("合约已初始化，无需重新初始化")
+        this.setLoading(false)
         return true
       }
+      
+      // 设置较高的gas限制和优先级，加快交易处理速度
+      const options = {
+        gasLimit: 3000000,
+        gasPrice: ethers.parseUnits("50", "gwei")
+      }
+      
       runInAction(() => {
         this.contract = new ethers.Contract(
           ContractConfig.InstitutionManager.address,
@@ -55,8 +64,10 @@ class GlobalStore {
       })
 
       console.log("合约初始化成功")
+      this.setLoading(false)
       return true
     } catch (error) {
+      this.setLoading(false)
       console.error("初始化合约失败:", error)
       return false
     }
@@ -97,6 +108,7 @@ class GlobalStore {
       }
     }
     try {
+      this.setLoading(true)
       // 确保参数类型正确
       const userTypeEnum = userType === "Personal" ? 0 : 1
       const orgIdBN = ethers.getBigInt(orgId)
@@ -112,8 +124,10 @@ class GlobalStore {
       await tx.wait()
       this.isRegistered = true
       await this.getUserInfo() // 更新用户信息
+      this.setLoading(false)
       return true
     } catch (error: any) {
+      this.setLoading(false)
       console.error("设置用户资料失败:", error)
       if (error.code === "INSUFFICIENT_FUNDS") {
         throw new Error("钱包中的ETH余额不足以支付gas费用")
@@ -142,6 +156,7 @@ class GlobalStore {
       return false
     }
     try {
+      this.setLoading(true)
       console.log("检查用户注册状态 - 开始", { address: this.walletAddress })
       const isRegistered = await this.userContract?.checkUserIsRegistered(
         this.walletAddress
@@ -152,9 +167,11 @@ class GlobalStore {
       runInAction(() => {
         this.isRegistered = isRegistered
       })
-
+      
+      this.setLoading(false)
       return isRegistered
     } catch (error) {
+      this.setLoading(false)
       console.error("检查地址注册状态失败:", error)
       return false
     }
@@ -356,12 +373,14 @@ class GlobalStore {
       return null
     }
     try {
+      this.setLoading(true)
       console.log("获取用户信息 - 开始", { address: this.walletAddress })
       const isRegistered = await this.checkRegisteredAddress()
       console.log("获取用户信息 - 用户注册状态:", isRegistered)
 
       if (!isRegistered) {
         console.warn("用户不存在，无法获取用户信息")
+        this.setLoading(false)
         return null
       }
 
@@ -373,9 +392,11 @@ class GlobalStore {
         this.userInfo = userInfo
         this.isRegistered = true // 确保isRegistered状态与获取到的用户信息一致
       })
-
+      
+      this.setLoading(false)
       return userInfo
     } catch (error) {
+      this.setLoading(false)
       console.error("获取用户信息失败:", error)
       return null
     }

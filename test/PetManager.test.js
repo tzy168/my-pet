@@ -26,8 +26,11 @@ describe("PetManager", function () {
     userManager = await UserManager.deploy(await institutionManager.getAddress());
     await userManager.waitForDeployment();
 
-    // 部署PetManager合约，传入UserManager地址
-    petManager = await PetManager.deploy(await userManager.getAddress());
+    // 部署PetManager合约，传入UserManager和InstitutionManager地址
+    petManager = await PetManager.deploy(
+      await userManager.getAddress(),
+      await institutionManager.getAddress()
+    );
     await petManager.waitForDeployment();
 
     // 添加一个测试机构
@@ -224,8 +227,8 @@ describe("PetManager", function () {
         1,
         "健康检查",
         "疫苗接种",
-        addr3.address,
-        addr3.address
+        // addr3.address,
+        // addr3.address
       );
 
       // 验证医疗事件

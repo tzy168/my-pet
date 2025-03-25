@@ -44,9 +44,7 @@ interface IPetManager is IMyPetBase {
   function addMedicalEvent(
     uint _petId,
     string memory _diagnosis,
-    string memory _treatment,
-    address _hospital,
-    address _doctor
+    string memory _treatment
   ) external;
 
   // 添加救助请求

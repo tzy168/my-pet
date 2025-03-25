@@ -83,7 +83,7 @@ const RescueRequests: React.FC = observer(() => {
     }
 
     try {
-      setIsLoading(true)
+      // 使用全局loading状态，不再使用局部loading
       // 从合约获取救助请求数据
       const requests = []
       const requestCount = await petContract.rescueRequestIdCounter()
@@ -94,7 +94,6 @@ const RescueRequests: React.FC = observer(() => {
       }
 
       setRescueRequests(requests)
-      setIsLoading(false)
     } catch (error) {
       console.error("获取救助请求失败:", error)
       setSnackbar({
@@ -102,7 +101,6 @@ const RescueRequests: React.FC = observer(() => {
         message: "获取救助请求失败",
         severity: "error",
       })
-      setIsLoading(false)
     }
   }
 
@@ -162,13 +160,11 @@ const RescueRequests: React.FC = observer(() => {
     }
 
     try {
-      setIsLoading(true)
-      // 调用合约添加救助请求
-      const tx = await petContract?.addRescueRequest(
+      // 使用全局store中的addRescueRequest方法，它内部已经处理了loading状态
+      await useGlobalStore().addRescueRequest(
         rescueForm.location,
         rescueForm.description
       )
-      await tx.wait()
 
       // 刷新救助请求列表
       await fetchRescueRequests()
@@ -178,7 +174,6 @@ const RescueRequests: React.FC = observer(() => {
         message: "添加救助请求成功",
         severity: "success",
       })
-      setIsLoading(false)
     } catch (error) {
       console.error("添加救助请求失败:", error)
       setSnackbar({
@@ -186,7 +181,6 @@ const RescueRequests: React.FC = observer(() => {
         message: "添加救助请求失败",
         severity: "error",
       })
-      setIsLoading(false)
     }
   }
 
@@ -194,14 +188,12 @@ const RescueRequests: React.FC = observer(() => {
     if (!selectedRequest) return
 
     try {
-      setIsLoading(true)
-      // 调用合约更新救助请求状态
-      const tx = await petContract?.updateRescueRequestStatus(
+      // 使用全局store中的updateRescueRequestStatus方法，它内部已经处理了loading状态
+      await useGlobalStore().updateRescueRequestStatus(
         selectedRequest.id,
         updateForm.status,
         updateForm.responderOrgId
       )
-      await tx.wait()
 
       // 刷新救助请求列表
       await fetchRescueRequests()
@@ -211,7 +203,6 @@ const RescueRequests: React.FC = observer(() => {
         message: "更新救助请求状态成功",
         severity: "success",
       })
-      setIsLoading(false)
     } catch (error) {
       console.error("更新救助请求状态失败:", error)
       setSnackbar({
@@ -219,7 +210,6 @@ const RescueRequests: React.FC = observer(() => {
         message: "更新救助请求状态失败",
         severity: "error",
       })
-      setIsLoading(false)
     }
   }
 

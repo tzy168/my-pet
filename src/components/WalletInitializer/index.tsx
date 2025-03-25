@@ -19,12 +19,14 @@ const WalletInitializer: React.FC<WalletInitializerProps> = ({ children }) => {
     isRegistered,
     getUserInfo,
     contract,
+    setLoading,
   } = useGlobalStore()
 
   useEffect(() => {
     if (walletClient) {
       const initializeContract = async () => {
         try {
+          setLoading(true)
           const signer = await new ethers.BrowserProvider(
             walletClient
           ).getSigner()
@@ -32,13 +34,15 @@ const WalletInitializer: React.FC<WalletInitializerProps> = ({ children }) => {
           if (!success) {
             console.error("合约初始化失败，请刷新页面或重新连接钱包")
           }
+          setLoading(false)
         } catch (error) {
+          setLoading(false)
           console.error("初始化合约时发生错误:", error)
         }
       }
       initializeContract()
     }
-  }, [walletClient, initContract])
+  }, [walletClient, initContract, setLoading])
 
   useEffect(() => {
     if (isConnected && address) {

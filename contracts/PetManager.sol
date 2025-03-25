@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/IPetManager.sol";
+import "./interfaces/IInstitutionManager.sol";
 
 contract PetManager is IPetManager {
   // 宠物存储
@@ -20,10 +21,17 @@ contract PetManager is IPetManager {
 
   // UserManager合约地址
   address public immutable userManagerAddress;
+  // InstitutionManager合约地址
+  address public immutable institutionManagerAddress;
 
-  constructor(address _userManagerAddress) {
+  constructor(address _userManagerAddress, address _institutionManagerAddress) {
     require(_userManagerAddress != address(0), "Invalid user manager address");
+    require(
+      _institutionManagerAddress != address(0),
+      "Invalid institution manager address"
+    );
     userManagerAddress = _userManagerAddress;
+    institutionManagerAddress = _institutionManagerAddress;
   }
 
   // 添加宠物
@@ -115,6 +123,88 @@ contract PetManager is IPetManager {
     return userPetList;
   }
 
+  // 获取所有宠物列表（仅限医院工作人员）
+  function getAllPets() external view returns (Pet[] memory) {
+    // 验证调用者是否为医院工作人员
+    IInstitutionManager institutionManager = IInstitutionManager(
+      institutionManagerAddress
+    );
+    address institutionAddress = institutionManager.staffToInstitution(
+      msg.sender
+    );
+    require(
+      institutionAddress != address(0),
+      "Caller is not a staff member of any institution"
+    );
+
+    uint institutionId = institutionManager.institutionAddressToId(
+      institutionAddress
+    );
+    (, , IMyPetBase.InstitutionType institutionType, , ) = institutionManager
+      .getInstitutionDetail(institutionId);
+    require(
+      institutionType == IMyPetBase.InstitutionType.Hospital,
+      "Caller's institution is not a hospital"
+    );
+
+    return pets;
+  }
+
+  // 根据ID获取宠物信息
+  function getPetById(uint _petId) external view returns (Pet memory) {
+    require(_petId > 0 && _petId < petIdCounter, "Pet does not exist");
+    return pets[_petId - 1];
+  }
+
+  // 根据名称查找宠物
+  function findPetsByName(
+    string memory _name
+  ) external view returns (Pet[] memory) {
+    // 验证调用者是否为医院工作人员
+    IInstitutionManager institutionManager = IInstitutionManager(
+      institutionManagerAddress
+    );
+    address institutionAddress = institutionManager.staffToInstitution(
+      msg.sender
+    );
+    require(
+      institutionAddress != address(0),
+      "Caller is not a staff member of any institution"
+    );
+
+    uint institutionId = institutionManager.institutionAddressToId(
+      institutionAddress
+    );
+    (, , IMyPetBase.InstitutionType institutionType, , ) = institutionManager
+      .getInstitutionDetail(institutionId);
+    require(
+      institutionType == IMyPetBase.InstitutionType.Hospital,
+      "Caller's institution is not a hospital"
+    );
+
+    // 计算匹配的宠物数量
+    uint matchCount = 0;
+    for (uint i = 1; i < petIdCounter; i++) {
+      if (keccak256(bytes(pets[i - 1].name)) == keccak256(bytes(_name))) {
+        matchCount++;
+      }
+    }
+
+    // 创建结果数组
+    Pet[] memory result = new Pet[](matchCount);
+    uint currentIndex = 0;
+
+    // 填充结果数组
+    for (uint i = 1; i < petIdCounter; i++) {
+      if (keccak256(bytes(pets[i - 1].name)) == keccak256(bytes(_name))) {
+        result[currentIndex] = pets[i - 1];
+        currentIndex++;
+      }
+    }
+
+    return result;
+  }
+
   // 添加领养事件
   function addAdoptionEvent(
     uint _petId,
@@ -143,19 +233,42 @@ contract PetManager is IPetManager {
   function addMedicalEvent(
     uint _petId,
     string memory _diagnosis,
-    string memory _treatment,
-    address _hospital,
-    address _doctor
+    string memory _treatment
   ) external override {
     require(_petId > 0 && _petId < petIdCounter, "Pet does not exist");
+
+    // 获取InstitutionManager合约实例
+    IInstitutionManager institutionManager = IInstitutionManager(
+      institutionManagerAddress
+    );
+
+    // 获取医生所属的机构ID
+    address institutionAddress = institutionManager.staffToInstitution(
+      msg.sender
+    );
+    require(
+      institutionAddress != address(0),
+      "Caller is not a staff member of any institution"
+    );
+
+    // 确保医生所属机构是医院类型
+    uint institutionId = institutionManager.institutionAddressToId(
+      institutionAddress
+    );
+    (, , IMyPetBase.InstitutionType institutionType, , ) = institutionManager
+      .getInstitutionDetail(institutionId);
+    require(
+      institutionType == IMyPetBase.InstitutionType.Hospital,
+      "Caller's institution is not a hospital"
+    );
 
     MedicalEvent memory newEvent = MedicalEvent({
       petId: _petId,
       diagnosis: _diagnosis,
       treatment: _treatment,
       timestamp: block.timestamp,
-      hospital: _hospital,
-      doctor: _doctor
+      hospital: institutionAddress,
+      doctor: msg.sender
     });
 
     medicalEvents.push(newEvent);

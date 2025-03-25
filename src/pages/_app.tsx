@@ -48,6 +48,7 @@ function MyApp({ Component, pageProps }: AppProps) {
                 minWidth: "1200px",
                 padding: "10px",
                 borderRadius: "8px",
+                marginTop: "58px",
               }}
             >
               <Component {...pageProps} />

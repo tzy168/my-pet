@@ -105,7 +105,12 @@ const Profile: React.FC = observer(() => {
       )
 
       // 检查返回结果是否为错误对象
-      if (result && typeof result === 'object' && 'success' in result && !result.success) {
+      if (
+        result &&
+        typeof result === "object" &&
+        "success" in result &&
+        !result.success
+      ) {
         // 处理合约未初始化等错误
         setSnackbar({
           open: true,
@@ -134,7 +139,7 @@ const Profile: React.FC = observer(() => {
       console.error("保存用户资料失败:", error)
       setSnackbar({
         open: true,
-        message: error.message || "保存失败，请重试",
+        message: "保存失败，请重试",
         severity: "error",
       })
     }

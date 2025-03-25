@@ -37,7 +37,6 @@ contract UserManager is IUserManager {
     uint _orgId
   ) external override {
     bool isNewUser = !_isUserRegistered(msg.sender);
-
     if (_userType == UserType.Institutional) {
       require(
         _orgId != 0,

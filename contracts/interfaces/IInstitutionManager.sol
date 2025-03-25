@@ -4,6 +4,11 @@ pragma solidity ^0.8.0;
 import "./IMyPetBase.sol";
 
 interface IInstitutionManager is IMyPetBase {
+  // 机构地址到ID的映射
+  function institutionAddressToId(address) external view returns (uint);
+  
+  // 员工到机构的映射
+  function staffToInstitution(address) external view returns (address);
   // 添加机构
   function addInstitution(
     string memory _name,

@@ -37,6 +37,7 @@ interface Pet {
   age: number
   description: string
   image: string
+  displayImage?: string // 添加用于显示的图片URL
 }
 
 const MyPets: React.FC = observer(() => {
@@ -70,8 +71,37 @@ const MyPets: React.FC = observer(() => {
     }
   }, [userInfo])
 
+  // 处理本地存储的图片URL
+  useEffect(() => {
+    const processLocalImages = async () => {
+      if (pets.length === 0) return
+
+      const updatedPets = await Promise.all(
+        pets.map(async (pet) => {
+          // 如果图片URL以'local:'开头，从IndexedDB获取实际的Blob URL
+          if (pet.image && pet.image.startsWith("local:")) {
+            try {
+              const imageId = pet.image.substring(6) // 去掉'local:'前缀
+              const blobUrl = await getImageFromIndexedDB(imageId)
+              return { ...pet, displayImage: blobUrl }
+            } catch (error) {
+              console.error("获取本地图片失败:", error)
+              return { ...pet, displayImage: "/images/pet-placeholder.png" }
+            }
+          }
+          return { ...pet, displayImage: pet.image }
+        })
+      )
+
+      setPets(updatedPets)
+    }
+
+    processLocalImages()
+  }, [pets.length])
+
   const fetchPets = async () => {
     try {
+      console.log("开始获取宠物列表")
       const petList = await getUserPets()
       setPets(petList)
     } catch (error) {
@@ -81,6 +111,8 @@ const MyPets: React.FC = observer(() => {
         message: "获取宠物列表失败",
         severity: "error",
       })
+    } finally {
+      console.log("获取宠物列表完成", pets)
     }
   }
 
@@ -99,7 +131,7 @@ const MyPets: React.FC = observer(() => {
     setOpenDialog(true)
   }
 
-  const handleEditPet = (pet: any) => {
+  const handleEditPet = (pet: Pet) => {
     setSelectedPet(pet)
     setPetForm({
       name: pet.name,
@@ -114,7 +146,7 @@ const MyPets: React.FC = observer(() => {
     setOpenDialog(true)
   }
 
-  const handleDeletePet = async (petId: any) => {
+  const handleDeletePet = async (petId: number) => {
     if (window.confirm("确定要解除与该宠物的关系吗？")) {
       try {
         await removePet(petId)
@@ -263,14 +295,14 @@ const MyPets: React.FC = observer(() => {
       </Box>
 
       <Grid container spacing={3}>
-        {pets.map((pet: any) => (
+        {pets.map((pet: Pet) => (
           <Grid item xs={12} sm={6} md={4} key={pet.id}>
             <Card>
               {pet.image && (
                 <CardMedia
                   component="img"
                   height="200"
-                  image={pet.image}
+                  image={pet.displayImage || "/images/pet-placeholder.png"}
                   alt={pet.name}
                   sx={{ objectFit: "cover" }}
                   // onError={(e) => {
@@ -305,14 +337,16 @@ const MyPets: React.FC = observer(() => {
                 </Box>
                 {/* id */}
                 <Typography variant="body2" color="textSecondary">
-                  ID: {pet.id}
+                  ID: {String(pet.id)}
                 </Typography>
                 <Typography color="textSecondary">{pet.species}</Typography>
                 <Typography variant="body2" sx={{ mt: 1 }}>
                   品种：{pet.breed || "未知"}
                 </Typography>
                 <Typography variant="body2">性别：{pet.gender}</Typography>
-                <Typography variant="body2">年龄：{pet.age}岁</Typography>
+                <Typography variant="body2">
+                  年龄：{String(pet.age)}岁
+                </Typography>
                 <Typography variant="body2" sx={{ mt: 1 }}>
                   {pet.description}
                 </Typography>

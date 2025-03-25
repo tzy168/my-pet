@@ -50,7 +50,14 @@ interface MedicalEvent {
 }
 
 const MedicalRecords: React.FC = observer(() => {
-  const { userInfo, getUserPets, petContract, walletAddress } = useGlobalStore()
+  const {
+    isLoading,
+    userInfo,
+    getUserPets,
+    petContract,
+    walletAddress,
+    setLoading,
+  } = useGlobalStore()
   const [pets, setPets] = useState<Pet[]>([])
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null)
   const [medicalEvents, setMedicalEvents] = useState<MedicalEvent[]>([])
@@ -61,7 +68,7 @@ const MedicalRecords: React.FC = observer(() => {
     hospital: "",
     doctor: "",
   })
-  const [isLoading, setIsLoading] = useState(false)
+  const [Loading, setIsLoading] = useState(false)
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -76,9 +83,11 @@ const MedicalRecords: React.FC = observer(() => {
   }, [userInfo])
 
   const fetchPets = async () => {
+    setLoading(true)
     try {
       const petList = await getUserPets()
       setPets(petList)
+      console.log("宠物列表:", petList)
     } catch (error) {
       console.error("获取宠物列表失败:", error)
       setSnackbar({
@@ -86,6 +95,8 @@ const MedicalRecords: React.FC = observer(() => {
         message: "获取宠物列表失败",
         severity: "error",
       })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -100,7 +111,7 @@ const MedicalRecords: React.FC = observer(() => {
     }
 
     try {
-      setIsLoading(true)
+      setLoading(true)
       // 从合约获取医疗记录数据
       const events = []
 
@@ -123,7 +134,7 @@ const MedicalRecords: React.FC = observer(() => {
       }
 
       setMedicalEvents(events)
-      setIsLoading(false)
+      setLoading(false)
     } catch (error) {
       console.error("获取医疗记录失败:", error)
       setSnackbar({
@@ -131,7 +142,7 @@ const MedicalRecords: React.FC = observer(() => {
         message: "获取医疗记录失败",
         severity: "error",
       })
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
@@ -190,7 +201,7 @@ const MedicalRecords: React.FC = observer(() => {
     }
 
     try {
-      setIsLoading(true)
+      setLoading(true)
       // 调用合约添加医疗记录
       const tx = await petContract?.addMedicalEvent(
         selectedPet.id,
@@ -209,7 +220,7 @@ const MedicalRecords: React.FC = observer(() => {
         message: "添加医疗记录成功",
         severity: "success",
       })
-      setIsLoading(false)
+      setLoading(false)
     } catch (error) {
       console.error("添加医疗记录失败:", error)
       setSnackbar({
@@ -217,12 +228,12 @@ const MedicalRecords: React.FC = observer(() => {
         message: "添加医疗记录失败",
         severity: "error",
       })
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
   const formatDate = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleString()
+    return new Date(Number(timestamp) * 1000).toLocaleString()
   }
 
   return (
@@ -245,14 +256,16 @@ const MedicalRecords: React.FC = observer(() => {
                     mb: 2,
                     cursor: "pointer",
                     border:
-                      selectedPet?.id === pet.id ? "2px solid #1976d2" : "none",
+                      selectedPet?.id === pet.id
+                        ? "1px solid #1976d2"
+                        : "1px solid transparent",
                   }}
                   onClick={() => handlePetSelect(pet)}
                 >
                   <CardContent>
                     <Typography variant="h6">{pet.name}</Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      ID: {pet.id}
+                    <Typography variant="body2">
+                      ID: {String(pet.id)}
                     </Typography>
                     <Typography color="textSecondary">{pet.species}</Typography>
                     <Typography variant="body2">
@@ -292,7 +305,7 @@ const MedicalRecords: React.FC = observer(() => {
             )}
           </Box>
 
-          {isLoading ? (
+          {Loading ? (
             <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
               <CircularProgress />
             </Box>
@@ -384,16 +397,16 @@ const MedicalRecords: React.FC = observer(() => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={isLoading}>
+          <Button onClick={handleCloseDialog} disabled={Loading}>
             取消
           </Button>
           <Button
             onClick={handleSubmit}
             variant="contained"
-            disabled={isLoading}
-            startIcon={isLoading ? <CircularProgress size={20} /> : null}
+            disabled={Loading}
+            startIcon={Loading ? <CircularProgress size={20} /> : null}
           >
-            {isLoading ? "提交中..." : "添加"}
+            {Loading ? "提交中..." : "添加"}
           </Button>
         </DialogActions>
       </Dialog>

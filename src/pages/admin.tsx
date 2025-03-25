@@ -35,16 +35,19 @@ import { Delete as DeleteIcon, Edit as EditIcon } from "@mui/icons-material"
 import { useRouter } from "next/router"
 import { ContractConfig } from "../config/contracts"
 import { ethers } from "ethers"
+import Spin from "../components/Spin"
 
 const Admin: React.FC = observer(() => {
   const router = useRouter()
   const {
     contract,
+    isLoading,
     isContractDeployer,
     walletAddress,
     petContract,
     userContract,
     addInstitution,
+    setLoading,
   } = useGlobalStore()
   const [institutions, setInstitutions] = useState<any[]>([])
   const [selectedInstitution, setSelectedInstitution] = useState<any>(null)
@@ -153,6 +156,7 @@ const Admin: React.FC = observer(() => {
   }
 
   const handleSubmit = async () => {
+    setLoading(true)
     try {
       // 验证表单数据
       if (!institutionData.name.trim()) {
@@ -245,6 +249,8 @@ const Admin: React.FC = observer(() => {
         message: errorMessage,
         severity: "error",
       })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -256,13 +262,12 @@ const Admin: React.FC = observer(() => {
           添加机构
         </Button>
       </Box>
-
       {/* 系统管理导航按钮 */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
-        <Button 
-          variant="outlined" 
-          color="primary" 
-          onClick={() => router.push('/system-info')}
+      <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
+        <Button
+          variant="outlined"
+          color="primary"
+          onClick={() => router.push("/system-info")}
         >
           查看系统信息
         </Button>

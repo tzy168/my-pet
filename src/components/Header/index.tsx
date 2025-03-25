@@ -22,6 +22,7 @@ import {
 
 const Header: React.FC = observer(() => {
   const {
+    walletAddress,
     setWalletAddress,
     isRegistered,
     getUserInfo,
@@ -138,6 +139,7 @@ const Header: React.FC = observer(() => {
             if (account?.address) {
               setWalletAddress(account.address)
             }
+
             return (
               <>
                 <ConnectButton />
@@ -157,7 +159,7 @@ const Header: React.FC = observer(() => {
                 <span
                   className={`${styles.userType} ${userInfo[5] === 0 ? styles.personal : styles.institutional}`}
                 >
-                  {userInfo[5] === 0 ? `机构用户` : `个人用户`}
+                  {userInfo[5] === 0 ? `个人用户` : `机构用户`}
                 </span>
               )}
             </div>

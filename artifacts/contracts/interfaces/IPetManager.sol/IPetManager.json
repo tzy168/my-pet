@@ -42,16 +42,6 @@
           "internalType": "string",
           "name": "_treatment",
           "type": "string"
-        },
-        {
-          "internalType": "address",
-          "name": "_hospital",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_doctor",
-          "type": "address"
         }
       ],
       "name": "addMedicalEvent",

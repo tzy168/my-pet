@@ -21,7 +21,7 @@ async function main() {
 
   // 部署PetManager合约
   const PetManager = await hre.ethers.getContractFactory("PetManager");
-  const petManager = await PetManager.deploy(userManagerAddress);
+  const petManager = await PetManager.deploy(userManagerAddress, institutionManagerAddress);
   await petManager.waitForDeployment();
   const petManagerAddress = await petManager.getAddress();
   console.log("PetManager合约已部署到:", petManagerAddress);
