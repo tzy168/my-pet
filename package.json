@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node scripts/start.js",
     "test": "npx hardhat test",
     "hardhat": "npx hardhat node",
     "compile": "npx hardhat run scripts/deploy.js --network localhost",
@@ -41,6 +41,7 @@
     "@types/react": "^19.0.6",
     "@typescript-eslint/eslint-plugin": "^8.26.1",
     "@typescript-eslint/parser": "^8.26.1",
+    "concurrently": "^9.1.2",
     "dotenv": "^16.4.7",
     "eslint-config-next": "^15.1.7",
     "eslint-config-prettier": "^10.1.1",

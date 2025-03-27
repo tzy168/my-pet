@@ -254,6 +254,44 @@ const Admin: React.FC = observer(() => {
     }
   }
 
+  // 添加员工到机构的函数
+  const addStaffToInstitution = async (institutionId: number, staffAddress: string) => {
+    try {
+      if (!contract) {
+        setSnackbar({
+          open: true,
+          message: "合约未初始化",
+          severity: "error"
+        });
+        return;
+      }
+      
+      setLoading(true);
+      
+      // 调用合约方法添加员工
+      const tx = await contract.addStaffToInstitution(institutionId, staffAddress);
+      await tx.wait();
+      
+      setSnackbar({
+        open: true,
+        message: "成功添加员工到机构",
+        severity: "success"
+      });
+      
+      // 刷新机构列表
+      fetchInstitutions();
+    } catch (error) {
+      console.error("添加员工失败:", error);
+      setSnackbar({
+        open: true,
+        message: "添加员工失败",
+        severity: "error"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Box sx={{ padding: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>

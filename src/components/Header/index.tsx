@@ -32,6 +32,8 @@ const Header: React.FC = observer(() => {
     isLoading,
     contract,
   } = useGlobalStore()
+  console.log('user',userInfo);
+  
   const router = useRouter()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
@@ -55,7 +57,14 @@ const Header: React.FC = observer(() => {
   useEffect(() => {
     // 监听钱包地址变化
     const handleAccountChange = (address: string | undefined) => {
-      setWalletAddress(address || "0x0000000000000000000000000000000000000000")
+      if (address) {
+        setWalletAddress(address)
+      } else {
+        // 当钱包断开连接时，清除钱包地址和用户信息
+        setWalletAddress("")
+        // 如果全局存储中有清除用户信息的方法，可以在这里调用
+        // clearUserInfo()
+      }
     }
     return () => {
       handleAccountChange(undefined)
@@ -138,6 +147,9 @@ const Header: React.FC = observer(() => {
 
             if (account?.address) {
               setWalletAddress(account.address)
+            } else {
+              // 当钱包断开连接时，清除钱包地址
+              setWalletAddress("")
             }
 
             return (
@@ -147,7 +159,7 @@ const Header: React.FC = observer(() => {
             )
           }}
         </ConnectButton.Custom>
-        {userInfo && (
+        {userInfo && walletAddress && (
           <>
             <div
               className={styles.userName}
@@ -159,7 +171,7 @@ const Header: React.FC = observer(() => {
                 <span
                   className={`${styles.userType} ${userInfo[5] === 0 ? styles.personal : styles.institutional}`}
                 >
-                  {userInfo[5] === 0 ? `个人用户` : `机构用户`}
+                  {userInfo[5] === '0n' ? `个人用户` : `机构用户`}
                 </span>
               )}
             </div>

@@ -24,9 +24,20 @@ import {
   List,
   ListItem,
   ListItemText,
+  Tabs,
+  Tab,
+  CardMedia,
+  InputAdornment,
+  IconButton,
 } from "@mui/material"
-import { LocalHospital as HospitalIcon } from "@mui/icons-material"
+import {
+  LocalHospital as HospitalIcon,
+  Search as SearchIcon,
+} from "@mui/icons-material"
 import styles from "../styles/MyPets.module.css"
+import { ethers } from "ethers"
+import WalletConfirmationGuide from "../components/WalletConfirmationGuide"
+import { log } from "util"
 
 interface Pet {
   id: number
@@ -54,87 +65,119 @@ const MedicalRecords: React.FC = observer(() => {
     isLoading,
     userInfo,
     getUserPets,
+    getAllPets,
     petContract,
     walletAddress,
     setLoading,
+    getInstitutionManagerContract,
+    addMedicalEvent,
+    checkIsHospitalStaff,
   } = useGlobalStore()
+  const [activeTab, setActiveTab] = useState(0)
   const [pets, setPets] = useState<Pet[]>([])
+  const [allPets, setAllPets] = useState<Pet[]>([])
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null)
   const [medicalEvents, setMedicalEvents] = useState<MedicalEvent[]>([])
   const [openDialog, setOpenDialog] = useState(false)
   const [medicalForm, setMedicalForm] = useState({
     diagnosis: "",
     treatment: "",
-    hospital: "",
-    doctor: "",
   })
-  const [Loading, setIsLoading] = useState(false)
+  const [loading, setIsLoading] = useState(false)
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
-    severity: "success" as "success" | "error",
+    severity: "success" as "success" | "error" | "info" | "warning",
   })
+  const [staffStatus, setStaffStatus] = useState<{
+    isStaff: boolean
+    message: string
+    institutionId?: number
+    institutionName?: string
+    institutionAddress?: string
+  }>({
+    isStaff: false,
+    message: "",
+  })
+  const [searchTerm, setSearchTerm] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    // 当用户信息加载完成后，获取用户的宠物列表
-    if (userInfo) {
-      fetchPets()
-    }
-  }, [userInfo])
+    const checkStaffStatus = async () => {
+      const status = await checkIsHospitalStaff()
+      setStaffStatus(status)
 
-  const fetchPets = async () => {
-    setLoading(true)
-    try {
-      const petList = await getUserPets()
-      setPets(petList)
-      console.log("宠物列表:", petList)
-    } catch (error) {
-      console.error("获取宠物列表失败:", error)
-      setSnackbar({
-        open: true,
-        message: "获取宠物列表失败",
-        severity: "error",
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchMedicalEvents = async (petId: number) => {
-    if (!petContract) {
-      setSnackbar({
-        open: true,
-        message: "合约未初始化，请刷新页面或重新连接钱包",
-        severity: "error",
-      })
-      return
+      if (!status.isStaff) {
+        setActiveTab(0)
+      }
     }
 
-    try {
-      setLoading(true)
-      // 从合约获取医疗记录数据
-      const events = []
+    if (walletAddress) {
+      checkStaffStatus()
+    }
+  }, [walletAddress])
 
-      // 获取所有医疗事件并筛选出与当前宠物相关的记录
-      // 注意：由于合约中没有提供获取医疗事件数量的公共方法，我们需要使用try-catch来遍历
-      let i = 0
-      let hasMore = true
-
-      while (hasMore) {
+  useEffect(() => {
+    const fetchAllPets = async () => {
+      if (staffStatus.isStaff && activeTab === 1) {
         try {
-          const event = await petContract.medicalEvents(i)
-          if (event.petId.toString() === petId.toString()) {
-            events.push(event)
-          }
-          i++
+          setIsLoading(true)
+          const allPetsList = await getAllPets()
+          setAllPets(allPetsList)
         } catch (error) {
-          // 当索引超出范围时，合约会抛出异常，表示没有更多记录
-          hasMore = false
+          console.error("获取所有宠物列表失败:", error)
+          setSnackbar({
+            open: true,
+            message: "获取所有宠物列表失败",
+            severity: "error",
+          })
+        } finally {
+          setIsLoading(false)
         }
       }
+    }
 
-      setMedicalEvents(events)
-      setLoading(false)
+    fetchAllPets()
+  }, [staffStatus.isStaff, activeTab])
+
+  useEffect(() => {
+    const fetchUserPets = async () => {
+      if (walletAddress && activeTab === 0) {
+        try {
+          setIsLoading(true)
+          const userPetsList = await getUserPets()
+          setPets(userPetsList)
+        } catch (error) {
+          console.error("获取用户宠物列表失败:", error)
+        } finally {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    fetchUserPets()
+  }, [walletAddress, activeTab])
+
+  const fetchPetMedicalEvents = async (petId: number) => {
+    try {
+      setIsLoading(true)
+      const count = await petContract?.getMedicalEventCountByPet(petId)
+
+      if (count > 0) {
+        const events = []
+        for (let i = 0; i < count; i++) {
+          const eventId = await petContract?.getPetMedicalEventAt(petId, i)
+          const event = await petContract?.medicalEvents(eventId)
+          events.push({
+            ...event,
+            timestamp: Number(event.timestamp),
+            petId: Number(event.petId),
+          })
+        }
+        setMedicalEvents(events)
+      } else {
+        setMedicalEvents([])
+      }
     } catch (error) {
       console.error("获取医疗记录失败:", error)
       setSnackbar({
@@ -142,16 +185,17 @@ const MedicalRecords: React.FC = observer(() => {
         message: "获取医疗记录失败",
         severity: "error",
       })
-      setLoading(false)
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handlePetSelect = (pet: Pet) => {
+  const handleSelectPet = async (pet: Pet) => {
     setSelectedPet(pet)
-    fetchMedicalEvents(pet.id)
+    await fetchPetMedicalEvents(pet.id)
   }
 
-  const handleAddMedicalRecord = () => {
+  const handleOpenDialog = () => {
     if (!selectedPet) {
       setSnackbar({
         open: true,
@@ -160,11 +204,19 @@ const MedicalRecords: React.FC = observer(() => {
       })
       return
     }
+
+    if (!staffStatus.isStaff) {
+      setSnackbar({
+        open: true,
+        message: "只有医院工作人员才能添加医疗记录",
+        severity: "error",
+      })
+      return
+    }
+
     setMedicalForm({
       diagnosis: "",
       treatment: "",
-      hospital: "",
-      doctor: walletAddress, // 默认使用当前钱包地址作为医生地址
     })
     setOpenDialog(true)
   }
@@ -175,10 +227,10 @@ const MedicalRecords: React.FC = observer(() => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setMedicalForm((prev) => ({
-      ...prev,
+    setMedicalForm({
+      ...medicalForm,
       [name]: value,
-    }))
+    })
   }
 
   const handleSubmit = async () => {
@@ -201,86 +253,161 @@ const MedicalRecords: React.FC = observer(() => {
     }
 
     try {
-      setLoading(true)
-      // 调用合约添加医疗记录
-      const tx = await petContract?.addMedicalEvent(
+      setIsSubmitting(true)
+
+      setSnackbar({
+        open: true,
+        message: "请在钱包中确认交易以添加医疗记录",
+        severity: "info",
+      })
+
+      await addMedicalEvent(
         selectedPet.id,
         medicalForm.diagnosis,
-        medicalForm.treatment,
-        medicalForm.hospital || walletAddress, // 如果未填写医院地址，使用当前钱包地址
-        medicalForm.doctor || walletAddress // 如果未填写医生地址，使用当前钱包地址
+        medicalForm.treatment
       )
-      await tx.wait()
 
-      // 刷新医疗记录
-      await fetchMedicalEvents(selectedPet.id)
       handleCloseDialog()
+
+      await fetchPetMedicalEvents(selectedPet.id)
+
       setSnackbar({
         open: true,
         message: "添加医疗记录成功",
         severity: "success",
       })
-      setLoading(false)
     } catch (error) {
-      console.error("添加医疗记录失败:", error)
+      console.error("合约调用错误:", error)
+
+      let errorMessage = "添加医疗记录失败"
+
+      const errorString = String(error)
+
+      if (errorString.includes("not been authorized by the user")) {
+        errorMessage = "您取消了交易，记录未添加"
+      } else if (errorString.includes("Caller is not a staff")) {
+        errorMessage = "添加失败：您不是任何医院机构的员工"
+      } else if (errorString.includes("not a hospital")) {
+        errorMessage = "添加失败：您所属的机构不是医院类型"
+      }
+
       setSnackbar({
         open: true,
-        message: "添加医疗记录失败",
+        message: errorMessage,
         severity: "error",
       })
-      setLoading(false)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const formatDate = (timestamp: number) => {
-    return new Date(Number(timestamp) * 1000).toLocaleString()
+    const date = new Date(timestamp * 1000)
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`
   }
 
+  const filteredPets =
+    activeTab === 0
+      ? pets
+      : allPets.filter(
+          (pet) =>
+            pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            pet.species.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            pet.breed.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue)
+    setSelectedPet(null)
+    setMedicalEvents([])
+  }
+
+  console.log("11", filteredPets)
   return (
     <Box className={styles.container}>
       <Box className={styles.header}>
-        <Typography variant="h5">宠物医疗记录</Typography>
+        <Typography variant="h5">医疗记录</Typography>
+        {staffStatus.isStaff && (
+          <Typography variant="subtitle1" color="primary">
+            医院: {staffStatus.institutionName}
+          </Typography>
+        )}
       </Box>
 
+      {staffStatus.isStaff ? (
+        <Tabs value={activeTab} onChange={handleTabChange} sx={{ mb: 3 }}>
+          <Tab label="我的患者" />
+          <Tab label="所有宠物" />
+        </Tabs>
+      ) : null}
+
+      {activeTab === 1 && (
+        <TextField
+          fullWidth
+          placeholder="搜索宠物（名称、种类、品种）"
+          margin="normal"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ mb: 2 }}
+        />
+      )}
+
       <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={5}>
           <Typography variant="h6" gutterBottom>
-            我的宠物
+            {activeTab === 0 ? "我的患者列表" : "所有宠物列表"}
           </Typography>
-          <List>
-            {pets.length > 0 ? (
-              pets.map((pet) => (
-                <Card
-                  key={pet.id}
-                  sx={{
-                    mb: 2,
-                    cursor: "pointer",
-                    border:
-                      selectedPet?.id === pet.id
-                        ? "1px solid #1976d2"
-                        : "1px solid transparent",
-                  }}
-                  onClick={() => handlePetSelect(pet)}
-                >
-                  <CardContent>
-                    <Typography variant="h6">{pet.name}</Typography>
-                    <Typography variant="body2">
-                      ID: {String(pet.id)}
-                    </Typography>
-                    <Typography color="textSecondary">{pet.species}</Typography>
-                    <Typography variant="body2">
-                      品种：{pet.breed || "未知"}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <Typography>暂无宠物信息</Typography>
-            )}
-          </List>
+          {loading ? (
+            <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : filteredPets.length > 0 ? (
+            <Grid container spacing={2}>
+              {filteredPets.map((pet) => (
+                <Grid item xs={12} sm={6} key={`pet-${pet.id}`}>
+                  <Card
+                    onClick={() => handleSelectPet(pet)}
+                    sx={{
+                      cursor: "pointer",
+                      transition: "transform 0.2s",
+                      "&:hover": { transform: "translateY(-5px)" },
+                      opacity: selectedPet?.id === pet.id ? 1 : 0.8,
+                      border:
+                        selectedPet?.id === pet.id
+                          ? "2px solid #3f51b5"
+                          : "none",
+                    }}
+                  >
+                    <CardMedia
+                      component="img"
+                      height="140"
+                      image={pet.image || "/images/pet-placeholder.png"}
+                      alt={pet.name}
+                    />
+                    <CardContent>
+                      <Typography variant="h6">{pet.name}</Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        {pet.species} / {pet.breed} / {pet.gender} /{" "}
+                        {String(pet.age)}岁
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <Typography>暂无{activeTab === 0 ? "患者" : "宠物"}数据</Typography>
+          )}
         </Grid>
 
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12} md={7}>
           <Box
             sx={{
               display: "flex",
@@ -289,23 +416,22 @@ const MedicalRecords: React.FC = observer(() => {
               mb: 2,
             }}
           >
-            <Typography variant="h6">
-              {selectedPet
-                ? `${selectedPet.name} 的医疗记录`
-                : "请选择宠物查看医疗记录"}
+            <Typography variant="h6" gutterBottom>
+              医疗记录
             </Typography>
-            {selectedPet && (
+            {selectedPet && staffStatus.isStaff && (
               <Button
                 variant="contained"
+                color="primary"
                 startIcon={<HospitalIcon />}
-                onClick={handleAddMedicalRecord}
+                onClick={handleOpenDialog}
               >
                 添加医疗记录
               </Button>
             )}
           </Box>
 
-          {Loading ? (
+          {loading ? (
             <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
               <CircularProgress />
             </Box>
@@ -315,10 +441,10 @@ const MedicalRecords: React.FC = observer(() => {
                 {medicalEvents.map((event, index) => (
                   <Card key={index} sx={{ mb: 2 }}>
                     <CardContent>
-                      <Typography variant="subtitle1" fontWeight="bold">
+                      <Typography variant="h6">
                         诊断: {event.diagnosis}
                       </Typography>
-                      <Typography variant="body1" sx={{ mt: 1 }}>
+                      <Typography variant="body1">
                         治疗: {event.treatment}
                       </Typography>
                       <Divider sx={{ my: 1 }} />
@@ -374,39 +500,29 @@ const MedicalRecords: React.FC = observer(() => {
               value={medicalForm.treatment}
               onChange={handleChange}
             />
-            <TextField
-              margin="dense"
-              name="hospital"
-              label="医院地址（钱包地址）"
-              fullWidth
-              value={medicalForm.hospital}
-              onChange={handleChange}
-              placeholder={walletAddress}
-              helperText="如不填写，默认使用当前钱包地址"
-            />
-            <TextField
-              margin="dense"
-              name="doctor"
-              label="医生地址（钱包地址）"
-              fullWidth
-              value={medicalForm.doctor}
-              onChange={handleChange}
-              placeholder={walletAddress}
-              helperText="如不填写，默认使用当前钱包地址"
-            />
+            <Typography
+              variant="caption"
+              color="textSecondary"
+              sx={{ display: "block", mt: 2 }}
+            >
+              注意：医疗记录将使用您的钱包地址作为医生信息，并自动关联到您所属的医院机构。
+            </Typography>
+            {isSubmitting && (
+              <WalletConfirmationGuide actionName="添加医疗记录" />
+            )}
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={Loading}>
+          <Button onClick={handleCloseDialog} disabled={isSubmitting}>
             取消
           </Button>
           <Button
             onClick={handleSubmit}
             variant="contained"
-            disabled={Loading}
-            startIcon={Loading ? <CircularProgress size={20} /> : null}
+            disabled={isSubmitting}
+            startIcon={isSubmitting ? <CircularProgress size={20} /> : null}
           >
-            {Loading ? "提交中..." : "添加"}
+            {isSubmitting ? "提交中..." : "添加"}
           </Button>
         </DialogActions>
       </Dialog>

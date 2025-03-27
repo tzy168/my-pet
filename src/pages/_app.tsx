@@ -44,7 +44,6 @@ function MyApp({ Component, pageProps }: AppProps) {
               style={{
                 width: "100%",
                 height: "calc(100vh - 64px)",
-                // border: "2px solid #ccc",
                 minWidth: "1200px",
                 padding: "10px",
                 borderRadius: "8px",

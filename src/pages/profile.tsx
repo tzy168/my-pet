@@ -18,6 +18,8 @@ import {
   SelectChangeEvent,
 } from "@mui/material"
 import styles from "../styles/Profile.module.css"
+import WalletConfirmationGuide from "../components/WalletConfirmationGuide"
+import { ethers } from "ethers"
 
 const Profile: React.FC = observer(() => {
   const router = useRouter()
@@ -26,6 +28,7 @@ const Profile: React.FC = observer(() => {
     setUserProfile,
     checkRegisteredAddress,
     getAllInstitutions,
+    setUserInfo,
   } = useGlobalStore()
   const [isEditing, setIsEditing] = useState(false)
   const [isNewUser, setIsNewUser] = useState(false)
@@ -36,12 +39,13 @@ const Profile: React.FC = observer(() => {
     userType: "Personal" as "Personal" | "Institutional",
     orgId: 0,
   })
-  const [orgList, setOrgList] = useState<{ id: number; name: string }[]>([])
+  const [orgList, setOrgList] = useState<{ id: number; name: string; type: number }[]>([])
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
-    severity: "success" as "success" | "error",
+    severity: "success" as "success" | "error" | "info" | "warning",
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // 检查用户是否是新用户
   useEffect(() => {
@@ -73,28 +77,113 @@ const Profile: React.FC = observer(() => {
   useEffect(() => {
     const fetchInstitutions = async () => {
       try {
-        const institutions = await getAllInstitutions()
-        if (institutions && institutions.length >= 4) {
-          const [ids, names, types, wallets] = institutions
+        const institutions = await getAllInstitutions();
+        console.log("获取到的机构列表:", institutions); // 添加日
+        if (institutions && Array.isArray(institutions) && institutions.length >= 4) {
+          const [ids, names, types, wallets] = institutions;
           const formattedList = ids.map((id: any, index: number) => ({
             id: Number(id),
             name: names[index],
-          }))
-          setOrgList(formattedList)
+            type: Number(types[index]) // 0=医院, 1=收容所
+          }));
+          console.log("格式化后的机构列表:", formattedList);
+          setOrgList(formattedList);
+        } else {
+          console.warn("获取到的机构数据格式不正确:", institutions);
+          setOrgList([]);
         }
       } catch (error) {
-        console.error("获取机构列表失败:", error)
+        console.error("获取机构列表失败:", error);
+        setOrgList([]);
+      }
+    };
+    
+    fetchInstitutions();
+  }, []);
+
+  // 在 useEffect 中获取机构列表后，添加以下代码
+  useEffect(() => {
+    // 如果用户是机构用户且有机构ID，但没有机构名称，尝试获取机构名称
+    const fetchInstitutionName = async () => {
+      if (
+        userInfo &&
+        Number(userInfo[5]) === 1 && // 是机构用户
+        Number(userInfo[6]) > 0 && // 有机构ID
+        !userInfo[7] // 没有机构名称
+      ) {
+        try {
+          // 获取所有机构
+          const institutions = await getAllInstitutions()
+          if (institutions && institutions.length >= 4) {
+            const [ids, names, types, wallets] = institutions
+            // 查找匹配的机构
+            const index = ids.findIndex(
+              (id: any) => Number(id) === Number(userInfo[6])
+            )
+
+            if (index !== -1) {
+              // 更新用户信息中的机构名称
+              const updatedUserInfo = [...userInfo]
+              updatedUserInfo[7] = names[index]
+              // 更新状态
+              setUserInfo(updatedUserInfo)
+            }
+          }
+        } catch (error) {
+          console.error("获取机构名称失败:", error)
+        }
       }
     }
-    fetchInstitutions()
-  }, [])
+
+    fetchInstitutionName()
+  }, [userInfo, getAllInstitutions])
 
   const handleEdit = () => {
     setIsEditing(true)
   }
 
+  // 在提交前检查钱包状态
+  const checkWalletBeforeSubmit = async () => {
+    try {
+      // 尝试获取钱包账户，如果获取不到会抛出异常
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = await provider.listAccounts();
+      
+      if (accounts.length === 0) {
+        setSnackbar({
+          open: true,
+          message: "请先连接钱包！",
+          severity: "warning",
+        });
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error("钱包连接检查失败:", error);
+      setSnackbar({
+        open: true,
+        message: "钱包连接异常，请刷新页面重试",
+        severity: "error",
+      });
+      return false;
+    }
+  };
+
   const handleSave = async () => {
     try {
+      // 首先检查钱包状态
+      const isWalletReady = await checkWalletBeforeSubmit();
+      if (!isWalletReady) return;
+      
+      setIsSubmitting(true);
+      
+      // 显示提示消息
+      setSnackbar({
+        open: true,
+        message: "请按以下步骤操作：\n1. 点击浏览器扩展栏的MetaMask图标\n2. 在弹出窗口中查看待处理交易\n3. 点击确认按钮完成授权",
+        severity: "info",
+      });
+      
       // 调用合约方法保存用户信息
       const result = await setUserProfile(
         formData.name,
@@ -104,22 +193,20 @@ const Profile: React.FC = observer(() => {
         formData.orgId
       )
 
-      // 检查返回结果是否为错误对象
-      if (
-        result &&
-        typeof result === "object" &&
-        "success" in result &&
-        !result.success
-      ) {
-        // 处理合约未初始化等错误
-        setSnackbar({
-          open: true,
-          message: result.error || "保存失败，请刷新页面或重新连接钱包",
-          severity: "error",
-        })
-        return
+      console.log('result',result);
+      
+      // 检查返回结果
+      if (result && typeof result === "object") {
+        if (!result.success) {      
+            setSnackbar({
+              open: true,
+              message: result.error || "保存失败，请刷新页面或重新连接钱包",
+              severity: "error",
+            })
+        }
       }
 
+      // 成功处理
       setIsEditing(false)
       setIsNewUser(false)
 
@@ -137,11 +224,16 @@ const Profile: React.FC = observer(() => {
       }
     } catch (error: any) {
       console.error("保存用户资料失败:", error)
-      setSnackbar({
-        open: true,
-        message: "保存失败，请重试",
-        severity: "error",
-      })
+      if (error.userRejected) {
+        setSnackbar({
+          open: true,
+          message: "请检查：\n1. MetaMask插件是否有待处理交易\n2. 是否点击了确认按钮\n3. 网络连接是否正常",
+          severity: "warning"
+        });
+      }
+      // 错误处理...
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -174,7 +266,7 @@ const Profile: React.FC = observer(() => {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-      // 如果用户类型改为个人用户，重置机构ID
+      // 如果用户类型改为个人用户，重置机构IDd
       ...(name === "userType" && value === "Personal" ? { orgId: 0 } : {}),
     }))
   }
@@ -267,18 +359,24 @@ const Profile: React.FC = observer(() => {
                         setFormData({
                           ...formData,
                           orgId: Number(e.target.value),
-                        })
+                        });
                       }}
                       displayEmpty
                     >
                       <MenuItem value="0" disabled>
                         请选择机构
                       </MenuItem>
-                      {orgList.map((org) => (
-                        <MenuItem key={org.id} value={org.id.toString()}>
-                          {org.name}
+                      {orgList && orgList.length > 0 ? (
+                        orgList.map((org) => (
+                          <MenuItem key={org.id} value={org.id.toString()}>
+                            {org.name} ({org.type === 0 ? "医院" : "收容所"})
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem value="0" disabled>
+                          加载机构列表中...
                         </MenuItem>
-                      ))}
+                      )}
                     </Select>
                   </FormControl>
                 ) : (
@@ -318,6 +416,7 @@ const Profile: React.FC = observer(() => {
               </Button>
             )}
           </Box>
+          {isSubmitting && <WalletConfirmationGuide actionName="保存个人资料" />}
         </CardContent>
       </Card>
       <Snackbar

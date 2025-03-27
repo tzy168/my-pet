@@ -124,29 +124,7 @@ contract PetManager is IPetManager {
   }
 
   // 获取所有宠物列表（仅限医院工作人员）
-  function getAllPets() external view returns (Pet[] memory) {
-    // 验证调用者是否为医院工作人员
-    IInstitutionManager institutionManager = IInstitutionManager(
-      institutionManagerAddress
-    );
-    address institutionAddress = institutionManager.staffToInstitution(
-      msg.sender
-    );
-    require(
-      institutionAddress != address(0),
-      "Caller is not a staff member of any institution"
-    );
-
-    uint institutionId = institutionManager.institutionAddressToId(
-      institutionAddress
-    );
-    (, , IMyPetBase.InstitutionType institutionType, , ) = institutionManager
-      .getInstitutionDetail(institutionId);
-    require(
-      institutionType == IMyPetBase.InstitutionType.Hospital,
-      "Caller's institution is not a hospital"
-    );
-
+  function getAllPets() public view returns (Pet[] memory) {
     return pets;
   }
 
@@ -309,5 +287,44 @@ contract PetManager is IPetManager {
     RescueRequest storage request = rescueRequests[_requestId - 1];
     request.status = _status;
     request.responderOrgId = _responderOrgId;
+  }
+
+  // 获取宠物总数
+  function getPetCount() public view returns (uint256) {
+    return petIdCounter - 1;
+  }
+
+  // 获取宠物的医疗事件数量
+  function getMedicalEventCountByPet(
+    uint256 _petId
+  ) public view returns (uint256) {
+    require(_petId > 0 && _petId < petIdCounter, "Pet does not exist");
+
+    uint256 count = 0;
+    for (uint256 i = 0; i < medicalEvents.length; i++) {
+      if (medicalEvents[i].petId == _petId) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  // 获取宠物的特定索引的医疗事件ID
+  function getPetMedicalEventAt(
+    uint256 _petId,
+    uint256 _index
+  ) public view returns (uint256) {
+    require(_petId > 0 && _petId < petIdCounter, "Pet does not exist");
+
+    uint256 count = 0;
+    for (uint256 i = 0; i < medicalEvents.length; i++) {
+      if (medicalEvents[i].petId == _petId) {
+        if (count == _index) {
+          return i;
+        }
+        count++;
+      }
+    }
+    revert("Index out of bounds");
   }
 }

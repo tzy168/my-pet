@@ -25,8 +25,7 @@ import {
 } from "@mui/material"
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material"
 import styles from "../styles/MyPets.module.css"
-import { uploadToIPFS, getIPFSGatewayUrl } from "../utils/ipfs"
-import { getImageFromIndexedDB } from "../utils/ipfsStorage"
+import { addToIpfs } from "../utils/ipfs"
 
 interface Pet {
   id: number
@@ -41,7 +40,7 @@ interface Pet {
 }
 
 const MyPets: React.FC = observer(() => {
-  const { userInfo, getUserPets, addPet, updatePet, removePet } =
+  const { userInfo, getUserPets, addPet, updatePet, removePet, walletAddress } =
     useGlobalStore()
   const [pets, setPets] = useState<Pet[]>([])
   const [openDialog, setOpenDialog] = useState(false)
@@ -63,6 +62,7 @@ const MyPets: React.FC = observer(() => {
     severity: "success" as "success" | "error",
   })
   const [isUploading, setIsUploading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     // 当用户信息加载完成后，获取用户的宠物列表
@@ -71,38 +71,63 @@ const MyPets: React.FC = observer(() => {
     }
   }, [userInfo])
 
-  // 处理本地存储的图片URL
+  // 修改处理页面刷新的 useEffect
   useEffect(() => {
-    const processLocalImages = async () => {
-      if (pets.length === 0) return
-
-      const updatedPets = await Promise.all(
-        pets.map(async (pet) => {
-          // 如果图片URL以'local:'开头，从IndexedDB获取实际的Blob URL
-          if (pet.image && pet.image.startsWith("local:")) {
-            try {
-              const imageId = pet.image.substring(6) // 去掉'local:'前缀
-              const blobUrl = await getImageFromIndexedDB(imageId)
-              return { ...pet, displayImage: blobUrl }
-            } catch (error) {
-              console.error("获取本地图片失败:", error)
-              return { ...pet, displayImage: "/images/pet-placeholder.png" }
-            }
-          }
-          return { ...pet, displayImage: pet.image }
-        })
-      )
-
-      setPets(updatedPets)
+    // 页面加载或刷新时，如果有钱包地址但没有用户信息，尝试获取宠物列表
+    const loadPetsOnRefresh = async () => {
+      try {
+        if (walletAddress && (!pets.length || !userInfo)) {
+          console.log("页面刷新或初始加载，尝试获取宠物列表")
+          await fetchPets()
+        }
+      } catch (error) {
+        console.error("获取宠物列表失败:", error)
+      }
     }
 
-    processLocalImages()
-  }, [pets.length])
+    loadPetsOnRefresh()
+  }, [walletAddress, pets.length, userInfo]) // 添加更多依赖项以确保正确触发
+
+  // // 处理本地存储的图片URL
+  // useEffect(() => {
+  //   const processLocalImages = async () => {
+  //     if (pets.length === 0) return
+
+  //     const updatedPets = await Promise.all(
+  //       pets.map(async (pet) => {
+  //         // 如果图片URL以'local:'开头，从IndexedDB获取实际的Blob URL
+  //         if (pet.image && pet.image.startsWith("local:")) {
+  //           try {
+  //             const imageId = pet.image.substring(6) // 去掉'local:'前缀
+  //             return { ...pet, displayImage: blobUrl }
+  //           } catch (error) {
+  //             console.error("获取本地图片失败:", error)
+  //             return { ...pet, displayImage: "/images/pet-placeholder.png" }
+  //           }
+  //         }
+  //         return { ...pet, displayImage: pet.image }
+  //       })
+  //     )
+
+  //     setPets(updatedPets)
+  //   }
+
+  //   processLocalImages()
+  // }, [pets.length])
 
   const fetchPets = async () => {
     try {
       console.log("开始获取宠物列表")
+      setIsLoading(true)
+
+      // 如果钱包地址不存在，提前返回
+      if (!walletAddress) {
+        console.log("钱包地址不存在，无法获取宠物列表")
+        return
+      }
+
       const petList = await getUserPets()
+      console.log("获取到宠物列表:", petList)
       setPets(petList)
     } catch (error) {
       console.error("获取宠物列表失败:", error)
@@ -112,7 +137,8 @@ const MyPets: React.FC = observer(() => {
         severity: "error",
       })
     } finally {
-      console.log("获取宠物列表完成", pets)
+      console.log("获取宠物列表完成")
+      setIsLoading(false)
     }
   }
 
@@ -190,18 +216,19 @@ const MyPets: React.FC = observer(() => {
     }))
   }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setImageFile(file)
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
+  // const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0]
+  //   if (file) {
+  //     setImageFile(file)
+  //     const reader = new FileReader()
+  //     reader.onloadend = () => {
+  //       setImagePreview(reader.result as string)
+  //     }
+  //     reader.readAsDataURL(file)
+  //   }
+  // }
 
+  // 提交表单
   const handleSubmit = async () => {
     try {
       if (
@@ -217,36 +244,30 @@ const MyPets: React.FC = observer(() => {
         })
         return
       }
-
       let imageUrl = petForm.imageUrl
       if (imageFile) {
         try {
           setIsUploading(true)
-          // 上传图片到IPFS
-          const cid = await uploadToIPFS(imageFile)
-          // 获取IPFS网关URL
-          imageUrl = await getIPFSGatewayUrl(cid)
-          console.log("图片已上传到IPFS:", imageUrl)
+          // 使用 addToIpfs 函数上传图片
+          const uploadedUrl = await addToIpfs(imageFile)
+          imageUrl = uploadedUrl!
           setSnackbar({
             open: true,
             message: "上传成功",
             severity: "success",
           })
-          setIsUploading(false)
         } catch (error) {
-          // console.error('上传图片到IPFS失败:', error)
+          console.log("error", error)
           setSnackbar({
             open: true,
-            message: "上传图片失败，请重试",
+            message: "上传图片失败，请重试1",
             severity: "error",
           })
-          setIsUploading(false)
           return
         } finally {
           setIsUploading(false)
         }
       }
-
       if (selectedPet) {
         await updatePet(
           selectedPet.id,
@@ -269,7 +290,6 @@ const MyPets: React.FC = observer(() => {
           imageUrl
         )
       }
-
       await fetchPets()
       handleCloseDialog()
       setSnackbar({
@@ -278,6 +298,7 @@ const MyPets: React.FC = observer(() => {
         severity: "success",
       })
     } catch (error) {
+      console.log("error", error)
       setSnackbar({
         open: true,
         message: "操作失败，请重试",
@@ -294,67 +315,175 @@ const MyPets: React.FC = observer(() => {
         </Button>
       </Box>
 
-      <Grid container spacing={3}>
-        {pets.map((pet: Pet) => (
-          <Grid item xs={12} sm={6} md={4} key={pet.id}>
-            <Card>
-              {pet.image && (
+      {isLoading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <Grid container spacing={3}>
+          {pets.map((pet: Pet) => (
+            <Grid item xs={12} sm={6} md={4} key={`pet-${pet.id}`}>
+              <Card
+                sx={{
+                  position: "relative",
+                  height: 320,
+                  overflow: "hidden",
+                  borderRadius: "16px",
+                  boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
+                  transition: "transform 0.3s, box-shadow 0.3s",
+                  background:
+                    "linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)",
+                  "&:hover": {
+                    transform: "translateY(-5px)",
+                    boxShadow: "0 12px 28px rgba(0,0,0,0.2)",
+                  },
+                }}
+              >
                 <CardMedia
                   component="img"
-                  height="200"
-                  image={pet.displayImage || "/images/pet-placeholder.png"}
+                  height="320"
+                  image={pet.image || "/images/pet-placeholder.png"}
                   alt={pet.name}
-                  sx={{ objectFit: "cover" }}
-                  // onError={(e) => {
-                  //   // 图片加载失败时的处理
-                  //   const target = e.target as HTMLImageElement
-                  //   target.onerror = null // 防止无限循环
-                  //   target.src = "/images/pet-placeholder.png" // 使用默认图片
-                  // }}
+                  sx={{
+                    objectFit: "cover",
+                    height: "100%",
+                    borderRadius: "16px",
+                    filter: "brightness(0.9)",
+                  }}
                 />
-              )}
-              <CardContent>
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    mb: 1,
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    background:
+                      "linear-gradient(to bottom, rgba(0,0,0,0) 60%, rgba(0,0,0,0.3) 100%)",
+                    pointerEvents: "none",
+                  }}
+                />
+                <CardContent
+                  sx={{
+                    position: "absolute",
+                    bottom: 0,
+                    width: "100%",
+                    padding: "16px !important",
+                    background: "rgba(255, 255, 255, 0.8)",
+                    backdropFilter: "blur(16px)",
+                    borderTop: "1px solid rgba(255, 255, 255, 0.6)",
+                    boxShadow: "0 -4px 10px rgba(0,0,0,0.05)",
+                    borderRadius: "0 0 16px 16px",
                   }}
                 >
-                  <Typography variant="h6">{pet.name}</Typography>
-                  <Box>
-                    <IconButton size="small" onClick={() => handleEditPet(pet)}>
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleDeletePet(pet.id)}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 0.5,
+                    }}
+                  >
+                    <Typography
+                      variant="subtitle1"
+                      fontWeight="bold"
+                      sx={{
+                        color: "#3a3a3a",
+                        fontSize: "1.2rem",
+                        textShadow: "0 1px 1px rgba(255,255,255,0.7)",
+                      }}
                     >
-                      <DeleteIcon />
-                    </IconButton>
+                      {pet.name}
+                      {pet.gender === "公"
+                        ? " ♂"
+                        : pet.gender === "母"
+                          ? " ♀"
+                          : ""}
+                    </Typography>
+                    <Box>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleEditPet(pet)}
+                        sx={{
+                          color: "#555",
+                          backgroundColor: "rgba(255,255,255,0.4)",
+                          padding: "4px",
+                          marginRight: "4px",
+                          "&:hover": {
+                            backgroundColor: "rgba(255,255,255,0.7)",
+                          },
+                        }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDeletePet(pet.id)}
+                        sx={{
+                          color: "#d32f2f",
+                          backgroundColor: "rgba(255,255,255,0.4)",
+                          padding: "4px",
+                          "&:hover": {
+                            backgroundColor: "rgba(255,255,255,0.7)",
+                          },
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
                   </Box>
-                </Box>
-                {/* id */}
-                <Typography variant="body2" color="textSecondary">
-                  ID: {String(pet.id)}
-                </Typography>
-                <Typography color="textSecondary">{pet.species}</Typography>
-                <Typography variant="body2" sx={{ mt: 1 }}>
-                  品种：{pet.breed || "未知"}
-                </Typography>
-                <Typography variant="body2">性别：{pet.gender}</Typography>
-                <Typography variant="body2">
-                  年龄：{String(pet.age)}岁
-                </Typography>
-                <Typography variant="body2" sx={{ mt: 1 }}>
-                  {pet.description}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "4px 12px",
+                      mt: 0.5,
+                      "& .pet-tag": {
+                        backgroundColor: "rgba(255,255,255,0.6)",
+                        borderRadius: "12px",
+                        padding: "2px 8px",
+                        fontSize: "0.75rem",
+                        color: "#555",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      },
+                    }}
+                  >
+                    <span className="pet-tag">
+                      <span style={{ color: "#888", fontSize: "0.7rem" }}>
+                        ID:
+                      </span>{" "}
+                      {String(pet.id)}
+                    </span>
+                    <span className="pet-tag">{pet.species}</span>
+                    <span className="pet-tag">{pet.breed || "未知品种"}</span>
+                    <span className="pet-tag">{String(pet.age)}岁</span>
+                  </Box>
+                  {pet.description && (
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        mt: 0.5,
+                        color: "#555",
+                        fontStyle: "italic",
+                        fontSize: "0.8rem",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      "{pet.description}"
+                    </Typography>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
 
       <Dialog
         open={openDialog}
@@ -370,7 +499,17 @@ const MyPets: React.FC = observer(() => {
               style={{ display: "none" }}
               id="pet-image-upload"
               type="file"
-              onChange={handleImageChange}
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) {
+                  setImageFile(file)
+                  const reader = new FileReader()
+                  reader.onloadend = () => {
+                    setImagePreview(reader.result as string)
+                  }
+                  reader.readAsDataURL(file)
+                }
+              }}
             />
             <label htmlFor="pet-image-upload">
               <Box

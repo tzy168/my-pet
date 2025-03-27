@@ -66,7 +66,7 @@ const Home: NextPage = () => {
     router.push(path)
   }
 
-  const theme = useTheme()
+  const list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
   return (
     <Container maxWidth="lg" className={styles.container}>
@@ -110,77 +110,81 @@ const Home: NextPage = () => {
               fontSize: { xs: "1.1rem", md: "1.3rem" },
             }}
           >
-            您的数字宠物管理平台
+            您的数字宠物管理平台😃
           </Typography>
         </Fade>
       </Box>
 
-      {/* 背景图区域 */}
-      {/* <Zoom
-        in={true}
-        timeout={800}
-        style={{ transitionDelay: "300ms", width: "100%" }}
-      >
-        <Paper
-          elevation={6}
-          sx={{
-            borderRadius: "16px",
-            overflow: "hidden",
-            mb: 8,
-            position: "relative",
-            height: { xs: 300, md: 400 },
-            boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
-            transition:
-              "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
-            "&:hover": {
-              transform: "translateY(-5px)",
-              boxShadow: "0 15px 35px rgba(0,0,0,0.15)",
-            },
-          }}
-        >
-          <CardMedia
-            component="img"
-            image="https://source.unsplash.com/random?pets,cute"
-            alt="宠物图片"
-            sx={{ height: "100%", objectFit: "cover" }}
-          />
-          <Box
-            sx={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              p: { xs: 3, md: 4 },
-              background: "linear-gradient(transparent, rgba(0,0,0,0.8))",
-              color: "white",
-              backdropFilter: "blur(4px)",
-            }}
-          >
-            <Typography
-              variant="h3"
-              gutterBottom
-              sx={{
-                fontWeight: 700,
-                fontSize: { xs: "1.8rem", md: "2.5rem" },
-                textShadow: "0 2px 4px rgba(0,0,0,0.3)",
-              }}
-            >
-              关爱宠物，从数字化管理开始
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                fontSize: { xs: "1rem", md: "1.2rem" },
-                maxWidth: "800px",
-                opacity: 0.9,
-              }}
-            >
-              MyPet平台帮助您轻松管理宠物信息、健康记录和所有权证明
-            </Typography>
-          </Box>
-        </Paper>
-      </Zoom> */}
-
+      <div className={styles.headBox}>
+        <div className={styles.headContainer}>
+          <div className={styles.dwHead}>
+            <div>🐱</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🐶</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🐹</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🐰</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🐼</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🐥</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🦜</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🐸</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🐢</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🐠</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🐵</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🐱</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🐶</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🐹</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🐰</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🐼</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🐥</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🦜</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🐸</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🐢</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🐠</div>
+          </div>
+          <div className={styles.dwHead}>
+            <div>🐵</div>
+          </div>
+        </div>
+      </div>
       {/* 功能导航卡片 */}
       <Box sx={{ mb: 2, textAlign: "center" }}>
         <Typography
