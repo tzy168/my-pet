@@ -29,6 +29,7 @@ interface IMyPetBase {
     InstitutionType institutionType;
     address wallet;
     address responsiblePerson;
+    address[] staffList; // 添加员工列表字段
   }
 
   // 用户结构体

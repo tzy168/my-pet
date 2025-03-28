@@ -170,7 +170,7 @@ contract PetManager is IPetManager {
       "Caller is not a staff member of any institution"
     );
 
-    (, , IMyPetBase.InstitutionType institutionType, , ) = institutionManager
+    (, , IMyPetBase.InstitutionType institutionType, , , ) = institutionManager
       .getInstitutionDetail(institutionId);
     require(
       institutionType == IMyPetBase.InstitutionType.Hospital,
@@ -242,7 +242,7 @@ contract PetManager is IPetManager {
     );
 
     // 确保医生所属机构是医院类型
-    (, , IMyPetBase.InstitutionType institutionType, , ) = institutionManager
+    (, , IMyPetBase.InstitutionType institutionType, , , ) = institutionManager
       .getInstitutionDetail(institutionId);
     require(
       institutionType == IMyPetBase.InstitutionType.Hospital,

@@ -48,7 +48,8 @@ interface IInstitutionManager is IMyPetBase {
       string memory name,
       InstitutionType institutionType,
       address wallet,
-      address responsiblePerson
+      address responsiblePerson,
+      address[] memory staffList
     );
 
   // 获取机构员工列表

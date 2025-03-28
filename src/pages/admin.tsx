@@ -492,22 +492,63 @@ const Admin: React.FC = observer(() => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>{selectedInstitution?.name} - 员工列表</DialogTitle>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="h6">
+            {selectedInstitution?.name} - 员工列表
+            <Typography
+              component="span"
+              variant="body2"
+              sx={{ ml: 1, color: "text.secondary" }}
+            >
+              ({selectedInstitution?.type === 0 ? "宠物医院" : "宠物收容所"})
+            </Typography>
+          </Typography>
+        </DialogTitle>
         <DialogContent>
           {staffList.length > 0 ? (
-            <List>
+            <List sx={{ width: "100%", bgcolor: "background.paper" }}>
               {staffList.map((staffAddress, index) => (
-                <ListItem key={index}>
-                  <ListItemText primary={staffAddress} />
+                <ListItem
+                  key={index}
+                  sx={{
+                    borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+                    "&:last-child": { borderBottom: "none" },
+                  }}
+                >
+                  <ListItemText
+                    primary={
+                      <Typography
+                        variant="body1"
+                        component="div"
+                        sx={{ fontFamily: "monospace" }}
+                      >
+                        {staffAddress}
+                      </Typography>
+                    }
+                    secondary={`员工 #${index + 1}`}
+                  />
                 </ListItem>
               ))}
             </List>
           ) : (
-            <Typography>暂无员工信息</Typography>
+            <Box sx={{ p: 3, textAlign: "center" }}>
+              <Typography color="text.secondary">暂无员工信息</Typography>
+            </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSelectedInstitution(null)}>关闭</Button>
+          <Button
+            onClick={() => setSelectedInstitution(null)}
+            variant="contained"
+          >
+            关闭
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

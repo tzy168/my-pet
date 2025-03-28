@@ -97,7 +97,7 @@ class GlobalStore {
     email: string,
     phone: string,
     userType: string,
-    orgId: String
+    orgId: string
   ) => {
     try {
       if (!this.userContract || !this.contract) {
@@ -112,7 +112,7 @@ class GlobalStore {
         email,
         phone,
         userTypeEnum,
-        orgId
+        Number(orgId)
       )
       console.log("交易已提交，等待确认...")
       await tx.wait()
@@ -242,7 +242,6 @@ class GlobalStore {
         this.walletAddress
       )
       console.log("检查用户注册状态 - 结果:", isRegistered)
-
       // 更新全局状态中的isRegistered值
       runInAction(() => {
         this.isRegistered = isRegistered
@@ -626,17 +625,16 @@ class GlobalStore {
       // 获取用户信息，包括角色ID
       const userInfo = await this.userContract.getUserInfo(this.walletAddress)
       const roleId = Number(userInfo.roleId)
+      const name = await this.getInstitutionNameById(Number(userInfo.orgId))
 
       // 检查角色是否为医院工作人员 (RoleType.Hospital = 2)
       const isHospitalStaff = roleId === 2
-      console.log("roleId", roleId)
-      console.log(isHospitalStaff ? "您是医院员工" : "您不是医院员工")
 
       return {
         isStaff: isHospitalStaff,
         message: isHospitalStaff ? "您是医院员工" : "您不是医院员工",
         institutionId: Number(userInfo.orgId),
-        institutionName: userInfo.orgName,
+        institutionName: name,
         institutionAddress: userInfo.wallet,
       }
     } catch (error) {

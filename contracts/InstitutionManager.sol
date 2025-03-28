@@ -43,6 +43,7 @@ contract InstitutionManager is IInstitutionManager {
     inst.institutionType = _institutionType;
     inst.wallet = _responsiblePerson;
     inst.responsiblePerson = _responsiblePerson;
+    inst.staffList = new address[](0); // 初始化空员工列表
     staffToInstitution[_responsiblePerson] = newId;
   }
 
@@ -61,6 +62,7 @@ contract InstitutionManager is IInstitutionManager {
       "Only institution responsible person can add staff"
     );
     staffToInstitution[_staff] = _orgId;
+    inst.staffList.push(_staff); // 将员工添加到机构的员工列表中
   }
 
   // 从机构移除员工
@@ -78,6 +80,16 @@ contract InstitutionManager is IInstitutionManager {
       "Only institution responsible person can remove staff"
     );
     staffToInstitution[_staff] = 0;
+    
+    // 从机构的员工列表中移除该员工
+    for (uint i = 0; i < inst.staffList.length; i++) {
+      if (inst.staffList[i] == _staff) {
+        // 将最后一个元素移到当前位置，然后删除最后一个元素
+        inst.staffList[i] = inst.staffList[inst.staffList.length - 1];
+        inst.staffList.pop();
+        break;
+      }
+    }
   }
 
   // 检查员工是否属于机构
@@ -133,7 +145,8 @@ contract InstitutionManager is IInstitutionManager {
       string memory name,
       InstitutionType institutionType,
       address wallet,
-      address responsiblePerson
+      address responsiblePerson,
+      address[] memory staffList
     )
   {
     require(
@@ -147,7 +160,8 @@ contract InstitutionManager is IInstitutionManager {
       inst.name,
       inst.institutionType,
       inst.wallet,
-      inst.responsiblePerson
+      inst.responsiblePerson,
+      inst.staffList
     );
   }
 

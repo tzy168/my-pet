@@ -262,12 +262,17 @@ const MedicalRecords: React.FC = observer(() => {
         message: "请在钱包中确认交易以添加医疗记录",
         severity: "info",
       })
-      const res = await addMedicalEvent(
+      // 添加调试信息
+      console.log("调用合约参数:", {
+        petId: selectedPet.id,
+        diagnosis: medicalForm.diagnosis,
+        treatment: medicalForm.treatment,
+      })
+      await addMedicalEvent(
         selectedPet.id,
         medicalForm.diagnosis,
         medicalForm.treatment
       )
-
       handleCloseDialog()
       await fetchPetMedicalEvents(selectedPet.id)
       setSnackbar({
@@ -310,6 +315,7 @@ const MedicalRecords: React.FC = observer(() => {
     setSelectedPet(null)
     setMedicalEvents([])
   }
+  console.log("pets", staffStatus)
 
   return (
     <Box className={styles.container}>
@@ -361,6 +367,7 @@ const MedicalRecords: React.FC = observer(() => {
                   <Card
                     onClick={() => handleSelectPet(pet)}
                     sx={{
+                      position: "relative",
                       cursor: "pointer",
                       transition: "transform 0.2s",
                       "&:hover": { transform: "translateY(-5px)" },
@@ -376,15 +383,45 @@ const MedicalRecords: React.FC = observer(() => {
                       height="140"
                       image={pet.image || "/images/pet-placeholder.png"}
                       alt={pet.name}
+                      sx={{
+                        height: "100%",
+                      }}
                     />
-                    <CardContent>
-                      <Typography variant="h6">{pet.name}</Typography>
+                    <CardContent
+                      sx={{
+                        position: "absolute",
+                        bottom: "0",
+                        width: "100%",
+                        backgroundColor: "rgba(255, 255, 255, 0.8)",
+                        backdropFilter: "blur(10px)",
+                        borderTopLeftRadius: "16px",
+                        borderTopRightRadius: "16px",
+                        boxShadow: "0 -4px 10px rgba(0,0,0,0.1)",
+                        padding: "16px",
+                      }}
+                    >
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: "bold", color: "#333" }}
+                      >
+                        {pet.name}
+                      </Typography>
                       <Typography variant="body2" color="textSecondary">
                         ID: {String(pet.id)}
                       </Typography>
-                      <Typography variant="body2" color="textSecondary">
+                      <Typography variant="body2" sx={{ color: "#555" }}>
                         {pet.species} / {pet.breed} / {pet.gender} /{" "}
                         {String(pet.age)}岁
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: "#777",
+                          fontStyle: "italic",
+                          fontSize: "10px",
+                        }}
+                      >
+                        {String(pet.owner)}
                       </Typography>
                     </CardContent>
                   </Card>

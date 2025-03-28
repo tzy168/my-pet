@@ -176,8 +176,6 @@ const Profile: React.FC = observer(() => {
   }
 
   const handleSave = async () => {
-    console.log("org", formData.orgId)
-
     try {
       // 表单验证
       if (!formData.name || !formData.email || !formData.phone) {
@@ -235,7 +233,6 @@ const Profile: React.FC = observer(() => {
         formData.userType,
         formData.orgId
       )
-
       // 检查返回结果
       if (result && typeof result === "object") {
         if (!result.success) {
