@@ -13,13 +13,13 @@ interface IMyPetBase {
     Personal,
     Institutional
   }
-  
+
   // 定义用户角色：管理员、普通用户、医院人员、救助站人员
   enum RoleType {
-    Admin,      // 0: 合约部署者/管理员
-    User,       // 1: 普通用户
-    Hospital,   // 2: 医院机构人员
-    Shelter     // 3: 救助站机构人员
+    Admin, // 0: 合约部署者/管理员
+    User, // 1: 普通用户
+    Hospital, // 2: 医院机构人员
+    Shelter // 3: 救助站机构人员
   }
 
   // 机构结构体
@@ -72,7 +72,7 @@ interface IMyPetBase {
     string diagnosis;
     string treatment;
     uint timestamp;
-    address hospital;
+    uint hospital;
     address doctor;
   }
 

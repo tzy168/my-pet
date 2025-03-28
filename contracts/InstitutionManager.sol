@@ -6,8 +6,7 @@ import "./interfaces/IInstitutionManager.sol";
 contract InstitutionManager is IInstitutionManager {
   // 机构存储
   Institution[] public institutions;
-  mapping(address => uint) public institutionAddressToId;
-  mapping(address => address) public staffToInstitution;
+  mapping(address => uint) public staffToInstitution;
   uint256 public institutionIdCounter = 1;
 
   // 合约部署者地址
@@ -15,14 +14,6 @@ contract InstitutionManager is IInstitutionManager {
 
   constructor() {
     deployer = msg.sender;
-  }
-
-  // 内部函数：检查机构是否已注册
-  function _isInstitutionRegistered(
-    address _inst
-  ) internal view returns (bool) {
-    uint institutionId = institutionAddressToId[_inst];
-    return institutionId != 0;
   }
 
   // 内部函数：检查机构是否存在
@@ -38,7 +29,7 @@ contract InstitutionManager is IInstitutionManager {
   ) external override {
     require(msg.sender == deployer, "Only deployer can add institutions");
     require(
-      institutionAddressToId[_responsiblePerson] == 0,
+      staffToInstitution[_responsiblePerson] == 0,
       "Address already associated with an institution"
     );
 
@@ -52,7 +43,7 @@ contract InstitutionManager is IInstitutionManager {
     inst.institutionType = _institutionType;
     inst.wallet = _responsiblePerson;
     inst.responsiblePerson = _responsiblePerson;
-    institutionAddressToId[_responsiblePerson] = newId;
+    staffToInstitution[_responsiblePerson] = newId;
   }
 
   // 添加员工到机构
@@ -69,7 +60,7 @@ contract InstitutionManager is IInstitutionManager {
       msg.sender == inst.responsiblePerson,
       "Only institution responsible person can add staff"
     );
-    staffToInstitution[_staff] = inst.wallet;
+    staffToInstitution[_staff] = _orgId;
   }
 
   // 从机构移除员工
@@ -86,7 +77,7 @@ contract InstitutionManager is IInstitutionManager {
       msg.sender == inst.responsiblePerson,
       "Only institution responsible person can remove staff"
     );
-    staffToInstitution[_staff] = address(0);
+    staffToInstitution[_staff] = 0;
   }
 
   // 检查员工是否属于机构
@@ -97,8 +88,7 @@ contract InstitutionManager is IInstitutionManager {
     if (_orgId == 0 || _orgId >= institutionIdCounter) {
       return false;
     }
-    Institution storage inst = institutions[_orgId - 1];
-    return staffToInstitution[_staff] == inst.wallet;
+    return staffToInstitution[_staff] == _orgId;
   }
 
   // 获取所有机构信息
@@ -169,22 +159,20 @@ contract InstitutionManager is IInstitutionManager {
       _orgId > 0 && _orgId < institutionIdCounter,
       "Institution does not exist"
     );
-    Institution storage inst = institutions[_orgId - 1];
 
     // 计算员工数量
     uint staffCount = 0;
     for (uint i = 0; i < institutionIdCounter; i++) {
-      if (staffToInstitution[address(uint160(i))] == inst.wallet) {
+      if (staffToInstitution[address(uint160(i))] == _orgId) {
         staffCount++;
       }
     }
-
     // 创建员工地址数组
     address[] memory staffList = new address[](staffCount);
     uint currentIndex = 0;
     for (uint i = 0; i < institutionIdCounter; i++) {
       address staffAddr = address(uint160(i));
-      if (staffToInstitution[staffAddr] == inst.wallet) {
+      if (staffToInstitution[staffAddr] == _orgId) {
         staffList[currentIndex] = staffAddr;
         currentIndex++;
       }

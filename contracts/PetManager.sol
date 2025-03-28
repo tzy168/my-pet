@@ -128,19 +128,25 @@ contract PetManager is IPetManager {
   function getAllPets() public view returns (Pet[] memory) {
     // 获取UserManager合约实例
     IUserManager userManager = IUserManager(userManagerAddress);
-    
+
     // 检查用户是否已注册
-    require(userManager.checkUserIsRegistered(msg.sender), "User not registered");
-    
+    require(
+      userManager.checkUserIsRegistered(msg.sender),
+      "User not registered"
+    );
+
     // 获取用户信息，包括角色ID
-    (,,,,,,,,,IMyPetBase.RoleType roleId) = userManager.getUserInfo(msg.sender);
-    
+    (, , , , , , , , , IMyPetBase.RoleType roleId) = userManager.getUserInfo(
+      msg.sender
+    );
+
     // 检查用户角色是否为管理员或医院人员
     require(
-      roleId == IMyPetBase.RoleType.Admin || roleId == IMyPetBase.RoleType.Hospital,
+      roleId == IMyPetBase.RoleType.Admin ||
+        roleId == IMyPetBase.RoleType.Hospital,
       "Only admin or hospital staff can view all pets"
     );
-    
+
     return pets;
   }
 
@@ -158,17 +164,12 @@ contract PetManager is IPetManager {
     IInstitutionManager institutionManager = IInstitutionManager(
       institutionManagerAddress
     );
-    address institutionAddress = institutionManager.staffToInstitution(
-      msg.sender
-    );
+    uint institutionId = institutionManager.staffToInstitution(msg.sender);
     require(
-      institutionAddress != address(0),
+      institutionId != 0,
       "Caller is not a staff member of any institution"
     );
 
-    uint institutionId = institutionManager.institutionAddressToId(
-      institutionAddress
-    );
     (, , IMyPetBase.InstitutionType institutionType, , ) = institutionManager
       .getInstitutionDetail(institutionId);
     require(
@@ -206,16 +207,13 @@ contract PetManager is IPetManager {
     string memory _notes
   ) external override {
     require(_petId > 0 && _petId < petIdCounter, "Pet does not exist");
-
     AdoptionEvent memory newEvent = AdoptionEvent({
       petId: _petId,
       adopter: _adopter,
       timestamp: block.timestamp,
       notes: _notes
     });
-
     adoptionEvents.push(newEvent);
-
     // 更新宠物所有者
     Pet storage pet = pets[_petId - 1];
     userPets[pet.owner][_petId] = false;
@@ -230,25 +228,20 @@ contract PetManager is IPetManager {
     string memory _treatment
   ) external override {
     require(_petId > 0 && _petId < petIdCounter, "Pet does not exist");
-
+    require(bytes(_diagnosis).length > 0, "Diagnosis cannot be empty");
+    require(bytes(_treatment).length > 0, "Treatment cannot be empty");
     // 获取InstitutionManager合约实例
     IInstitutionManager institutionManager = IInstitutionManager(
       institutionManagerAddress
     );
-
     // 获取医生所属的机构ID
-    address institutionAddress = institutionManager.staffToInstitution(
-      msg.sender
-    );
+    uint institutionId = institutionManager.staffToInstitution(msg.sender);
     require(
-      institutionAddress != address(0),
+      institutionId != 0,
       "Caller is not a staff member of any institution"
     );
 
     // 确保医生所属机构是医院类型
-    uint institutionId = institutionManager.institutionAddressToId(
-      institutionAddress
-    );
     (, , IMyPetBase.InstitutionType institutionType, , ) = institutionManager
       .getInstitutionDetail(institutionId);
     require(
@@ -261,10 +254,9 @@ contract PetManager is IPetManager {
       diagnosis: _diagnosis,
       treatment: _treatment,
       timestamp: block.timestamp,
-      hospital: institutionAddress,
+      hospital: institutionId,
       doctor: msg.sender
     });
-
     medicalEvents.push(newEvent);
   }
 

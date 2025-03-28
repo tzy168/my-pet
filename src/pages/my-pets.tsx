@@ -77,7 +77,7 @@ const MyPets: React.FC = observer(() => {
     const loadPetsOnRefresh = async () => {
       try {
         if (walletAddress && (!pets.length || !userInfo)) {
-          console.log("页面刷新或初始加载，尝试获取宠物列表")
+          // console.log("页面刷新或初始加载，尝试获取宠物列表")
           await fetchPets()
         }
       } catch (error) {
@@ -117,17 +117,17 @@ const MyPets: React.FC = observer(() => {
 
   const fetchPets = async () => {
     try {
-      console.log("开始获取宠物列表")
+      // console.log("开始获取宠物列表")
       setIsLoading(true)
 
       // 如果钱包地址不存在，提前返回
       if (!walletAddress) {
-        console.log("钱包地址不存在，无法获取宠物列表")
+        // console.log("钱包地址不存在，无法获取宠物列表")
         return
       }
 
       const petList = await getUserPets()
-      console.log("获取到宠物列表:", petList)
+      // console.log("获取到宠物列表:", petList)
       setPets(petList)
     } catch (error) {
       console.error("获取宠物列表失败:", error)
@@ -137,7 +137,7 @@ const MyPets: React.FC = observer(() => {
         severity: "error",
       })
     } finally {
-      console.log("获取宠物列表完成")
+      // console.log("获取宠物列表完成")
       setIsLoading(false)
     }
   }

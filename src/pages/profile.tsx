@@ -37,9 +37,11 @@ const Profile: React.FC = observer(() => {
     email: "",
     phone: "",
     userType: "Personal" as "Personal" | "Institutional",
-    orgId: 0,
+    orgId: "",
   })
-  const [orgList, setOrgList] = useState<{ id: number; name: string; type: number }[]>([])
+  const [orgList, setOrgList] = useState<
+    { id: number; name: string; type: number }[]
+  >([])
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -60,7 +62,7 @@ const Profile: React.FC = observer(() => {
             email: userInfo[2],
             phone: userInfo[3],
             userType: Number(userInfo[5]) === 0 ? "Personal" : "Institutional",
-            orgId: Number(userInfo[6]),
+            orgId: String(userInfo[6]),
           })
         } else {
           // 新用户，设置为编辑模式
@@ -77,29 +79,33 @@ const Profile: React.FC = observer(() => {
   useEffect(() => {
     const fetchInstitutions = async () => {
       try {
-        const institutions = await getAllInstitutions();
-        console.log("获取到的机构列表:", institutions); // 添加日
-        if (institutions && Array.isArray(institutions) && institutions.length >= 4) {
-          const [ids, names, types, wallets] = institutions;
+        const institutions = await getAllInstitutions()
+        console.log("获取到的机构列表:", institutions) // 添加日
+        if (
+          institutions &&
+          Array.isArray(institutions) &&
+          institutions.length >= 4
+        ) {
+          const [ids, names, types, wallets] = institutions
           const formattedList = ids.map((id: any, index: number) => ({
             id: Number(id),
             name: names[index],
-            type: Number(types[index]) // 0=医院, 1=收容所
-          }));
-          console.log("格式化后的机构列表:", formattedList);
-          setOrgList(formattedList);
+            type: Number(types[index]), // 0=医院, 1=收容所
+          }))
+          console.log("格式化后的机构列表:", formattedList)
+          setOrgList(formattedList)
         } else {
-          console.warn("获取到的机构数据格式不正确:", institutions);
-          setOrgList([]);
+          console.warn("获取到的机构数据格式不正确:", institutions)
+          setOrgList([])
         }
       } catch (error) {
-        console.error("获取机构列表失败:", error);
-        setOrgList([]);
+        console.error("获取机构列表失败:", error)
+        setOrgList([])
       }
-    };
-    
-    fetchInstitutions();
-  }, []);
+    }
+
+    fetchInstitutions()
+  }, [])
 
   // 在 useEffect 中获取机构列表后，添加以下代码
   useEffect(() => {
@@ -146,30 +152,32 @@ const Profile: React.FC = observer(() => {
   const checkWalletBeforeSubmit = async () => {
     try {
       // 尝试获取钱包账户，如果获取不到会抛出异常
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const accounts = await provider.listAccounts();
-      
+      const provider = new ethers.BrowserProvider(window.ethereum)
+      const accounts = await provider.listAccounts()
+
       if (accounts.length === 0) {
         setSnackbar({
           open: true,
           message: "请先连接钱包！",
           severity: "warning",
-        });
-        return false;
+        })
+        return false
       }
-      return true;
+      return true
     } catch (error) {
-      console.error("钱包连接检查失败:", error);
+      console.error("钱包连接检查失败:", error)
       setSnackbar({
         open: true,
         message: "钱包连接异常，请刷新页面重试",
         severity: "error",
-      });
-      return false;
+      })
+      return false
     }
-  };
+  }
 
   const handleSave = async () => {
+    console.log("org", formData.orgId)
+
     try {
       // 表单验证
       if (!formData.name || !formData.email || !formData.phone) {
@@ -177,55 +185,48 @@ const Profile: React.FC = observer(() => {
           open: true,
           message: "请填写完整的个人信息",
           severity: "warning",
-        });
-        return;
+        })
+        return
       }
-
       // 验证邮箱格式
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
       if (!emailRegex.test(formData.email)) {
         setSnackbar({
           open: true,
           message: "请输入有效的邮箱地址",
           severity: "warning",
-        });
-        return;
+        })
+        return
       }
-
       // 验证手机号格式（中国大陆手机号）
-      const phoneRegex = /^1[3-9]\d{9}$/;
+      const phoneRegex = /^1[3-9]\d{9}$/
       if (!phoneRegex.test(formData.phone)) {
         setSnackbar({
           open: true,
           message: "请输入有效的手机号码",
           severity: "warning",
-        });
-        return;
+        })
+        return
       }
-
       // 机构用户必须选择机构
-      if (formData.userType === "Institutional" && formData.orgId === 0) {
+      if (formData.userType === "Institutional" && formData.orgId === "") {
         setSnackbar({
           open: true,
           message: "机构用户必须选择所属机构",
           severity: "warning",
-        });
-        return;
+        })
+        return
       }
-
       // 首先检查钱包状态
-      const isWalletReady = await checkWalletBeforeSubmit();
-      if (!isWalletReady) return;
-      
-      setIsSubmitting(true);
-      
+      const isWalletReady = await checkWalletBeforeSubmit()
+      if (!isWalletReady) return
+      setIsSubmitting(true)
       // 显示提示消息
       setSnackbar({
         open: true,
         message: "请在MetaMask中确认交易",
         severity: "info",
-      });
-      
+      })
       // 调用合约方法保存用户信息
       const result = await setUserProfile(
         formData.name,
@@ -233,59 +234,42 @@ const Profile: React.FC = observer(() => {
         formData.phone,
         formData.userType,
         formData.orgId
-      );
+      )
 
       // 检查返回结果
       if (result && typeof result === "object") {
-        if (!result.success) {      
+        if (!result.success) {
           setSnackbar({
             open: true,
             message: result.error || "保存失败，请刷新页面或重新连接钱包",
             severity: "error",
-          });
-          return;
+          })
+          return
         }
       }
-
       // 成功处理
-      setIsEditing(false);
-      setIsNewUser(false);
-
+      setIsEditing(false)
+      setIsNewUser(false)
       setSnackbar({
         open: true,
         message: isNewUser ? "资料设置成功" : "资料更新成功",
         severity: "success",
-      });
-
+      })
       // 如果是新用户设置完资料，跳转到首页
       if (isNewUser) {
         setTimeout(() => {
-          router.push("/");
-        }, 1500);
+          router.push("/")
+        }, 1500)
       }
     } catch (error: any) {
-      console.error("保存用户资料失败:", error);
-      if (error.code === 4100 || (error.error && error.error.code === 4100)) {
-        setSnackbar({
-          open: true,
-          message: "请在MetaMask中授权交易，如果没有看到弹窗，请点击浏览器工具栏中的MetaMask图标",
-          severity: "warning"
-        });
-      } else if (error.code === 4001 || (error.error && error.error.code === 4001)) {
-        setSnackbar({
-          open: true,
-          message: "您已取消交易，请重新提交",
-          severity: "info"
-        });
-      } else {
-        setSnackbar({
-          open: true,
-          message: "操作失败，请检查钱包连接状态并重试",
-          severity: "error"
-        });
-      }
+      console.error("保存用户资料失败:", error)
+      setSnackbar({
+        open: true,
+        message: "请刷新页面重试!",
+        severity: "error",
+      })
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
   }
 
@@ -296,7 +280,7 @@ const Profile: React.FC = observer(() => {
         email: userInfo[2],
         phone: userInfo[3],
         userType: Number(userInfo[5]) === 0 ? "Personal" : "Institutional",
-        orgId: Number(userInfo[6]),
+        orgId: String(userInfo[6]),
       })
       setIsEditing(false)
     } else if (isNewUser) {
@@ -319,7 +303,7 @@ const Profile: React.FC = observer(() => {
       ...prev,
       [name]: value,
       // 如果用户类型改为个人用户，重置机构IDd
-      ...(name === "userType" && value === "Personal" ? { orgId: 0 } : {}),
+      ...(name === "userType" && value === "Personal" ? { orgId: "" } : {}),
     }))
   }
 
@@ -410,8 +394,8 @@ const Profile: React.FC = observer(() => {
                       onChange={(e) => {
                         setFormData({
                           ...formData,
-                          orgId: Number(e.target.value),
-                        });
+                          orgId: String(e.target.value),
+                        })
                       }}
                       displayEmpty
                     >
@@ -453,7 +437,7 @@ const Profile: React.FC = observer(() => {
                   onClick={handleSave}
                   disabled={
                     formData.userType === "Institutional" &&
-                    formData.orgId === 0
+                    formData.orgId === ""
                   }
                 >
                   {isNewUser ? "完成设置" : "保存"}
@@ -468,7 +452,9 @@ const Profile: React.FC = observer(() => {
               </Button>
             )}
           </Box>
-          {isSubmitting && <WalletConfirmationGuide actionName="保存个人资料" />}
+          {isSubmitting && (
+            <WalletConfirmationGuide actionName="保存个人资料" />
+          )}
         </CardContent>
       </Card>
       <Snackbar

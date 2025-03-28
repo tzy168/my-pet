@@ -18,6 +18,8 @@ import {
   FormControl,
   InputLabel,
   FormHelperText,
+  Snackbar,
+  Alert,
 } from "@mui/material"
 
 const Header: React.FC = observer(() => {
@@ -32,7 +34,7 @@ const Header: React.FC = observer(() => {
     isLoading,
     contract,
   } = useGlobalStore()
-  // console.log('user',userInfo);
+  console.log("user", userInfo)
 
   const router = useRouter()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
@@ -44,6 +46,11 @@ const Header: React.FC = observer(() => {
     responsiblePerson: "",
   })
   const [error, setError] = useState<string | null>(null)
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success" as "success" | "error",
+  })
 
   useEffect(() => {
     // 确保合约已初始化后再获取用户信息
@@ -111,9 +118,11 @@ const Header: React.FC = observer(() => {
         institutionData.responsiblePerson
       )
       if (success) {
-        // 显示成功提示
-        alert("添加机构成功！")
-        // 关闭对话框
+        setSnackbar({
+          open: true,
+          message: "添加机构成功！",
+          severity: "success",
+        })
         handleCloseDialog()
       }
     } catch (error: any) {
@@ -262,6 +271,19 @@ const Header: React.FC = observer(() => {
           </Button>
         </DialogActions>
       </Dialog>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </header>
   )
 })

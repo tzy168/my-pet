@@ -97,18 +97,15 @@ class GlobalStore {
     email: string,
     phone: string,
     userType: string,
-    orgId: number
+    orgId: String
   ) => {
     try {
       if (!this.userContract || !this.contract) {
         return { success: false, error: "合约未初始化" }
       }
-
       this.setLoading(true)
-
       // 转换用户类型
       const userTypeEnum = userType === "Personal" ? 0 : 1
-
       // 调用合约方法设置用户资料
       const tx = await this.userContract.setUserProfile(
         name,
@@ -117,13 +114,12 @@ class GlobalStore {
         userTypeEnum,
         orgId
       )
-
       console.log("交易已提交，等待确认...")
       await tx.wait()
       console.log("交易已确认")
 
       // 如果是机构用户，自动将用户添加为该机构的员工
-      if (userTypeEnum === 1 && orgId > 0) {
+      if (userTypeEnum === 1 && orgId !== "") {
         try {
           // 检查用户是否已经是该机构的员工
           const currentInstitution = await this.contract.staffToInstitution(
@@ -511,70 +507,20 @@ class GlobalStore {
     if (!this.petContract) {
       throw new Error("合约未初始化")
     }
-
     try {
       this.setLoading(true)
-
-      // 参数验证和处理
-      if (!petId || petId <= 0) {
-        throw new Error("无效的宠物ID")
-      }
-      if (!diagnosis.trim() || !treatment.trim()) {
-        throw new Error("诊断和治疗信息不能为空")
-      }
-
-      // 先检查用户是否是医院员工
-      const staffStatus = await this.checkIsHospitalStaff()
-      if (!staffStatus.isStaff) {
-        throw new Error("只有医院工作人员才能添加医疗记录")
-      }
-
-      // 使用更低的gas限制和更合理的gas价格
       const tx = await this.petContract.addMedicalEvent(
         petId,
-        diagnosis.trim(),
-        treatment.trim(),
-        {
-          gasLimit: 200000, // 降低gas限制到更合理的值
-          gasPrice: ethers.parseUnits("15", "gwei"), // 降低gas价格到更合理的值
-        }
+        diagnosis,
+        treatment
       )
-
+      console.log("res", tx.data)
       await tx.wait()
       this.setLoading(false)
       return true
     } catch (error: any) {
       this.setLoading(false)
       console.error("添加医疗记录失败:", error)
-
-      // 详细的错误处理
-      if (error.code === "INSUFFICIENT_FUNDS") {
-        throw new Error("钱包中的ETH余额不足以支付gas费用")
-      } else if (error.code === "UNPREDICTABLE_GAS_LIMIT") {
-        throw new Error("无法估算gas限制，请检查参数格式是否正确")
-      } else if (
-        error.code === -32603 ||
-        (error.message && error.message.includes("Internal JSON-RPC error"))
-      ) {
-        // 处理内部JSON-RPC错误
-        if (error.message && error.message.includes("Caller is not a staff")) {
-          throw new Error("添加失败：您不是任何医院机构的员工")
-        } else if (error.message && error.message.includes("not a hospital")) {
-          throw new Error("添加失败：您所属的机构不是医院类型")
-        } else {
-          throw new Error(
-            "交易执行失败，可能是网络拥堵或钱包配置问题，请稍后重试"
-          )
-        }
-      } else if (
-        error.message &&
-        error.message.includes("missing revert data")
-      ) {
-        throw new Error("合约调用失败，可能是参数格式错误，请检查输入内容")
-      } else if (error.message && error.message.includes("user rejected")) {
-        throw new Error("您取消了交易，记录未添加")
-      }
-
       throw error
     }
   }
@@ -643,28 +589,20 @@ class GlobalStore {
       if (!this.petContract) {
         throw new Error("Pet contract not initialized")
       }
-      this.setLoading(true)
-      // 先检查用户角色是否为医院员工(roleId === 2)
-      if (!this.userInfo) {
-        await this.getUserInfo()
-      }
-      const _roleId = Number(this.userInfo[9])
-      const roleId = Number(_roleId)
-      console.log("roleId", _roleId)
 
-      if (roleId !== 2 && roleId !== 0) {
-        // 只允许医院员工(roleId=2)和管理员(roleId=0)访问
-        throw new Error("您没有权限查看所有宠物，只有医院员工和管理员可以访问")
-      }
-      // 调用合约中的getAllPets方法
+      this.setLoading(true)
+
+      // 直接调用合约中的getAllPets方法，这会进行权限检查
       console.log("调用合约getAllPets方法")
       const pets = await this.petContract.getAllPets()
       console.log("获取到宠物列表:", pets)
+
       this.setLoading(false)
       return pets
     } catch (error: any) {
       this.setLoading(false)
       console.error("获取所有宠物失败:", error)
+
       // 提供更详细的错误信息
       if (
         error.message &&
@@ -673,12 +611,8 @@ class GlobalStore {
         throw new Error("您不是任何机构的员工，无法查看所有宠物")
       } else if (error.message && error.message.includes("not a hospital")) {
         throw new Error("您所属的机构不是医院，无法查看所有宠物")
-      } else if (
-        error.message &&
-        error.message.includes("没有权限查看所有宠物")
-      ) {
-        throw error
       }
+
       throw error
     }
   }
@@ -687,45 +621,22 @@ class GlobalStore {
   checkIsHospitalStaff = async () => {
     try {
       if (!this.userContract || !this.walletAddress) {
-        return { isStaff: false, message: "未连接钱包或合约未初始化" }
+        return { isStaff: false, message: "1未连接钱包或合约未初始化" }
       }
       // 获取用户信息，包括角色ID
       const userInfo = await this.userContract.getUserInfo(this.walletAddress)
       const roleId = Number(userInfo.roleId)
-      console.log(roleId)
 
-      // 直接使用roleId进行判断，RoleType.Hospital = 2
+      // 检查角色是否为医院工作人员 (RoleType.Hospital = 2)
       const isHospitalStaff = roleId === 2
-
-      // 如果是医院员工，获取机构信息
-      let institutionName = ""
-      let institutionId = 0
-
-      if (isHospitalStaff && userInfo.orgId > 0) {
-        institutionId = Number(userInfo.orgId)
-        // 获取机构名称
-        const institutions = await this.getAllInstitutions()
-        if (institutions && institutions.length >= 4) {
-          const [ids, names, types, wallets] = institutions
-          // 查找匹配的机构
-          const index = ids.findIndex((id: any) => Number(id) === institutionId)
-
-          if (index !== -1) {
-            institutionName = names[index]
-            // 更新用户信息中的机构名称
-            const updatedUserInfo = [...userInfo]
-            updatedUserInfo[7] = institutionName
-            // 更新状态
-            this.setUserInfo(updatedUserInfo)
-          }
-        }
-      }
+      console.log("roleId", roleId)
+      console.log(isHospitalStaff ? "您是医院员工" : "您不是医院员工")
 
       return {
         isStaff: isHospitalStaff,
         message: isHospitalStaff ? "您是医院员工" : "您不是医院员工",
-        institutionId: institutionId,
-        institutionName: institutionName || this.userInfo?.[7] || "",
+        institutionId: Number(userInfo.orgId),
+        institutionName: userInfo.orgName,
         institutionAddress: userInfo.wallet,
       }
     } catch (error) {
@@ -742,28 +653,23 @@ class GlobalStore {
       console.warn("合约未初始化，无法获取机构名称")
       return ""
     }
-
     try {
       // 检查缓存
       const cachedName = this.institutionNameCache.get(orgId)
       if (cachedName !== undefined) {
         return cachedName
       }
-
       // 从合约获取机构详情
       const institutionDetail = await this.contract.getInstitutionDetail(orgId)
       const institutionName = institutionDetail.name
-
       // 更新缓存
       this.institutionNameCache.set(orgId, institutionName)
-
       return institutionName
     } catch (error) {
       console.error("获取机构名称失败:", error)
       return ""
     }
   }
-
   // 清除机构名称缓存
   clearInstitutionNameCache = () => {
     this.institutionNameCache.clear()

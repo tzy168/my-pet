@@ -35,7 +35,7 @@ describe("PetManager", function () {
 
     // 添加一个测试机构
     await institutionManager.addInstitution("测试医院", 0, addr3.address);
-    
+
     // 将addr3添加为医院员工 - 必须由负责人(addr3)自己添加
     await institutionManager.connect(addr3).addStaffToInstitution(1, addr3.address);
 
@@ -229,7 +229,7 @@ describe("PetManager", function () {
       await petManager.connect(addr3).addMedicalEvent(
         1,
         "健康检查",
-        "疫苗接种"
+        "疫苗接种",
       );
 
       // 验证医疗事件
@@ -237,10 +237,10 @@ describe("PetManager", function () {
       expect(event.petId).to.equal(1);
       expect(event.diagnosis).to.equal("健康检查");
       expect(event.treatment).to.equal("疫苗接种");
-      expect(event.hospital).to.equal(addr3.address);
+      expect(event.hospital).to.equal(1);
       expect(event.doctor).to.equal(addr3.address);
     });
-    
+
     it("非医疗机构员工不应该能够添加医疗事件", async function () {
       // 用户1不是医疗机构员工，尝试添加医疗事件应该被拒绝
       await expect(
@@ -250,13 +250,13 @@ describe("PetManager", function () {
           "疫苗接种"
         )
       ).to.be.revertedWith("Caller is not a staff member of any institution");
-      
+
       // 添加一个救助站类型的机构
       await institutionManager.addInstitution("测试救助站", 1, addr2.address);
-      
+
       // 将addr2添加为救助站员工
       await institutionManager.connect(addr2).addStaffToInstitution(2, addr2.address);
-      
+
       // 验证救助站员工也不能添加医疗事件
       await expect(
         petManager.connect(addr2).addMedicalEvent(
