@@ -10,7 +10,7 @@ import {
 
 export const config = getDefaultConfig({
   appName: "RainbowKit App",
-  projectId: "YOUR_PROJECT_ID",
+  projectId: "11",
   chains: [
     {
       id: 31337,

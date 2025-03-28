@@ -14,6 +14,9 @@ contract UserManager is IUserManager {
 
   // InstitutionManager合约地址
   address public immutable institutionManagerAddress;
+  
+  // 合约部署者地址
+  address public deployer;
 
   constructor(address _institutionManagerAddress) {
     require(
@@ -21,6 +24,7 @@ contract UserManager is IUserManager {
       "Invalid institution manager address"
     );
     institutionManagerAddress = _institutionManagerAddress;
+    deployer = msg.sender;
   }
 
   // 内部函数：检查用户是否已注册
@@ -50,6 +54,38 @@ contract UserManager is IUserManager {
       );
     }
 
+    // 确定用户角色
+    RoleType roleId;
+    
+    // 检查是否是合约部署者
+    if (msg.sender == tx.origin && block.coinbase != msg.sender) {
+      // 如果是合约部署者，设置为管理员角色
+      if (msg.sender == deployer) {
+        roleId = RoleType.Admin;
+      } else if (_userType == UserType.Institutional && _orgId > 0) {
+        // 根据机构类型设置角色
+        if (_orgId > 0) {
+          // 获取机构类型
+          InstitutionType instType = institutions[_orgId - 1].institutionType;
+          if (instType == InstitutionType.Hospital) {
+            roleId = RoleType.Hospital;
+          } else if (instType == InstitutionType.Shelter) {
+            roleId = RoleType.Shelter;
+          } else {
+            roleId = RoleType.User;
+          }
+        } else {
+          roleId = RoleType.User;
+        }
+      } else {
+        // 普通用户
+        roleId = RoleType.User;
+      }
+    } else {
+      // 默认为普通用户
+      roleId = RoleType.User;
+    }
+    
     if (isNewUser) {
       userIds[msg.sender] = userIdCounter;
       users.push();
@@ -63,6 +99,7 @@ contract UserManager is IUserManager {
       newUser.userType = _userType;
       newUser.orgId = _orgId;
       newUser.isProfileSet = true;
+      newUser.roleId = roleId; // 设置角色ID
       userIdCounter++;
     } else {
       uint userId = userIds[msg.sender];
@@ -73,6 +110,7 @@ contract UserManager is IUserManager {
       user.userType = _userType;
       user.orgId = _orgId;
       user.isProfileSet = true;
+      user.roleId = roleId; // 更新角色ID
     }
   }
 
@@ -99,7 +137,8 @@ contract UserManager is IUserManager {
       UserType userType,
       uint256 orgId,
       string memory orgName,
-      InstitutionType orgType
+      InstitutionType orgType,
+      RoleType roleId
     )
   {
     require(_isUserRegistered(_user), "User not registered");
@@ -114,6 +153,7 @@ contract UserManager is IUserManager {
     wallet = user.wallet;
     userType = user.userType;
     orgId = user.orgId;
+    roleId = user.roleId; // 返回用户角色ID
 
     if (userType == UserType.Institutional && orgId != 0) {
       Institution storage inst = institutions[orgId - 1];

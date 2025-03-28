@@ -76,6 +76,11 @@
           "internalType": "enum IMyPetBase.InstitutionType",
           "name": "orgType",
           "type": "uint8"
+        },
+        {
+          "internalType": "enum IMyPetBase.RoleType",
+          "name": "roleId",
+          "type": "uint8"
         }
       ],
       "stateMutability": "view",

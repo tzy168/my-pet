@@ -31,6 +31,7 @@ interface IUserManager is IMyPetBase {
       UserType userType,
       uint256 orgId,
       string memory orgName,
-      InstitutionType orgType
+      InstitutionType orgType,
+      RoleType roleId
     );
 }

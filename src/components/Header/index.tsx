@@ -32,8 +32,8 @@ const Header: React.FC = observer(() => {
     isLoading,
     contract,
   } = useGlobalStore()
-  console.log('user',userInfo);
-  
+  // console.log('user',userInfo);
+
   const router = useRouter()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
@@ -171,7 +171,7 @@ const Header: React.FC = observer(() => {
                 <span
                   className={`${styles.userType} ${userInfo[5] === 0 ? styles.personal : styles.institutional}`}
                 >
-                  {userInfo[5] === '0n' ? `个人用户` : `机构用户`}
+                  {userInfo[5] === "0n" ? `个人用户` : `机构用户`}
                 </span>
               )}
             </div>

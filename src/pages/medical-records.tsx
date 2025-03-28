@@ -106,12 +106,12 @@ const MedicalRecords: React.FC = observer(() => {
     const checkStaffStatus = async () => {
       const status = await checkIsHospitalStaff()
       setStaffStatus(status)
-
+      console.log("staff status:", status)
+      // 如果不是医院员工(roleId !== 2)，则只显示我的患者标签
       if (!status.isStaff) {
         setActiveTab(0)
       }
     }
-
     if (walletAddress) {
       checkStaffStatus()
     }
@@ -123,20 +123,23 @@ const MedicalRecords: React.FC = observer(() => {
         try {
           setIsLoading(true)
           const allPetsList = await getAllPets()
-          setAllPets(allPetsList)
-        } catch (error) {
+          setAllPets(allPetsList) // 修正这里，使用过滤后的列表
+        } catch (error: any) {
           console.error("获取所有宠物列表失败:", error)
           setSnackbar({
             open: true,
-            message: "获取所有宠物列表失败",
+            message: error.message || "获取所有宠物列表失败", // 使用具体的错误信息
             severity: "error",
           })
+          // 如果是权限错误，自动切换到"我的患者"标签
+          if (error.message?.includes("没有权限")) {
+            setActiveTab(0)
+          }
         } finally {
           setIsLoading(false)
         }
       }
     }
-
     fetchAllPets()
   }, [staffStatus.isStaff, activeTab])
 
@@ -205,6 +208,7 @@ const MedicalRecords: React.FC = observer(() => {
       return
     }
 
+    // 使用staffStatus.isStaff进行权限控制，该值已经基于roleId进行判断
     if (!staffStatus.isStaff) {
       setSnackbar({
         open: true,
@@ -283,12 +287,21 @@ const MedicalRecords: React.FC = observer(() => {
 
       const errorString = String(error)
 
-      if (errorString.includes("not been authorized by the user")) {
+      if (
+        errorString.includes("not been authorized by the user") ||
+        errorString.includes("user rejected")
+      ) {
         errorMessage = "您取消了交易，记录未添加"
       } else if (errorString.includes("Caller is not a staff")) {
         errorMessage = "添加失败：您不是任何医院机构的员工"
       } else if (errorString.includes("not a hospital")) {
         errorMessage = "添加失败：您所属的机构不是医院类型"
+      } else if (errorString.includes("Internal JSON-RPC error")) {
+        // 处理MetaMask内部JSON-RPC错误
+        errorMessage =
+          "交易执行失败，可能是由于以下原因：\n1. 网络拥堵\n2. Gas费用设置不合理\n3. 钱包配置问题\n请稍后重试或刷新页面"
+      } else if (errorString.includes("INSUFFICIENT_FUNDS")) {
+        errorMessage = "钱包中的ETH余额不足以支付gas费用"
       }
 
       setSnackbar({
@@ -311,9 +324,11 @@ const MedicalRecords: React.FC = observer(() => {
       ? pets
       : allPets.filter(
           (pet) =>
-            pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            pet.species.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            pet.breed.toLowerCase().includes(searchTerm.toLowerCase())
+            (pet?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              pet?.species?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              pet?.breed?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              String(pet?.id).includes(searchTerm)) ??
+            false
         )
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -322,7 +337,8 @@ const MedicalRecords: React.FC = observer(() => {
     setMedicalEvents([])
   }
 
-  console.log("11", filteredPets)
+  console.log("pets:", filteredPets)
+
   return (
     <Box className={styles.container}>
       <Box className={styles.header}>
@@ -334,17 +350,15 @@ const MedicalRecords: React.FC = observer(() => {
         )}
       </Box>
 
-      {staffStatus.isStaff ? (
-        <Tabs value={activeTab} onChange={handleTabChange} sx={{ mb: 3 }}>
-          <Tab label="我的患者" />
-          <Tab label="所有宠物" />
-        </Tabs>
-      ) : null}
+      <Tabs value={activeTab} onChange={handleTabChange} sx={{ mb: 3 }}>
+        <Tab label="我的宠物" />
+        {staffStatus.isStaff && <Tab label="所有宠物" />}
+      </Tabs>
 
       {activeTab === 1 && (
         <TextField
           fullWidth
-          placeholder="搜索宠物（名称、种类、品种）"
+          placeholder="搜索宠物（名称、种类、品种、ID）"
           margin="normal"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -362,7 +376,7 @@ const MedicalRecords: React.FC = observer(() => {
       <Grid container spacing={3}>
         <Grid item xs={12} md={5}>
           <Typography variant="h6" gutterBottom>
-            {activeTab === 0 ? "我的患者列表" : "所有宠物列表"}
+            所有宠物列表
           </Typography>
           {loading ? (
             <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
@@ -393,6 +407,9 @@ const MedicalRecords: React.FC = observer(() => {
                     />
                     <CardContent>
                       <Typography variant="h6">{pet.name}</Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        ID: {String(pet?.id)}
+                      </Typography>
                       <Typography variant="body2" color="textSecondary">
                         {pet.species} / {pet.breed} / {pet.gender} /{" "}
                         {String(pet.age)}岁

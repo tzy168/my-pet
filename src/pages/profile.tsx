@@ -171,6 +171,48 @@ const Profile: React.FC = observer(() => {
 
   const handleSave = async () => {
     try {
+      // 表单验证
+      if (!formData.name || !formData.email || !formData.phone) {
+        setSnackbar({
+          open: true,
+          message: "请填写完整的个人信息",
+          severity: "warning",
+        });
+        return;
+      }
+
+      // 验证邮箱格式
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        setSnackbar({
+          open: true,
+          message: "请输入有效的邮箱地址",
+          severity: "warning",
+        });
+        return;
+      }
+
+      // 验证手机号格式（中国大陆手机号）
+      const phoneRegex = /^1[3-9]\d{9}$/;
+      if (!phoneRegex.test(formData.phone)) {
+        setSnackbar({
+          open: true,
+          message: "请输入有效的手机号码",
+          severity: "warning",
+        });
+        return;
+      }
+
+      // 机构用户必须选择机构
+      if (formData.userType === "Institutional" && formData.orgId === 0) {
+        setSnackbar({
+          open: true,
+          message: "机构用户必须选择所属机构",
+          severity: "warning",
+        });
+        return;
+      }
+
       // 首先检查钱包状态
       const isWalletReady = await checkWalletBeforeSubmit();
       if (!isWalletReady) return;
@@ -180,7 +222,7 @@ const Profile: React.FC = observer(() => {
       // 显示提示消息
       setSnackbar({
         open: true,
-        message: "请按以下步骤操作：\n1. 点击浏览器扩展栏的MetaMask图标\n2. 在弹出窗口中查看待处理交易\n3. 点击确认按钮完成授权",
+        message: "请在MetaMask中确认交易",
         severity: "info",
       });
       
@@ -191,49 +233,59 @@ const Profile: React.FC = observer(() => {
         formData.phone,
         formData.userType,
         formData.orgId
-      )
+      );
 
-      console.log('result',result);
-      
       // 检查返回结果
       if (result && typeof result === "object") {
         if (!result.success) {      
-            setSnackbar({
-              open: true,
-              message: result.error || "保存失败，请刷新页面或重新连接钱包",
-              severity: "error",
-            })
+          setSnackbar({
+            open: true,
+            message: result.error || "保存失败，请刷新页面或重新连接钱包",
+            severity: "error",
+          });
+          return;
         }
       }
 
       // 成功处理
-      setIsEditing(false)
-      setIsNewUser(false)
+      setIsEditing(false);
+      setIsNewUser(false);
 
       setSnackbar({
         open: true,
         message: isNewUser ? "资料设置成功" : "资料更新成功",
         severity: "success",
-      })
+      });
 
       // 如果是新用户设置完资料，跳转到首页
       if (isNewUser) {
         setTimeout(() => {
-          router.push("/")
-        }, 1500)
+          router.push("/");
+        }, 1500);
       }
     } catch (error: any) {
-      console.error("保存用户资料失败:", error)
-      if (error.userRejected) {
+      console.error("保存用户资料失败:", error);
+      if (error.code === 4100 || (error.error && error.error.code === 4100)) {
         setSnackbar({
           open: true,
-          message: "请检查：\n1. MetaMask插件是否有待处理交易\n2. 是否点击了确认按钮\n3. 网络连接是否正常",
+          message: "请在MetaMask中授权交易，如果没有看到弹窗，请点击浏览器工具栏中的MetaMask图标",
           severity: "warning"
         });
+      } else if (error.code === 4001 || (error.error && error.error.code === 4001)) {
+        setSnackbar({
+          open: true,
+          message: "您已取消交易，请重新提交",
+          severity: "info"
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: "操作失败，请检查钱包连接状态并重试",
+          severity: "error"
+        });
       }
-      // 错误处理...
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
 

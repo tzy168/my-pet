@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/IPetManager.sol";
 import "./interfaces/IInstitutionManager.sol";
+import "./interfaces/IUserManager.sol";
 
 contract PetManager is IPetManager {
   // 宠物存储
@@ -123,8 +124,23 @@ contract PetManager is IPetManager {
     return userPetList;
   }
 
-  // 获取所有宠物列表（仅限医院工作人员）
+  // 获取所有宠物列表（仅限医院工作人员和管理员）
   function getAllPets() public view returns (Pet[] memory) {
+    // 获取UserManager合约实例
+    IUserManager userManager = IUserManager(userManagerAddress);
+    
+    // 检查用户是否已注册
+    require(userManager.checkUserIsRegistered(msg.sender), "User not registered");
+    
+    // 获取用户信息，包括角色ID
+    (,,,,,,,,,IMyPetBase.RoleType roleId) = userManager.getUserInfo(msg.sender);
+    
+    // 检查用户角色是否为管理员或医院人员
+    require(
+      roleId == IMyPetBase.RoleType.Admin || roleId == IMyPetBase.RoleType.Hospital,
+      "Only admin or hospital staff can view all pets"
+    );
+    
     return pets;
   }
 
