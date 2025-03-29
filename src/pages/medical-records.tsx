@@ -66,7 +66,7 @@ const MedicalRecords: React.FC = observer(() => {
   const [userSOrg, setUserSOrg] = useState({})
   const [staffStatus, setStaffStatus] = useState({
     isStaff: Number(userInfo?.orgId) === 2,
-    institutionId: 0,
+    institutionId: Number(userInfo?.orgId),
     institutionName: "",
   })
 
@@ -100,19 +100,16 @@ const MedicalRecords: React.FC = observer(() => {
       }
     }
     checkStaffStatus()
-    // setActiveTab(Number(userInfo?.roleId) === 2 ? 1 : 0)
   }, [contract, walletAddress])
 
   useEffect(() => {
     const fetchPets = async () => {
       try {
-        if (activeTab === 0) {
-          const userPets = await getUserPets()
-          setPets(userPets)
-        } else if (staffStatus.isStaff) {
-          const allPetsList = await getAllPets()
-          setAllPets(allPetsList)
-        }
+        const userPets = await getUserPets()
+        setPets(userPets)
+        const allPetsList = await getAllPets()
+        console.log("pet", allPetsList)
+        setAllPets(allPetsList)
       } catch (error) {
         console.error("获取宠物列表失败:", error)
         setSnackbar({

@@ -102,9 +102,16 @@ const Home: NextPage = () => {
               fontSize: { xs: "1.1rem", md: "1.3rem" },
             }}
           >
-            您的宠物管理平台🥳
+            您的宠物管理平台
           </Typography>
         </Fade>
+        <Typography
+          sx={{
+            fontSize: { xs: "3rem", md: "3rem" },
+          }}
+        >
+          🥳
+        </Typography>
       </Box>
 
       <div className={styles.headBox}>

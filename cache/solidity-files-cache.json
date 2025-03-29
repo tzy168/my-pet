@@ -152,8 +152,8 @@
       ]
     },
     "D:\\ABMS\\my-pet\\contracts\\UserManager.sol": {
-      "lastModificationDate": 1743218801761,
-      "contentHash": "508f9accff8a551b035a393d1bcd6be9",
+      "lastModificationDate": 1743256647470,
+      "contentHash": "94b6602437a2939ba3c3899d6401c842",
       "sourceName": "contracts/UserManager.sol",
       "solcConfig": {
         "version": "0.8.19",

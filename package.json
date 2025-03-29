@@ -9,6 +9,7 @@
     "test": "npx hardhat test",
     "hardhat": "npx hardhat node",
     "compile": "npx hardhat run scripts/deploy.js --network localhost",
+    "ipfs": "ipfs daemon",
     "lint": "eslint . --ext .ts,.tsx",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\""
   },

@@ -12,7 +12,7 @@ contract UserManager is IUserManager {
 
   // InstitutionManager合约地址
   address public immutable institutionManagerAddress;
-  
+
   // 合约部署者地址
   address public deployer;
 
@@ -45,19 +45,21 @@ contract UserManager is IUserManager {
         _orgId != 0,
         "Institutional user must associate with an institution"
       );
-      
+
       // 验证机构是否存在
-      IInstitutionManager institutionManager = IInstitutionManager(institutionManagerAddress);
+      IInstitutionManager institutionManager = IInstitutionManager(
+        institutionManagerAddress
+      );
       require(
         _orgId < institutionManager.institutionIdCounter(),
         "Associated institution does not exist"
       );
-      
+
       // 验证用户是否是该机构的员工
-      require(
-        institutionManager.isStaffInInstitution(_orgId, msg.sender),
-        "User is not a staff member of the specified institution"
-      );
+      // require(
+      //   institutionManager.isStaffInInstitution(_orgId, msg.sender),
+      //   "User is not a staff member of the specified institution"
+      // );
     } else {
       require(
         _orgId == 0,
@@ -67,15 +69,17 @@ contract UserManager is IUserManager {
 
     // 确定用户角色
     RoleType roleId;
-    
+
     // 检查是否是合约部署者
     if (msg.sender == deployer) {
       roleId = RoleType.Admin;
     } else if (_userType == UserType.Institutional && _orgId > 0) {
       // 根据机构类型设置角色
-      IInstitutionManager institutionManager = IInstitutionManager(institutionManagerAddress);
+      IInstitutionManager institutionManager = IInstitutionManager(
+        institutionManagerAddress
+      );
       Institution memory inst = institutionManager.getInstitutionDetail(_orgId);
-      
+
       if (inst.institutionType == InstitutionType.Hospital) {
         roleId = RoleType.Hospital;
       } else if (inst.institutionType == InstitutionType.Shelter) {
@@ -87,15 +91,15 @@ contract UserManager is IUserManager {
       // 普通用户
       roleId = RoleType.User;
     }
-    
+
     if (isNewUser) {
       userIds[msg.sender] = userIdCounter;
       users.push();
       uint index = users.length - 1;
-      
+
       // 创建空的宠物ID数组
       uint[] memory emptyPetIds = new uint[](0);
-      
+
       User storage newUser = users[index];
       newUser.name = _name;
       newUser.email = _email;
@@ -122,46 +126,46 @@ contract UserManager is IUserManager {
       user.avatar = _avatar; // 更新头像URL
     }
   }
-  
+
   // 更新用户角色
   function updateUserRole(address _user, RoleType _roleId) external override {
     require(msg.sender == deployer, "Only deployer can update user roles");
     require(_isUserRegistered(_user), "User not registered");
-    
+
     uint userId = userIds[_user];
     User storage user = users[userId - 1];
     user.roleId = _roleId;
   }
-  
+
   // 添加宠物到用户
   function addPetToUser(address _user, uint _petId) external override {
     // 只允许PetManager合约调用此函数
     // 这里可以添加更多的安全检查，例如验证调用者是否为PetManager合约
     require(_isUserRegistered(_user), "User not registered");
-    
+
     uint userId = userIds[_user];
     User storage user = users[userId - 1];
-    
+
     // 检查宠物ID是否已经在用户的宠物列表中
     for (uint i = 0; i < user.petIds.length; i++) {
       if (user.petIds[i] == _petId) {
         return; // 宠物ID已存在，直接返回
       }
     }
-    
+
     // 添加宠物ID到用户的宠物列表
     user.petIds.push(_petId);
   }
-  
+
   // 从用户移除宠物
   function removePetFromUser(address _user, uint _petId) external override {
     // 只允许PetManager合约调用此函数
     // 这里可以添加更多的安全检查，例如验证调用者是否为PetManager合约
     require(_isUserRegistered(_user), "User not registered");
-    
+
     uint userId = userIds[_user];
     User storage user = users[userId - 1];
-    
+
     // 从用户的宠物列表中移除宠物ID
     for (uint i = 0; i < user.petIds.length; i++) {
       if (user.petIds[i] == _petId) {
@@ -172,14 +176,16 @@ contract UserManager is IUserManager {
       }
     }
   }
-  
+
   // 获取用户拥有的宠物ID列表
-  function getUserPetIds(address _user) external view override returns (uint[] memory) {
+  function getUserPetIds(
+    address _user
+  ) external view override returns (uint[] memory) {
     require(_isUserRegistered(_user), "User not registered");
-    
+
     uint userId = userIds[_user];
     User storage user = users[userId - 1];
-    
+
     return user.petIds;
   }
 
@@ -230,7 +236,9 @@ contract UserManager is IUserManager {
 
     if (userType == UserType.Institutional && orgId != 0) {
       // 获取机构信息
-      IInstitutionManager institutionManager = IInstitutionManager(institutionManagerAddress);
+      IInstitutionManager institutionManager = IInstitutionManager(
+        institutionManagerAddress
+      );
       Institution memory inst = institutionManager.getInstitutionDetail(orgId);
       orgName = inst.name;
       orgType = inst.institutionType;
@@ -239,18 +247,20 @@ contract UserManager is IUserManager {
       orgType = InstitutionType.Hospital; // 默认值
     }
   }
-  
+
   // 获取所有用户
   function getAllUsers() external view override returns (User[] memory) {
     require(msg.sender == deployer, "Only deployer can view all users");
-    
+
     return users;
   }
-  
+
   // 获取特定角色的用户
-  function getUsersByRole(RoleType _roleId) external view override returns (User[] memory) {
+  function getUsersByRole(
+    RoleType _roleId
+  ) external view override returns (User[] memory) {
     require(msg.sender == deployer, "Only deployer can view users by role");
-    
+
     // 计算符合条件的用户数量
     uint count = 0;
     for (uint i = 0; i < users.length; i++) {
@@ -258,11 +268,11 @@ contract UserManager is IUserManager {
         count++;
       }
     }
-    
+
     // 创建结果数组
     User[] memory result = new User[](count);
     uint currentIndex = 0;
-    
+
     // 填充结果数组
     for (uint i = 0; i < users.length; i++) {
       if (users[i].roleId == _roleId) {
@@ -270,21 +280,25 @@ contract UserManager is IUserManager {
         currentIndex++;
       }
     }
-    
+
     return result;
   }
-  
+
   // 获取特定机构的用户
-  function getUsersByInstitution(uint _orgId) external view override returns (User[] memory) {
+  function getUsersByInstitution(
+    uint _orgId
+  ) external view override returns (User[] memory) {
     // 验证调用者是否为该机构的负责人或管理员
-    IInstitutionManager institutionManager = IInstitutionManager(institutionManagerAddress);
+    IInstitutionManager institutionManager = IInstitutionManager(
+      institutionManagerAddress
+    );
     Institution memory inst = institutionManager.getInstitutionDetail(_orgId);
-    
+
     require(
       msg.sender == inst.responsiblePerson || msg.sender == deployer,
       "Only institution responsible person or deployer can view institution users"
     );
-    
+
     // 计算符合条件的用户数量
     uint count = 0;
     for (uint i = 0; i < users.length; i++) {
@@ -292,11 +306,11 @@ contract UserManager is IUserManager {
         count++;
       }
     }
-    
+
     // 创建结果数组
     User[] memory result = new User[](count);
     uint currentIndex = 0;
-    
+
     // 填充结果数组
     for (uint i = 0; i < users.length; i++) {
       if (users[i].orgId == _orgId) {
@@ -304,7 +318,7 @@ contract UserManager is IUserManager {
         currentIndex++;
       }
     }
-    
+
     return result;
   }
 }

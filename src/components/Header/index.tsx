@@ -72,7 +72,8 @@ const Header: React.FC = observer(() => {
         // 当钱包断开连接时，清除钱包地址和用户信息
         setWalletAddress("")
         // 如果全局存储中有清除用户信息的方法，可以在这里调用
-        // clearUserInfo()
+
+        // 刷新页面
       }
     }
     return () => {
@@ -145,7 +146,7 @@ const Header: React.FC = observer(() => {
             router.push("/")
           }}
         >
-          MyPet🐾
+          MyPet🐾🐾
         </div>
         {<Navigation />}
       </div>
@@ -165,8 +166,14 @@ const Header: React.FC = observer(() => {
             } else {
               // 当钱包断开连接时，清除钱包地址
               setWalletAddress("")
+              // window.location.reload() // 刷新页面
             }
-
+            useEffect(() => {
+              if (walletAddress === "") {
+                setWalletAddress("")
+                window.location.reload() // 刷新页面
+              }
+            }, [walletAddress])
             return (
               <>
                 <ConnectButton />

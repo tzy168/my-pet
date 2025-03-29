@@ -34,7 +34,6 @@ import {
   Person as PersonRounded,
 } from "@mui/icons-material"
 import { useRouter } from "next/router"
-import { ContractConfig } from "../config/contracts"
 import { ethers } from "ethers"
 import { InstitutionType } from "../stores/types"
 
@@ -44,9 +43,6 @@ const Admin: React.FC = observer(() => {
     contract,
     isLoading,
     isContractDeployer,
-    walletAddress,
-    petContract,
-    userContract,
     addInstitution,
     setLoading,
     getAllInstitutions,
@@ -63,6 +59,7 @@ const Admin: React.FC = observer(() => {
     concatInfo: "",
   })
   const [staffList, setStaffList] = useState<string[]>([])
+  const [staffListOpen, setStaffListOpen] = useState(false)
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -73,13 +70,11 @@ const Admin: React.FC = observer(() => {
     if (contract) {
       fetchInstitutions()
     }
-  }, [isContractDeployer, contract])
+  }, [contract])
 
   const fetchInstitutions = async () => {
     try {
       const result = await getAllInstitutions()
-      console.log("org", result)
-
       setInstitutions(result)
     } catch (error: any) {
       console.error("获取机构列表失败:", error)
@@ -91,13 +86,10 @@ const Admin: React.FC = observer(() => {
     }
   }
 
-  //
   const fetchInstitutionDetail = async (id: number) => {
-    console.log(id)
     try {
       setLoading(true)
       const detail = await contract?.getInstitutionDetail(id)
-      console.log("detail", detail)
       setSelectedInstitution({
         id: Number(detail[0]),
         name: detail[1],
@@ -130,14 +122,16 @@ const Admin: React.FC = observer(() => {
     setDialogMode("edit")
     setInstitutionData({
       name: institution.name,
-      institutionType: institution.type,
+      institutionType: institution.institutionType,
       responsiblePerson: institution.responsiblePerson,
-      address: institution.address,
-      concatInfo: "",
+      address: institution.orgAddress,
+      concatInfo: institution.contactInfo,
     })
     setSelectedInstitution(institution)
     setOpenDialog(true)
+    // 移除 fetchInstitutionDetail 调用
   }
+
   const handleDeleteInstitution = async (id: number) => {
     try {
       await contract?.deleteInstitution(id)
@@ -148,6 +142,7 @@ const Admin: React.FC = observer(() => {
       })
       fetchInstitutions()
     } catch (error: any) {
+      console.error("删除机构失败:", error)
       setSnackbar({
         open: true,
         message: error.message || "删除机构失败",
@@ -158,18 +153,15 @@ const Admin: React.FC = observer(() => {
 
   const handleSubmit = async () => {
     try {
-      // 验证是否为合约部署者
       if (!isContractDeployer) {
         setSnackbar({
           open: true,
-          message:
-            "权限不足：只有系统管理员才能进行机构管理操作。请使用管理员账户重试。",
+          message: "权限不足：只有系统管理员才能进行机构管理操作。",
           severity: "error",
         })
         return
       }
       setLoading(true)
-      // 验证表单数据
       if (!institutionData.name.trim()) {
         setSnackbar({
           open: true,
@@ -190,16 +182,6 @@ const Admin: React.FC = observer(() => {
         return
       }
       if (dialogMode === "add") {
-        // 添加机构 - 使用可选链时需要注意可能为null的情况
-        if (!contract) {
-          setSnackbar({
-            open: true,
-            message: "合约未初始化，请刷新页面或重新连接钱包",
-            severity: "error",
-          })
-          return
-        }
-        // 直接调用合约方法，不使用可选链，以便更好地捕获错误
         await addInstitution(
           institutionData.name.trim(),
           institutionData.institutionType,
@@ -208,7 +190,6 @@ const Admin: React.FC = observer(() => {
           institutionData.concatInfo
         )
       } else {
-        // 更新机构
         await contract?.updateInstitution(
           selectedInstitution.id,
           institutionData.name.trim(),
@@ -228,55 +209,6 @@ const Admin: React.FC = observer(() => {
       setSnackbar({
         open: true,
         message: error.message || "机构操作失败",
-        severity: "error",
-      })
-      // 详细的错误处理
-      let errorMessage = "操作失败"
-      setSnackbar({
-        open: true,
-        message: errorMessage,
-        severity: "error",
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // 添加员工到机构的函数
-  const addStaffToInstitution = async (
-    institutionId: number,
-    staffAddress: string
-  ) => {
-    try {
-      if (!contract) {
-        setSnackbar({
-          open: true,
-          message: "合约未初始化",
-          severity: "error",
-        })
-        return
-      }
-      setLoading(true)
-      // 调用合约方法添加员工
-      const tx = await contract.addStaffToInstitution(
-        institutionId,
-        staffAddress
-      )
-      await tx.wait()
-
-      setSnackbar({
-        open: true,
-        message: "成功添加员工到机构",
-        severity: "success",
-      })
-
-      // 刷新机构列表
-      fetchInstitutions()
-    } catch (error) {
-      console.error("添加员工失败:", error)
-      setSnackbar({
-        open: true,
-        message: "添加员工失败",
         severity: "error",
       })
     } finally {
@@ -312,7 +244,6 @@ const Admin: React.FC = observer(() => {
           </Button>
         </Box>
       )}
-      {/* 系统管理导航按钮 */}
       <Box sx={{ display: "flex", gap: 2, mb: 4 }}>
         <Button
           variant="outlined"
@@ -325,7 +256,6 @@ const Admin: React.FC = observer(() => {
       <Typography variant="h6" sx={{ mb: 2 }}>
         机构管理
       </Typography>
-      {/* 搜索和筛选区域 */}
       <Box sx={{ mb: 3, display: "flex", gap: 2 }}>
         <TextField
           label="搜索ID"
@@ -406,6 +336,16 @@ const Admin: React.FC = observer(() => {
                       <EditIcon />
                     </IconButton>
                   )}
+                  <IconButton
+                    onClick={() => {
+                      fetchInstitutionDetail(institution.id)
+                      setStaffListOpen(true)
+                    }}
+                    size="small"
+                    color="primary"
+                  >
+                    <PersonRounded />
+                  </IconButton>
                   {isContractDeployer && (
                     <IconButton
                       onClick={() => handleDeleteInstitution(institution.id)}
@@ -415,13 +355,6 @@ const Admin: React.FC = observer(() => {
                       <DeleteIcon />
                     </IconButton>
                   )}
-                  <IconButton
-                    onClick={() => fetchInstitutionDetail(institution.id)}
-                    size="small"
-                    color="primary"
-                  >
-                    <PersonRounded />
-                  </IconButton>
                 </TableCell>
               </TableRow>
             ))}
@@ -446,7 +379,7 @@ const Admin: React.FC = observer(() => {
           <FormControl fullWidth margin="dense">
             <InputLabel>机构类型</InputLabel>
             <Select
-              value={institutionData.institutionType}
+              value={Number(institutionData.institutionType)}
               label="机构类型"
               onChange={(e) =>
                 setInstitutionData({
@@ -517,8 +450,8 @@ const Admin: React.FC = observer(() => {
       </Snackbar>
 
       <Dialog
-        open={selectedInstitution !== null}
-        onClose={() => setSelectedInstitution(null)}
+        open={staffListOpen}
+        onClose={() => setStaffListOpen(false)}
         maxWidth="md"
         fullWidth
       >
@@ -574,7 +507,10 @@ const Admin: React.FC = observer(() => {
         </DialogContent>
         <DialogActions>
           <Button
-            onClick={() => setSelectedInstitution(null)}
+            onClick={() => {
+              setSelectedInstitution(null)
+              setStaffListOpen(false)
+            }}
             variant="contained"
           >
             关闭

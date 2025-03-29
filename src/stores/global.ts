@@ -211,6 +211,8 @@ class GlobalStore {
     } catch (error: any) {
       this.setLoading(false)
       return this.handleContractError(error)
+    } finally {
+      this.setLoading(false)
     }
   }
 
