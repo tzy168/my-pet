@@ -25,8 +25,10 @@ contract InstitutionManager is IInstitutionManager {
   function addInstitution(
     string memory _name,
     InstitutionType _institutionType,
-    address _responsiblePerson
-  ) external override {
+    address _responsiblePerson,
+    string memory _orgAddress,
+    string memory _contactInfo
+  ) external override returns (uint) {
     require(msg.sender == deployer, "Only deployer can add institutions");
     require(
       staffToInstitution[_responsiblePerson] == 0,
@@ -41,10 +43,36 @@ contract InstitutionManager is IInstitutionManager {
     inst.id = newId;
     inst.name = _name;
     inst.institutionType = _institutionType;
-    inst.wallet = _responsiblePerson;
     inst.responsiblePerson = _responsiblePerson;
     inst.staffList = new address[](0); // 初始化空员工列表
+    inst.createdAt = block.timestamp; // 设置创建时间
+    inst.orgAddress = _orgAddress; // 设置机构地址
+    inst.contactInfo = _contactInfo; // 设置联系信息
+
+    // 将负责人添加到员工列表
+    inst.staffList.push(_responsiblePerson);
     staffToInstitution[_responsiblePerson] = newId;
+
+    return newId;
+  }
+
+  // 更新机构信息
+  function updateInstitution(
+    uint _orgId,
+    string memory _name,
+    string memory _orgAddress,
+    string memory _contactInfo
+  ) external override {
+    require(_isInstitutionExists(_orgId), "Institution does not exist");
+    Institution storage inst = institutions[_orgId - 1];
+    require(
+      msg.sender == inst.responsiblePerson || msg.sender == deployer,
+      "Only responsible person or deployer can update institution"
+    );
+
+    inst.name = _name;
+    inst.orgAddress = _orgAddress;
+    inst.contactInfo = _contactInfo;
   }
 
   // 添加员工到机构
@@ -52,15 +80,17 @@ contract InstitutionManager is IInstitutionManager {
     uint _orgId,
     address _staff
   ) external override {
-    require(
-      _orgId > 0 && _orgId < institutionIdCounter,
-      "Institution does not exist"
-    );
+    require(_isInstitutionExists(_orgId), "Institution does not exist");
     Institution storage inst = institutions[_orgId - 1];
     require(
       msg.sender == inst.responsiblePerson,
       "Only institution responsible person can add staff"
     );
+    require(
+      staffToInstitution[_staff] == 0,
+      "Staff already associated with an institution"
+    );
+
     staffToInstitution[_staff] = _orgId;
     inst.staffList.push(_staff); // 将员工添加到机构的员工列表中
   }
@@ -70,17 +100,19 @@ contract InstitutionManager is IInstitutionManager {
     uint _orgId,
     address _staff
   ) external override {
-    require(
-      _orgId > 0 && _orgId < institutionIdCounter,
-      "Institution does not exist"
-    );
+    require(_isInstitutionExists(_orgId), "Institution does not exist");
     Institution storage inst = institutions[_orgId - 1];
     require(
       msg.sender == inst.responsiblePerson,
       "Only institution responsible person can remove staff"
     );
+    require(
+      _staff != inst.responsiblePerson,
+      "Cannot remove responsible person"
+    );
+
     staffToInstitution[_staff] = 0;
-    
+
     // 从机构的员工列表中移除该员工
     for (uint i = 0; i < inst.staffList.length; i++) {
       if (inst.staffList[i] == _staff) {
@@ -97,7 +129,7 @@ contract InstitutionManager is IInstitutionManager {
     uint _orgId,
     address _staff
   ) external view override returns (bool) {
-    if (_orgId == 0 || _orgId >= institutionIdCounter) {
+    if (!_isInstitutionExists(_orgId)) {
       return false;
     }
     return staffToInstitution[_staff] == _orgId;
@@ -108,90 +140,90 @@ contract InstitutionManager is IInstitutionManager {
     external
     view
     override
-    returns (
-      uint[] memory,
-      string[] memory,
-      InstitutionType[] memory,
-      address[] memory
-    )
+    returns (Institution[] memory)
   {
-    uint[] memory ids = new uint[](institutionIdCounter - 1);
-    string[] memory names = new string[](institutionIdCounter - 1);
-    InstitutionType[] memory types = new InstitutionType[](
-      institutionIdCounter - 1
-    );
-    address[] memory wallets = new address[](institutionIdCounter - 1);
-
+    Institution[] memory result = new Institution[](institutionIdCounter - 1);
     for (uint i = 1; i < institutionIdCounter; i++) {
-      Institution storage inst = institutions[i - 1];
-      ids[i - 1] = inst.id;
-      names[i - 1] = inst.name;
-      types[i - 1] = inst.institutionType;
-      wallets[i - 1] = inst.wallet;
+      result[i - 1] = institutions[i - 1];
     }
-
-    return (ids, names, types, wallets);
+    return result;
   }
 
   // 获取机构详细信息
   function getInstitutionDetail(
     uint _orgId
-  )
-    external
-    view
-    override
-    returns (
-      uint id,
-      string memory name,
-      InstitutionType institutionType,
-      address wallet,
-      address responsiblePerson,
-      address[] memory staffList
-    )
-  {
-    require(
-      _orgId > 0 && _orgId < institutionIdCounter,
-      "Institution does not exist"
-    );
-
-    Institution storage inst = institutions[_orgId - 1];
-    return (
-      inst.id,
-      inst.name,
-      inst.institutionType,
-      inst.wallet,
-      inst.responsiblePerson,
-      inst.staffList
-    );
+  ) external view override returns (Institution memory) {
+    require(_isInstitutionExists(_orgId), "Institution does not exist");
+    return institutions[_orgId - 1];
   }
 
   // 获取机构员工列表
   function getInstitutionStaff(
     uint _orgId
   ) external view override returns (address[] memory) {
-    require(
-      _orgId > 0 && _orgId < institutionIdCounter,
-      "Institution does not exist"
-    );
+    require(_isInstitutionExists(_orgId), "Institution does not exist");
+    return institutions[_orgId - 1].staffList;
+  }
 
-    // 计算员工数量
-    uint staffCount = 0;
-    for (uint i = 0; i < institutionIdCounter; i++) {
-      if (staffToInstitution[address(uint160(i))] == _orgId) {
-        staffCount++;
+  // 获取特定类型的机构
+  function getInstitutionsByType(
+    InstitutionType _type
+  ) external view override returns (Institution[] memory) {
+    // 计算特定类型的机构数量
+    uint count = 0;
+    for (uint i = 0; i < institutions.length; i++) {
+      if (institutions[i].institutionType == _type) {
+        count++;
       }
     }
-    // 创建员工地址数组
-    address[] memory staffList = new address[](staffCount);
+
+    // 创建结果数组
+    Institution[] memory result = new Institution[](count);
     uint currentIndex = 0;
-    for (uint i = 0; i < institutionIdCounter; i++) {
-      address staffAddr = address(uint160(i));
-      if (staffToInstitution[staffAddr] == _orgId) {
-        staffList[currentIndex] = staffAddr;
+
+    // 填充结果数组
+    for (uint i = 0; i < institutions.length; i++) {
+      if (institutions[i].institutionType == _type) {
+        result[currentIndex] = institutions[i];
         currentIndex++;
       }
     }
 
-    return staffList;
+    return result;
+  }
+
+  // 获取机构创建时间
+  function getInstitutionCreationTime(
+    uint _orgId
+  ) external view override returns (uint) {
+    require(_isInstitutionExists(_orgId), "Institution does not exist");
+    return institutions[_orgId - 1].createdAt;
+  }
+
+  // 更新机构负责人
+  function updateInstitutionResponsiblePerson(
+    uint _orgId,
+    address _newResponsiblePerson
+  ) external override {
+    require(_isInstitutionExists(_orgId), "Institution does not exist");
+    Institution storage inst = institutions[_orgId - 1];
+    require(
+      msg.sender == inst.responsiblePerson || msg.sender == deployer,
+      "Only current responsible person or deployer can update responsible person"
+    );
+    require(
+      staffToInstitution[_newResponsiblePerson] == 0 ||
+        staffToInstitution[_newResponsiblePerson] == _orgId,
+      "New responsible person is associated with another institution"
+    );
+
+    // 如果新负责人不是当前机构的员工，则添加到员工列表
+    if (staffToInstitution[_newResponsiblePerson] == 0) {
+      staffToInstitution[_newResponsiblePerson] = _orgId;
+      inst.staffList.push(_newResponsiblePerson);
+    }
+
+    // 更新负责人
+    inst.responsiblePerson = _newResponsiblePerson;
   }
 }

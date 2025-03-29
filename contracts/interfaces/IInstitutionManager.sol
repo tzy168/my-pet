@@ -6,12 +6,25 @@ import "./IMyPetBase.sol";
 interface IInstitutionManager is IMyPetBase {
   // 员工到机构ID的映射
   function staffToInstitution(address) external view returns (uint);
+  
+  // 机构ID计数器
+  function institutionIdCounter() external view returns (uint256);
 
   // 添加机构
   function addInstitution(
     string memory _name,
     InstitutionType _institutionType,
-    address _responsiblePerson
+    address _responsiblePerson,
+    string memory _orgAddress,
+    string memory _contactInfo
+  ) external returns (uint);
+
+  // 更新机构信息
+  function updateInstitution(
+    uint _orgId,
+    string memory _name,
+    string memory _orgAddress,
+    string memory _contactInfo
   ) external;
 
   // 添加员工到机构
@@ -27,33 +40,24 @@ interface IInstitutionManager is IMyPetBase {
   ) external view returns (bool);
 
   // 获取所有机构信息
-  function getAllInstitutions()
-    external
-    view
-    returns (
-      uint[] memory,
-      string[] memory,
-      InstitutionType[] memory,
-      address[] memory
-    );
+  function getAllInstitutions() external view returns (Institution[] memory);
 
   // 获取机构详细信息
   function getInstitutionDetail(
     uint _orgId
-  )
-    external
-    view
-    returns (
-      uint id,
-      string memory name,
-      InstitutionType institutionType,
-      address wallet,
-      address responsiblePerson,
-      address[] memory staffList
-    );
+  ) external view returns (Institution memory);
 
   // 获取机构员工列表
   function getInstitutionStaff(
     uint _orgId
   ) external view returns (address[] memory);
+  
+  // 获取特定类型的机构
+  function getInstitutionsByType(InstitutionType _type) external view returns (Institution[] memory);
+  
+  // 获取机构创建时间
+  function getInstitutionCreationTime(uint _orgId) external view returns (uint);
+  
+  // 更新机构负责人
+  function updateInstitutionResponsiblePerson(uint _orgId, address _newResponsiblePerson) external;
 }
