@@ -2,16 +2,17 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "D:\\ABMS\\my-pet\\contracts\\InstitutionManager.sol": {
-      "lastModificationDate": 1743171639681,
-      "contentHash": "4ebad319740066cc5906607442a7dae2",
+      "lastModificationDate": 1743230178358,
+      "contentHash": "27a6e3f2f8a9e5d03f85c778cf42c256",
       "sourceName": "contracts/InstitutionManager.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
           "outputSelection": {
             "*": {
               "*": [
@@ -39,16 +40,17 @@
       ]
     },
     "D:\\ABMS\\my-pet\\contracts\\interfaces\\IInstitutionManager.sol": {
-      "lastModificationDate": 1743171539952,
-      "contentHash": "9105bcef75e4bf8644d049e7638bef26",
+      "lastModificationDate": 1743218938420,
+      "contentHash": "dc44fd1b1857c0735f909bd7356ab2de",
       "sourceName": "contracts/interfaces/IInstitutionManager.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
           "outputSelection": {
             "*": {
               "*": [
@@ -76,16 +78,17 @@
       ]
     },
     "D:\\ABMS\\my-pet\\contracts\\interfaces\\IMyPetBase.sol": {
-      "lastModificationDate": 1743171496074,
-      "contentHash": "521032903c65bcf408109dc73dce804f",
+      "lastModificationDate": 1743218087367,
+      "contentHash": "dc50d0051ae65d57963ba573ba4f485b",
       "sourceName": "contracts/interfaces/IMyPetBase.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
           "outputSelection": {
             "*": {
               "*": [
@@ -111,16 +114,17 @@
       ]
     },
     "D:\\ABMS\\my-pet\\contracts\\interfaces\\IUserManager.sol": {
-      "lastModificationDate": 1743159425876,
-      "contentHash": "e0bec4bdddc4b14c7f379e1731f2ecaa",
+      "lastModificationDate": 1743218363332,
+      "contentHash": "c94f61be166c9f97114b47af60c41c37",
       "sourceName": "contracts/interfaces/IUserManager.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
           "outputSelection": {
             "*": {
               "*": [
@@ -148,16 +152,17 @@
       ]
     },
     "D:\\ABMS\\my-pet\\contracts\\UserManager.sol": {
-      "lastModificationDate": 1743159425876,
-      "contentHash": "e75f46ce9a4b4fb7ec9c78291f6c5ebf",
+      "lastModificationDate": 1743218801761,
+      "contentHash": "508f9accff8a551b035a393d1bcd6be9",
       "sourceName": "contracts/UserManager.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
           "outputSelection": {
             "*": {
               "*": [
@@ -175,7 +180,8 @@
         }
       },
       "imports": [
-        "./interfaces/IUserManager.sol"
+        "./interfaces/IUserManager.sol",
+        "./interfaces/IInstitutionManager.sol"
       ],
       "versionPragmas": [
         "^0.8.0"
@@ -185,16 +191,17 @@
       ]
     },
     "D:\\ABMS\\my-pet\\contracts\\interfaces\\IPetManager.sol": {
-      "lastModificationDate": 1742906616216,
-      "contentHash": "ea26e4573523bd00fc5e279aa9596cbe",
+      "lastModificationDate": 1743218350551,
+      "contentHash": "c753552deb5cf541f9ff2fc1318bee24",
       "sourceName": "contracts/interfaces/IPetManager.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
           "outputSelection": {
             "*": {
               "*": [
@@ -222,16 +229,17 @@
       ]
     },
     "D:\\ABMS\\my-pet\\contracts\\PetManager.sol": {
-      "lastModificationDate": 1743171882539,
-      "contentHash": "36f8505abbf11ed331653cdc73df3dcd",
+      "lastModificationDate": 1743218786450,
+      "contentHash": "3c20fffbca413c189d6f8d7a36e05c47",
       "sourceName": "contracts/PetManager.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
           "optimizer": {
-            "enabled": false,
+            "enabled": true,
             "runs": 200
           },
+          "viaIR": true,
           "outputSelection": {
             "*": {
               "*": [

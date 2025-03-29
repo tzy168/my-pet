@@ -33,15 +33,15 @@ const Profile: React.FC = observer(() => {
   const [isEditing, setIsEditing] = useState(false)
   const [isNewUser, setIsNewUser] = useState(false)
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    userType: "Personal" as "Personal" | "Institutional",
-    orgId: "",
+    name: userInfo?.name || "",
+    email: userInfo?.email || "",
+    phone: userInfo?.phone || "",
+    userType: userInfo?.userType === UserType.Institutional ? "Institutional" : "Personal",
+    orgId: userInfo?.orgId || 0,
+    roleId: userInfo?.roleId || RoleType.User,
+    avatar: userInfo?.avatar || "",
   })
-  const [orgList, setOrgList] = useState<
-    { id: number; name: string; type: number }[]
-  >([])
+  const [orgList, setOrgList] = useState<Institution[]>([])
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -58,11 +58,11 @@ const Profile: React.FC = observer(() => {
         if (isRegistered && userInfo) {
           // 已注册用户，加载用户信息
           setFormData({
-            name: userInfo[1],
-            email: userInfo[2],
-            phone: userInfo[3],
-            userType: Number(userInfo[5]) === 0 ? "Personal" : "Institutional",
-            orgId: String(userInfo[6]),
+            name: userInfo.name,
+            email: userInfo.email,
+            phone: userInfo.phone,
+            userType: userInfo.userType === UserType.Institutional ? "Institutional" : "Personal",
+            orgId: userInfo.orgId,
           })
         } else {
           // 新用户，设置为编辑模式
@@ -79,180 +79,83 @@ const Profile: React.FC = observer(() => {
   useEffect(() => {
     const fetchInstitutions = async () => {
       try {
-        const institutions = await getAllInstitutions()
-        console.log("获取到的机构列表:", institutions) // 添加日
-        if (
-          institutions &&
-          Array.isArray(institutions) &&
-          institutions.length >= 4
-        ) {
-          const [ids, names, types, wallets] = institutions
-          const formattedList = ids.map((id: any, index: number) => ({
-            id: Number(id),
-            name: names[index],
-            type: Number(types[index]), // 0=医院, 1=收容所
-          }))
-          console.log("格式化后的机构列表:", formattedList)
-          setOrgList(formattedList)
-        } else {
-          console.warn("获取到的机构数据格式不正确:", institutions)
-          setOrgList([])
-        }
+        const institutions = await getAllInstitutions();
+        setOrgList(institutions);
       } catch (error) {
-        console.error("获取机构列表失败:", error)
-        setOrgList([])
+        console.error("获取机构列表失败:", error);
+        setOrgList([]);
       }
-    }
-
-    fetchInstitutions()
-  }, [])
-
-  // 在 useEffect 中获取机构列表后，添加以下代码
-  useEffect(() => {
-    // 如果用户是机构用户且有机构ID，但没有机构名称，尝试获取机构名称
-    const fetchInstitutionName = async () => {
-      if (
-        userInfo &&
-        Number(userInfo[5]) === 1 && // 是机构用户
-        Number(userInfo[6]) > 0 && // 有机构ID
-        !userInfo[7] // 没有机构名称
-      ) {
-        try {
-          // 获取所有机构
-          const institutions = await getAllInstitutions()
-          if (institutions && institutions.length >= 4) {
-            const [ids, names, types, wallets] = institutions
-            // 查找匹配的机构
-            const index = ids.findIndex(
-              (id: any) => Number(id) === Number(userInfo[6])
-            )
-
-            if (index !== -1) {
-              // 更新用户信息中的机构名称
-              const updatedUserInfo = [...userInfo]
-              updatedUserInfo[7] = names[index]
-              // 更新状态
-              setUserInfo(updatedUserInfo)
-            }
-          }
-        } catch (error) {
-          console.error("获取机构名称失败:", error)
-        }
-      }
-    }
-
-    fetchInstitutionName()
-  }, [userInfo, getAllInstitutions])
-
-  const handleEdit = () => {
-    setIsEditing(true)
-  }
+    };
+    
+    fetchInstitutions();
+  }, []);
 
   // 在提交前检查钱包状态
   const checkWalletBeforeSubmit = async () => {
     try {
-      // 尝试获取钱包账户，如果获取不到会抛出异常
-      const provider = new ethers.BrowserProvider(window.ethereum)
-      const accounts = await provider.listAccounts()
-
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = await provider.listAccounts();
+      
       if (accounts.length === 0) {
         setSnackbar({
           open: true,
           message: "请先连接钱包！",
           severity: "warning",
-        })
-        return false
+        });
+        return false;
       }
-      return true
+      return true;
     } catch (error) {
-      console.error("钱包连接检查失败:", error)
+      console.error("钱包连接检查失败:", error);
       setSnackbar({
         open: true,
         message: "钱包连接异常，请刷新页面重试",
         severity: "error",
-      })
-      return false
+      });
+      return false;
     }
-  }
+  };
 
   const handleSave = async () => {
     try {
-      // 表单验证
-      if (!formData.name || !formData.email || !formData.phone) {
-        setSnackbar({
-          open: true,
-          message: "请填写完整的个人信息",
-          severity: "warning",
-        })
-        return
-      }
-      // 验证邮箱格式
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(formData.email)) {
-        setSnackbar({
-          open: true,
-          message: "请输入有效的邮箱地址",
-          severity: "warning",
-        })
-        return
-      }
-      // 验证手机号格式（中国大陆手机号）
-      const phoneRegex = /^1[3-9]\d{9}$/
-      if (!phoneRegex.test(formData.phone)) {
-        setSnackbar({
-          open: true,
-          message: "请输入有效的手机号码",
-          severity: "warning",
-        })
-        return
-      }
-      // 机构用户必须选择机构
-      if (formData.userType === "Institutional" && formData.orgId === "") {
-        setSnackbar({
-          open: true,
-          message: "机构用户必须选择所属机构",
-          severity: "warning",
-        })
-        return
-      }
-      // 首先检查钱包状态
-      const isWalletReady = await checkWalletBeforeSubmit()
-      if (!isWalletReady) return
-      setIsSubmitting(true)
-      // 显示提示消息
+      const isWalletReady = await checkWalletBeforeSubmit();
+      if (!isWalletReady) return;
+      
+      setIsSubmitting(true);
+      
       setSnackbar({
         open: true,
-        message: "请在MetaMask中确认交易",
+        message: "请按以下步骤操作：\n1. 点击浏览器扩展栏的MetaMask图标\n2. 在弹出窗口中查看待处理交易\n3. 点击确认按钮完成授权",
         severity: "info",
-      })
-      // 调用合约方法保存用户信息
+      });
+      
       const result = await setUserProfile(
         formData.name,
         formData.email,
         formData.phone,
         formData.userType,
-        formData.orgId
+        formData.orgId,
+        formData.avatar
       )
-      // 检查返回结果
-      if (result && typeof result === "object") {
-        if (!result.success) {
-          setSnackbar({
-            open: true,
-            message: result.error || "保存失败，请刷新页面或重新连接钱包",
-            severity: "error",
-          })
-          return
-        }
+
+      if (result && !result.success) {      
+        setSnackbar({
+          open: true,
+          message: result.error || "保存失败，请刷新页面或重新连接钱包",
+          severity: "error",
+        })
+        return;
       }
-      // 成功处理
+
       setIsEditing(false)
       setIsNewUser(false)
+
       setSnackbar({
         open: true,
         message: isNewUser ? "资料设置成功" : "资料更新成功",
         severity: "success",
       })
-      // 如果是新用户设置完资料，跳转到首页
+
       if (isNewUser) {
         setTimeout(() => {
           router.push("/")
@@ -260,11 +163,19 @@ const Profile: React.FC = observer(() => {
       }
     } catch (error: any) {
       console.error("保存用户资料失败:", error)
-      setSnackbar({
-        open: true,
-        message: "请刷新页面重试!",
-        severity: "error",
-      })
+      if (error.code === 4100 || (error.error && error.error.code === 4100)) {
+        setSnackbar({
+          open: true,
+          message: "请检查：\n1. MetaMask插件是否有待处理交易\n2. 是否点击了确认按钮\n3. 网络连接是否正常",
+          severity: "warning"
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: "操作失败，请检查钱包连接状态并重试",
+          severity: "error"
+        });
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -273,15 +184,14 @@ const Profile: React.FC = observer(() => {
   const handleCancel = () => {
     if (userInfo && !isNewUser) {
       setFormData({
-        name: userInfo[1],
-        email: userInfo[2],
-        phone: userInfo[3],
-        userType: Number(userInfo[5]) === 0 ? "Personal" : "Institutional",
-        orgId: String(userInfo[6]),
+        name: userInfo.name,
+        email: userInfo.email,
+        phone: userInfo.phone,
+        userType: userInfo.userType === UserType.Institutional ? "Institutional" : "Personal",
+        orgId: userInfo.orgId,
       })
       setIsEditing(false)
     } else if (isNewUser) {
-      // 新用户取消，返回登录页
       router.push("/")
     }
   }
@@ -299,8 +209,7 @@ const Profile: React.FC = observer(() => {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-      // 如果用户类型改为个人用户，重置机构IDd
-      ...(name === "userType" && value === "Personal" ? { orgId: "" } : {}),
+      ...(name === "userType" && value === "Personal" ? { orgId: 0 } : {}),
     }))
   }
 
@@ -375,8 +284,7 @@ const Profile: React.FC = observer(() => {
                 </FormControl>
               ) : (
                 <Typography>
-                  {userInfo &&
-                    (Number(userInfo[5]) === 0 ? "个人用户" : "机构用户")}
+                  {userInfo && (userInfo.userType === UserType.Personal ? "个人用户" : "机构用户")}
                 </Typography>
               )}
             </Box>
@@ -391,8 +299,8 @@ const Profile: React.FC = observer(() => {
                       onChange={(e) => {
                         setFormData({
                           ...formData,
-                          orgId: String(e.target.value),
-                        })
+                          orgId: Number(e.target.value),
+                        });
                       }}
                       displayEmpty
                     >
@@ -402,7 +310,7 @@ const Profile: React.FC = observer(() => {
                       {orgList && orgList.length > 0 ? (
                         orgList.map((org) => (
                           <MenuItem key={org.id} value={org.id.toString()}>
-                            {org.name} ({org.type === 0 ? "医院" : "收容所"})
+                            {org.name} ({org.institutionType === InstitutionType.Hospital ? "医院" : "收容所"})
                           </MenuItem>
                         ))
                       ) : (
@@ -413,15 +321,15 @@ const Profile: React.FC = observer(() => {
                     </Select>
                   </FormControl>
                 ) : (
-                  <Typography>{userInfo && userInfo[7]}</Typography>
+                  <Typography>{userInfo?.orgName}</Typography>
                 )}
               </Box>
             )}
-            {!isEditing && userInfo && Number(userInfo[5]) === 1 && (
+            {!isEditing && userInfo && userInfo.userType === UserType.Institutional && (
               <Box className={styles.infoItem}>
                 <Typography variant="subtitle1">机构类型：</Typography>
                 <Typography>
-                  {Number(userInfo[8]) === 0 ? "宠物医院" : "宠物收容所"}
+                  {userInfo.orgType === InstitutionType.Hospital ? "宠物医院" : "宠物收容所"}
                 </Typography>
               </Box>
             )}
@@ -432,10 +340,7 @@ const Profile: React.FC = observer(() => {
                 <Button
                   variant="contained"
                   onClick={handleSave}
-                  disabled={
-                    formData.userType === "Institutional" &&
-                    formData.orgId === ""
-                  }
+                  disabled={formData.userType === "Institutional" && formData.orgId === 0}
                 >
                   {isNewUser ? "完成设置" : "保存"}
                 </Button>
@@ -449,9 +354,7 @@ const Profile: React.FC = observer(() => {
               </Button>
             )}
           </Box>
-          {isSubmitting && (
-            <WalletConfirmationGuide actionName="保存个人资料" />
-          )}
+          {isSubmitting && <WalletConfirmationGuide actionName="保存个人资料" />}
         </CardContent>
       </Card>
       <Snackbar

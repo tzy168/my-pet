@@ -9,6 +9,24 @@
           "internalType": "address",
           "name": "_user",
           "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_petId",
+          "type": "uint256"
+        }
+      ],
+      "name": "addPetToUser",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
         }
       ],
       "name": "checkUserIsRegistered",
@@ -17,6 +35,76 @@
           "internalType": "bool",
           "name": "",
           "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getAllUsers",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "string",
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "email",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "phone",
+              "type": "string"
+            },
+            {
+              "internalType": "address",
+              "name": "wallet",
+              "type": "address"
+            },
+            {
+              "internalType": "enum IMyPetBase.UserType",
+              "name": "userType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256",
+              "name": "orgId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "isProfileSet",
+              "type": "bool"
+            },
+            {
+              "internalType": "enum IMyPetBase.RoleType",
+              "name": "roleId",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "petIds",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256",
+              "name": "registeredAt",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "avatar",
+              "type": "string"
+            }
+          ],
+          "internalType": "struct IMyPetBase.User[]",
+          "name": "",
+          "type": "tuple[]"
         }
       ],
       "stateMutability": "view",
@@ -81,9 +169,208 @@
           "internalType": "enum IMyPetBase.RoleType",
           "name": "roleId",
           "type": "uint8"
+        },
+        {
+          "internalType": "uint256",
+          "name": "registeredAt",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "avatar",
+          "type": "string"
         }
       ],
       "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        }
+      ],
+      "name": "getUserPetIds",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_orgId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getUsersByInstitution",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "string",
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "email",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "phone",
+              "type": "string"
+            },
+            {
+              "internalType": "address",
+              "name": "wallet",
+              "type": "address"
+            },
+            {
+              "internalType": "enum IMyPetBase.UserType",
+              "name": "userType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256",
+              "name": "orgId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "isProfileSet",
+              "type": "bool"
+            },
+            {
+              "internalType": "enum IMyPetBase.RoleType",
+              "name": "roleId",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "petIds",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256",
+              "name": "registeredAt",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "avatar",
+              "type": "string"
+            }
+          ],
+          "internalType": "struct IMyPetBase.User[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "enum IMyPetBase.RoleType",
+          "name": "_roleId",
+          "type": "uint8"
+        }
+      ],
+      "name": "getUsersByRole",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "string",
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "email",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "phone",
+              "type": "string"
+            },
+            {
+              "internalType": "address",
+              "name": "wallet",
+              "type": "address"
+            },
+            {
+              "internalType": "enum IMyPetBase.UserType",
+              "name": "userType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256",
+              "name": "orgId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "isProfileSet",
+              "type": "bool"
+            },
+            {
+              "internalType": "enum IMyPetBase.RoleType",
+              "name": "roleId",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "petIds",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256",
+              "name": "registeredAt",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "avatar",
+              "type": "string"
+            }
+          ],
+          "internalType": "struct IMyPetBase.User[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_petId",
+          "type": "uint256"
+        }
+      ],
+      "name": "removePetFromUser",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -112,9 +399,32 @@
           "internalType": "uint256",
           "name": "_orgId",
           "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "_avatar",
+          "type": "string"
         }
       ],
       "name": "setUserProfile",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        },
+        {
+          "internalType": "enum IMyPetBase.RoleType",
+          "name": "_roleId",
+          "type": "uint8"
+        }
+      ],
+      "name": "updateUserRole",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

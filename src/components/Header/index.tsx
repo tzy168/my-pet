@@ -133,14 +133,14 @@ const Header: React.FC = observer(() => {
   return (
     <header className={styles.header}>
       <div className={styles.leftSection}>
-        <h2
+        <div
           className={styles.logo}
           onClick={() => {
             router.push("/")
           }}
         >
-          MyPet
-        </h2>
+          MyPet🐾
+        </div>
         {<Navigation />}
       </div>
       <div className={styles.rightSection}>

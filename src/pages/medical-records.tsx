@@ -69,10 +69,9 @@ const MedicalRecords: React.FC = observer(() => {
     petContract,
     walletAddress,
     setLoading,
-    getInstitutionManagerContract,
+    // getInstitutionManagerContract,
     addMedicalEvent,
-    checkIsHospitalStaff,
-    getInstitutionNameById,
+    // checkIsHospitalStaff,
   } = useGlobalStore()
   const [activeTab, setActiveTab] = useState(0)
   const [pets, setPets] = useState<Pet[]>([])
@@ -247,6 +246,7 @@ const MedicalRecords: React.FC = observer(() => {
       })
       return
     }
+
     if (!medicalForm.diagnosis || !medicalForm.treatment) {
       setSnackbar({
         open: true,
@@ -255,26 +255,26 @@ const MedicalRecords: React.FC = observer(() => {
       })
       return
     }
+
     try {
       setIsSubmitting(true)
+
       setSnackbar({
         open: true,
         message: "请在钱包中确认交易以添加医疗记录",
         severity: "info",
       })
-      // 添加调试信息
-      console.log("调用合约参数:", {
-        petId: selectedPet.id,
-        diagnosis: medicalForm.diagnosis,
-        treatment: medicalForm.treatment,
-      })
+
       await addMedicalEvent(
         selectedPet.id,
         medicalForm.diagnosis,
         medicalForm.treatment
       )
+
       handleCloseDialog()
+
       await fetchPetMedicalEvents(selectedPet.id)
+
       setSnackbar({
         open: true,
         message: "添加医疗记录成功",
@@ -282,7 +282,28 @@ const MedicalRecords: React.FC = observer(() => {
       })
     } catch (error) {
       console.error("合约调用错误:", error)
+
       let errorMessage = "添加医疗记录失败"
+
+      const errorString = String(error)
+
+      if (
+        errorString.includes("not been authorized by the user") ||
+        errorString.includes("user rejected")
+      ) {
+        errorMessage = "您取消了交易，记录未添加"
+      } else if (errorString.includes("Caller is not a staff")) {
+        errorMessage = "添加失败：您不是任何医院机构的员工"
+      } else if (errorString.includes("not a hospital")) {
+        errorMessage = "添加失败：您所属的机构不是医院类型"
+      } else if (errorString.includes("Internal JSON-RPC error")) {
+        // 处理MetaMask内部JSON-RPC错误
+        errorMessage =
+          "交易执行失败，可能是由于以下原因：\n1. 网络拥堵\n2. Gas费用设置不合理\n3. 钱包配置问题\n请稍后重试或刷新页面"
+      } else if (errorString.includes("INSUFFICIENT_FUNDS")) {
+        errorMessage = "钱包中的ETH余额不足以支付gas费用"
+      }
+
       setSnackbar({
         open: true,
         message: errorMessage,
@@ -315,15 +336,13 @@ const MedicalRecords: React.FC = observer(() => {
     setSelectedPet(null)
     setMedicalEvents([])
   }
-  console.log("pets", staffStatus)
-
   return (
     <Box className={styles.container}>
       <Box className={styles.header}>
         <Typography variant="h5">医疗记录</Typography>
         {staffStatus.isStaff && (
           <Typography variant="subtitle1" color="primary">
-            医院: {String(staffStatus.institutionName)}
+            医院: {staffStatus.institutionName}
           </Typography>
         )}
       </Box>
@@ -367,7 +386,6 @@ const MedicalRecords: React.FC = observer(() => {
                   <Card
                     onClick={() => handleSelectPet(pet)}
                     sx={{
-                      position: "relative",
                       cursor: "pointer",
                       transition: "transform 0.2s",
                       "&:hover": { transform: "translateY(-5px)" },
@@ -383,45 +401,15 @@ const MedicalRecords: React.FC = observer(() => {
                       height="140"
                       image={pet.image || "/images/pet-placeholder.png"}
                       alt={pet.name}
-                      sx={{
-                        height: "100%",
-                      }}
                     />
-                    <CardContent
-                      sx={{
-                        position: "absolute",
-                        bottom: "0",
-                        width: "100%",
-                        backgroundColor: "rgba(255, 255, 255, 0.8)",
-                        backdropFilter: "blur(10px)",
-                        borderTopLeftRadius: "16px",
-                        borderTopRightRadius: "16px",
-                        boxShadow: "0 -4px 10px rgba(0,0,0,0.1)",
-                        padding: "16px",
-                      }}
-                    >
-                      <Typography
-                        variant="h6"
-                        sx={{ fontWeight: "bold", color: "#333" }}
-                      >
-                        {pet.name}
+                    <CardContent>
+                      <Typography variant="h6">{pet.name}</Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        ID: {pet.id}
                       </Typography>
                       <Typography variant="body2" color="textSecondary">
-                        ID: {String(pet.id)}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: "#555" }}>
                         {pet.species} / {pet.breed} / {pet.gender} /{" "}
                         {String(pet.age)}岁
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: "#777",
-                          fontStyle: "italic",
-                          fontSize: "10px",
-                        }}
-                      >
-                        {String(pet.owner)}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -464,21 +452,21 @@ const MedicalRecords: React.FC = observer(() => {
           ) : selectedPet ? (
             medicalEvents.length > 0 ? (
               <List>
-                {medicalEvents.map((event: any, index) => (
+                {medicalEvents.map((event, index) => (
                   <Card key={index} sx={{ mb: 2 }}>
                     <CardContent>
                       <Typography variant="h6">
-                        诊断: {String(event[1])}
+                        诊断: {event.diagnosis}
                       </Typography>
                       <Typography variant="body1">
-                        治疗: {String(event[2])}
+                        治疗: {event.treatment}
                       </Typography>
                       <Divider sx={{ my: 1 }} />
                       <Typography variant="body2" color="textSecondary">
-                        医院: {Number(event[4])}
+                        医院: {event.hospital}
                       </Typography>
                       <Typography variant="body2" color="textSecondary">
-                        医生: {String(event[5])}
+                        医生: {event.doctor}
                       </Typography>
                       <Typography variant="body2" color="textSecondary">
                         时间: {formatDate(event.timestamp)}

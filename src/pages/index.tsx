@@ -9,18 +9,12 @@ import {
   Card,
   CardContent,
   Typography,
-  Button,
   Grid,
-  CardMedia,
   CardActionArea,
-  Divider,
-  Chip,
   Container,
   Paper,
   Fade,
   Zoom,
-  useTheme,
-  alpha,
 } from "@mui/material"
 import {
   PetsRounded,
@@ -66,8 +60,6 @@ const Home: NextPage = () => {
     router.push(path)
   }
 
-  const list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-
   return (
     <Container maxWidth="lg" className={styles.container}>
       {/* 欢迎区域 */}
@@ -110,7 +102,7 @@ const Home: NextPage = () => {
               fontSize: { xs: "1.1rem", md: "1.3rem" },
             }}
           >
-            您的数字宠物管理平台😃
+            您的宠物管理平台😃
           </Typography>
         </Fade>
       </Box>
