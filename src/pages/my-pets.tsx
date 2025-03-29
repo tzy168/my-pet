@@ -26,18 +26,8 @@ import {
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material"
 import styles from "../styles/MyPets.module.css"
 import { addToIpfs } from "../utils/ipfs"
-
-interface Pet {
-  id: number
-  name: string
-  species: string
-  breed: string
-  gender: string
-  age: number
-  description: string
-  image: string
-  displayImage?: string // 添加用于显示的图片URL
-}
+import { PetAdoptionStatus, PetHealthStatus, Pet } from "../stores/types"
+import { randomColor } from "../utils/RandomColor"
 
 const MyPets: React.FC = observer(() => {
   const { userInfo, getUserPets, addPet, updatePet, removePet, walletAddress } =
@@ -45,6 +35,19 @@ const MyPets: React.FC = observer(() => {
   const [pets, setPets] = useState<Pet[]>([])
   const [openDialog, setOpenDialog] = useState(false)
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null)
+  // id: number
+  // name: string
+  // species: string
+  // breed: string
+  // gender: string
+  // age: number
+  // description: string
+  // image: string
+  // healthStatus: PetHealthStatus
+  // adoptionStatus: PetAdoptionStatus
+  // owner: string
+  // medicalRecordIds: number[]
+  // lastUpdatedAt: number
   const [petForm, setPetForm] = useState({
     name: "",
     species: "",
@@ -53,6 +56,9 @@ const MyPets: React.FC = observer(() => {
     age: "",
     description: "",
     imageUrl: "",
+    healthStatus: PetHealthStatus.Healthy,
+    adoptionStatus: PetAdoptionStatus.NotAvailable, // 修改默认状态为NotAvailable
+    lastUpdatedAt: 0,
   })
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState("")
@@ -152,6 +158,9 @@ const MyPets: React.FC = observer(() => {
       age: "",
       description: "",
       imageUrl: "",
+      healthStatus: PetHealthStatus.Healthy,
+      adoptionStatus: PetAdoptionStatus.Adopted,
+      lastUpdatedAt: 0,
     })
     setImagePreview("")
     setOpenDialog(true)
@@ -167,6 +176,9 @@ const MyPets: React.FC = observer(() => {
       age: pet.age.toString(),
       description: pet.description,
       imageUrl: pet.image,
+      healthStatus: pet.healthStatus,
+      adoptionStatus: pet.adoptionStatus,
+      lastUpdatedAt: pet.lastUpdatedAt,
     })
     setImagePreview(pet.image)
     setOpenDialog(true)
@@ -203,30 +215,21 @@ const MyPets: React.FC = observer(() => {
       age: "",
       description: "",
       imageUrl: "",
+      healthStatus: PetHealthStatus.Healthy,
+      adoptionStatus: PetAdoptionStatus.Adopted,
+      lastUpdatedAt: 0,
     })
     setImagePreview("")
     setImageFile(null)
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: any) => {
     const { name, value } = e.target
     setPetForm((prev) => ({
       ...prev,
-      [name]: value,
+      [name as string]: value,
     }))
   }
-
-  // const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const file = e.target.files?.[0]
-  //   if (file) {
-  //     setImageFile(file)
-  //     const reader = new FileReader()
-  //     reader.onloadend = () => {
-  //       setImagePreview(reader.result as string)
-  //     }
-  //     reader.readAsDataURL(file)
-  //   }
-  // }
 
   // 提交表单
   const handleSubmit = async () => {
@@ -235,11 +238,12 @@ const MyPets: React.FC = observer(() => {
         !petForm.name ||
         !petForm.species ||
         !petForm.gender ||
-        !petForm.age
+        !petForm.age ||
+        !userInfo // 添加用户信息验证
       ) {
         setSnackbar({
           open: true,
-          message: "请填写必填字段",
+          message: !userInfo ? "请先完成用户注册" : "请填写必填字段",
           severity: "error",
         })
         return
@@ -248,7 +252,6 @@ const MyPets: React.FC = observer(() => {
       if (imageFile) {
         try {
           setIsUploading(true)
-          // 使用 addToIpfs 函数上传图片
           const uploadedUrl = await addToIpfs(imageFile)
           imageUrl = uploadedUrl!
           setSnackbar({
@@ -260,7 +263,7 @@ const MyPets: React.FC = observer(() => {
           console.log("error", error)
           setSnackbar({
             open: true,
-            message: "上传图片失败，请重试1",
+            message: "上传图片失败，请重试",
             severity: "error",
           })
           return
@@ -269,6 +272,15 @@ const MyPets: React.FC = observer(() => {
         }
       }
       if (selectedPet) {
+        // 验证是否为宠物主人
+        if (selectedPet.owner.toLowerCase() !== walletAddress.toLowerCase()) {
+          setSnackbar({
+            open: true,
+            message: "只有宠物主人可以修改宠物信息",
+            severity: "error",
+          })
+          return
+        }
         await updatePet(
           selectedPet.id,
           petForm.name,
@@ -277,7 +289,9 @@ const MyPets: React.FC = observer(() => {
           petForm.gender,
           parseInt(petForm.age),
           petForm.description,
-          imageUrl
+          imageUrl,
+          petForm.healthStatus,
+          petForm.adoptionStatus
         )
       } else {
         await addPet(
@@ -287,7 +301,9 @@ const MyPets: React.FC = observer(() => {
           petForm.gender,
           parseInt(petForm.age),
           petForm.description,
-          imageUrl
+          imageUrl,
+          petForm.healthStatus,
+          petForm.adoptionStatus
         )
       }
       await fetchPets()
@@ -297,11 +313,11 @@ const MyPets: React.FC = observer(() => {
         message: selectedPet ? "修改成功" : "添加成功",
         severity: "success",
       })
-    } catch (error) {
+    } catch (error: any) {
       console.log("error", error)
       setSnackbar({
         open: true,
-        message: "操作失败，请重试",
+        message: error.error || "操作失败，请重试",
         severity: "error",
       })
     }
@@ -328,14 +344,14 @@ const MyPets: React.FC = observer(() => {
                   position: "relative",
                   height: 320,
                   overflow: "hidden",
-                  borderRadius: "16px",
+                  borderRadius: "10px",
                   boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
                   transition: "transform 0.3s, box-shadow 0.3s",
                   background:
                     "linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)",
                   "&:hover": {
-                    transform: "translateY(-5px)",
-                    boxShadow: "0 12px 28px rgba(0,0,0,0.2)",
+                    // transform: "translateY(-5px)",
+                    boxShadow: "0 12px 28px rgba(0,0,0,0.3)",
                   },
                 }}
               >
@@ -347,7 +363,7 @@ const MyPets: React.FC = observer(() => {
                   sx={{
                     objectFit: "cover",
                     height: "100%",
-                    borderRadius: "16px",
+                    borderRadius: "10px",
                     filter: "brightness(0.9)",
                   }}
                 />
@@ -369,11 +385,11 @@ const MyPets: React.FC = observer(() => {
                     bottom: 0,
                     width: "100%",
                     padding: "16px !important",
-                    background: "rgba(255, 255, 255, 0.8)",
+                    background: "rgba(255, 255, 255, 0.6)",
                     backdropFilter: "blur(16px)",
                     borderTop: "1px solid rgba(255, 255, 255, 0.6)",
                     boxShadow: "0 -4px 10px rgba(0,0,0,0.05)",
-                    borderRadius: "0 0 16px 16px",
+                    borderRadius: "0 0 ",
                   }}
                 >
                   <Box
@@ -390,7 +406,7 @@ const MyPets: React.FC = observer(() => {
                       sx={{
                         color: "#3a3a3a",
                         fontSize: "1.2rem",
-                        textShadow: "0 1px 1px rgba(255,255,255,0.7)",
+                        textShadow: `0 1px 1px ${randomColor()}`,
                       }}
                     >
                       {pet.name}
@@ -450,10 +466,22 @@ const MyPets: React.FC = observer(() => {
                       },
                     }}
                   >
-                    <span className="pet-tag">
-                      <span style={{ color: "#888", fontSize: "0.7rem" }}>
+                    <span
+                      className="pet-tag"
+                      style={{
+                        backgroundColor: `${randomColor()}`,
+                        backdropFilter: "blur(16px)",
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "#888",
+                          fontSize: "0.7rem",
+                          backdropFilter: "blur(16px)",
+                        }}
+                      >
                         ID:
-                      </span>{" "}
+                      </span>
                       {String(pet.id)}
                     </span>
                     <span className="pet-tag">{pet.species}</span>
@@ -493,7 +521,13 @@ const MyPets: React.FC = observer(() => {
       >
         <DialogTitle>{selectedPet ? "编辑宠物信息" : "添加新宠物"}</DialogTitle>
         <DialogContent>
-          <Box sx={{ mt: 2 }}>
+          <Box
+            sx={{
+              mt: 2,
+              backgroundColor: "rgba(255, 255, 255, 0.5)",
+              backdropFilter: "blur(10px)",
+            }}
+          >
             <input
               accept="image/*"
               style={{ display: "none" }}
@@ -598,6 +632,36 @@ const MyPets: React.FC = observer(() => {
               value={petForm.description}
               onChange={handleChange}
             />
+            <FormControl fullWidth margin="normal">
+              <InputLabel>健康状态</InputLabel>
+              <Select
+                name="healthStatus"
+                value={petForm.healthStatus}
+                onChange={handleChange}
+                label="健康状态"
+              >
+                <MenuItem value={PetHealthStatus.Healthy}>健康</MenuItem>
+                <MenuItem value={PetHealthStatus.Sick}>生病</MenuItem>
+                <MenuItem value={PetHealthStatus.Recovering}>恢复中</MenuItem>
+                <MenuItem value={PetHealthStatus.Critical}>危重</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl fullWidth margin="normal">
+              <InputLabel>领养状态</InputLabel>
+              <Select
+                name="adoptionStatus"
+                value={petForm.adoptionStatus}
+                onChange={handleChange}
+                label="领养状态"
+              >
+                <MenuItem value={PetAdoptionStatus.Available}>可领养</MenuItem>
+                <MenuItem value={PetAdoptionStatus.Adopted}>已领养</MenuItem>
+                <MenuItem value={PetAdoptionStatus.Processing}>处理中</MenuItem>
+                <MenuItem value={PetAdoptionStatus.NotAvailable}>
+                  不可领养
+                </MenuItem>
+              </Select>
+            </FormControl>
           </Box>
         </DialogContent>
         <DialogActions>
@@ -619,10 +683,12 @@ const MyPets: React.FC = observer(() => {
         open={snackbar.open}
         autoHideDuration={3000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert
           onClose={() => setSnackbar({ ...snackbar, open: false })}
           severity={snackbar.severity}
+          variant="filled"
         >
           {snackbar.message}
         </Alert>

@@ -10,6 +10,9 @@ import {
   AdoptionEvent,
   MedicalEvent,
   RescueRequest,
+  UserType,
+  RoleType,
+  InstitutionType,
 } from "./types"
 import { createContext, useContext } from "react"
 
@@ -97,21 +100,33 @@ class GlobalStore {
     name: string,
     email: string,
     phone: string,
-    userType: string,
+    userType: UserType,
     orgId: number,
     avatar: string = ""
   ) => {
     if (!this.userContract || !this.contract) {
       return { success: false, error: "合约未初始化" }
     }
-
     try {
       this.setLoading(true)
+      // 验证机构用户的权限
+      // if (userType === UserType.Institutional) {
+      //   const isStaff = await this.contract.isStaffInInstitution(
+      //     orgId,
+      //     this.walletAddress
+      //   )
+      //   if (!isStaff) {
+      //     return {
+      //       success: false,
+      //       error: "您不是该机构的员工，无法设置为机构用户",
+      //     }
+      //   }
+      // }
       const tx = await this.userContract.setUserProfile(
         name,
         email,
         phone,
-        userType === "Personal" ? 0 : 1,
+        userType,
         orgId,
         avatar
       )
@@ -128,18 +143,136 @@ class GlobalStore {
     if (!this.userContract) {
       return null
     }
-
     try {
       this.setLoading(true)
       const userInfo = await this.userContract.getUserInfo(this.walletAddress)
       runInAction(() => {
-        this.userInfo = userInfo
+        this.userInfo = {
+          name: userInfo.name,
+          email: userInfo.email,
+          phone: userInfo.phone,
+          wallet: userInfo.wallet,
+          userType: userInfo.userType,
+          orgId: userInfo.orgId,
+          isProfileSet: userInfo.isProfileSet,
+          roleId: userInfo.roleId,
+          petIds: userInfo.petIds,
+          registeredAt: userInfo.registeredAt,
+          avatar: userInfo.avatar,
+        }
         this.isRegistered = true
       })
       return userInfo
     } catch (error) {
       console.error("获取用户信息失败:", error)
       return null
+    } finally {
+      this.setLoading(false)
+    }
+  }
+
+  // 机构相关方法
+  // / "宠物医院A",
+  // 0, // Hospital类型
+  // addr1.address,
+  // "北京市海淀区",
+  // "010-12345678"
+  addInstitution = async (
+    name: string,
+    institutionType: InstitutionType,
+    responsiblePerson: string,
+    address: string,
+    contactInfo: string
+  ) => {
+    if (!this.contract) {
+      return { success: false, error: "合约未初始化" }
+    }
+    try {
+      this.setLoading(true)
+      // 验证调用者是否为合约部署者
+      if (!this.isContractDeployer) {
+        return { success: false, error: "只有系统管理员可以添加机构" }
+      }
+      // 验证负责人地址是否已关联其他机构
+      const staffInstitution =
+        await this.contract.staffToInstitution(responsiblePerson)
+      if (staffInstitution > 0) {
+        return { success: false, error: "该地址已关联其他机构" }
+      }
+      const tx = await this.contract.addInstitution(
+        name,
+        institutionType,
+        responsiblePerson,
+        address,
+        contactInfo
+      )
+      await tx.wait()
+      return { success: true }
+    } catch (error: any) {
+      this.setLoading(false)
+      return this.handleContractError(error)
+    }
+  }
+
+  addStaffToInstitution = async (orgId: number, staff: string) => {
+    if (!this.contract) {
+      return { success: false, error: "合约未初始化" }
+    }
+
+    try {
+      this.setLoading(true)
+      const tx = await this.contract.addStaffToInstitution(orgId, staff)
+      await tx.wait()
+      return { success: true }
+    } catch (error: any) {
+      this.setLoading(false)
+      return this.handleContractError(error)
+    }
+  }
+
+  removeStaffFromInstitution = async (orgId: number, staff: string) => {
+    if (!this.contract) {
+      return { success: false, error: "合约未初始化" }
+    }
+
+    try {
+      this.setLoading(true)
+      const tx = await this.contract.removeStaffFromInstitution(orgId, staff)
+      await tx.wait()
+      return { success: true }
+    } catch (error: any) {
+      this.setLoading(false)
+      return this.handleContractError(error)
+    }
+  }
+
+  getInstitutionDetail = async (orgId: number) => {
+    if (!this.contract) {
+      return null
+    }
+    try {
+      this.setLoading(true)
+      const institution = await this.contract.getInstitutionDetail(orgId)
+      return institution
+    } catch (error) {
+      console.error("获取机构详情失败:", error)
+      return null
+    } finally {
+      this.setLoading(false)
+    }
+  }
+
+  getAllInstitutions = async () => {
+    if (!this.contract) {
+      return []
+    }
+    try {
+      this.setLoading(true)
+      const institutions = await this.contract.getAllInstitutions()
+      return institutions
+    } catch (error) {
+      console.error("获取所有机构失败:", error)
+      return []
     } finally {
       this.setLoading(false)
     }
@@ -157,12 +290,20 @@ class GlobalStore {
     healthStatus: PetHealthStatus,
     adoptionStatus: PetAdoptionStatus
   ) => {
-    if (!this.petContract) {
-      return { success: false, error: "宠物合约未初始化" }
+    if (!this.petContract || !this.userContract) {
+      return { success: false, error: "合约未初始化" }
     }
 
     try {
       this.setLoading(true)
+      // 验证用户是否已注册
+      const isRegistered = await this.userContract.checkUserIsRegistered(
+        this.walletAddress
+      )
+      if (!isRegistered) {
+        return { success: false, error: "请先完成用户注册" }
+      }
+
       const tx = await this.petContract.addPet(
         name,
         species,
@@ -226,12 +367,30 @@ class GlobalStore {
     petId: number,
     healthStatus: PetHealthStatus
   ) => {
-    if (!this.petContract) {
-      return { success: false, error: "宠物合约未初始化" }
+    if (!this.petContract || !this.contract) {
+      return { success: false, error: "合约未初始化" }
     }
 
     try {
       this.setLoading(true)
+      // 验证调用者是否为医院工作人员或宠物主人
+      const institutionId = await this.contract.staffToInstitution(
+        this.walletAddress
+      )
+      let isHospitalStaff = false
+      if (institutionId !== 0) {
+        const inst = await this.contract.getInstitutionDetail(institutionId)
+        isHospitalStaff = inst.institutionType === InstitutionType.Hospital
+      }
+
+      const pet = await this.petContract.getPetById(petId)
+      if (!isHospitalStaff && pet.owner !== this.walletAddress) {
+        return {
+          success: false,
+          error: "只有宠物主人或医院工作人员可以更新健康状态",
+        }
+      }
+
       const tx = await this.petContract.updatePetHealthStatus(
         petId,
         healthStatus
@@ -249,16 +408,51 @@ class GlobalStore {
     petId: number,
     adoptionStatus: PetAdoptionStatus
   ) => {
+    if (!this.petContract || !this.contract) {
+      return { success: false, error: "合约未初始化" }
+    }
+
+    try {
+      this.setLoading(true)
+      // 验证调用者是否为救助站工作人员或宠物主人
+      const institutionId = await this.contract.staffToInstitution(
+        this.walletAddress
+      )
+      let isShelterStaff = false
+      if (institutionId !== 0) {
+        const inst = await this.contract.getInstitutionDetail(institutionId)
+        isShelterStaff = inst.institutionType === InstitutionType.Shelter
+      }
+
+      const pet = await this.petContract.getPetById(petId)
+      if (!isShelterStaff && pet.owner !== this.walletAddress) {
+        return {
+          success: false,
+          error: "只有宠物主人或救助站工作人员可以更新领养状态",
+        }
+      }
+
+      const tx = await this.petContract.updatePetAdoptionStatus(
+        petId,
+        adoptionStatus
+      )
+      await tx.wait()
+      await this.getUserPets()
+      return { success: true }
+    } catch (error: any) {
+      this.setLoading(false)
+      return this.handleContractError(error)
+    }
+  }
+
+  removePet = async (petId: number) => {
     if (!this.petContract) {
       return { success: false, error: "宠物合约未初始化" }
     }
 
     try {
       this.setLoading(true)
-      const tx = await this.petContract.updatePetAdoptionStatus(
-        petId,
-        adoptionStatus
-      )
+      const tx = await this.petContract.removePet(petId)
       await tx.wait()
       await this.getUserPets()
       return { success: true }
@@ -282,6 +476,23 @@ class GlobalStore {
       return pets
     } catch (error) {
       console.error("获取用户宠物失败:", error)
+      return []
+    } finally {
+      this.setLoading(false)
+    }
+  }
+
+  getAllPets = async () => {
+    if (!this.petContract) {
+      return []
+    }
+
+    try {
+      this.setLoading(true)
+      const pets = await this.petContract.getAllPets()
+      return pets
+    } catch (error) {
+      console.error("获取所有宠物失败:", error)
       return []
     } finally {
       this.setLoading(false)
@@ -316,7 +527,6 @@ class GlobalStore {
     if (!this.petContract) {
       return { success: false, error: "宠物合约未初始化" }
     }
-
     try {
       this.setLoading(true)
       const tx = await this.petContract.addMedicalEvent(
@@ -448,24 +658,6 @@ class GlobalStore {
     } catch (error) {
       console.error("获取救助请求失败:", error)
       return []
-    } finally {
-      this.setLoading(false)
-    }
-  }
-
-  // 机构相关方法
-  getInstitutionDetail = async (orgId: number) => {
-    if (!this.contract) {
-      return null
-    }
-
-    try {
-      this.setLoading(true)
-      const institution = await this.contract.getInstitutionDetail(orgId)
-      return institution
-    } catch (error) {
-      console.error("获取机构详情失败:", error)
-      return null
     } finally {
       this.setLoading(false)
     }

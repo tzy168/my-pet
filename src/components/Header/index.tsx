@@ -44,6 +44,8 @@ const Header: React.FC = observer(() => {
     name: "",
     institutionType: 0,
     responsiblePerson: "",
+    address: "",
+    concatInfo: "",
   })
   const [error, setError] = useState<string | null>(null)
   const [snackbar, setSnackbar] = useState({
@@ -101,6 +103,8 @@ const Header: React.FC = observer(() => {
       name: "",
       institutionType: 0,
       responsiblePerson: "",
+      address: "",
+      concatInfo: "",
     })
     setError(null)
   }
@@ -115,7 +119,9 @@ const Header: React.FC = observer(() => {
       const success = await addInstitution(
         institutionData.name,
         institutionData.institutionType,
-        institutionData.responsiblePerson
+        institutionData.responsiblePerson,
+        institutionData.address,
+        institutionData.concatInfo
       )
       if (success) {
         setSnackbar({
@@ -175,12 +181,12 @@ const Header: React.FC = observer(() => {
               onClick={handleClick}
               style={{ cursor: "pointer" }}
             >
-              {isContractDeployer ? "系统管理员" : userInfo[1]}
+              {isContractDeployer ? "系统管理员" : userInfo.name}
               {!isContractDeployer && (
                 <span
-                  className={`${styles.userType} ${userInfo[5] === 0 ? styles.personal : styles.institutional}`}
+                  className={`${styles.userType} ${userInfo.userType === 0 ? styles.personal : styles.institutional}`}
                 >
-                  {userInfo[5] === "0n" ? `个人用户` : `机构用户`}
+                  {userInfo.userType === 0 ? "个人用户" : "机构用户"}
                 </span>
               )}
             </div>
@@ -259,6 +265,32 @@ const Header: React.FC = observer(() => {
               setInstitutionData({
                 ...institutionData,
                 responsiblePerson: e.target.value,
+              })
+            }
+          />
+          <TextField
+            autoFocus
+            margin="dense"
+            label="地址"
+            fullWidth
+            value={institutionData.address}
+            onChange={(e) =>
+              setInstitutionData({
+                ...institutionData,
+                address: e.target.value,
+              })
+            }
+          />
+          <TextField
+            autoFocus
+            margin="dense"
+            label="联系方式"
+            fullWidth
+            value={institutionData.concatInfo}
+            onChange={(e) =>
+              setInstitutionData({
+                ...institutionData,
+                concatInfo: e.target.value,
               })
             }
           />

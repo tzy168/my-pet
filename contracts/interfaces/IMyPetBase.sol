@@ -52,17 +52,17 @@ interface IMyPetBase {
 
   // 用户结构体
   struct User {
-    string name; // 姓名
-    string email; // 邮箱
-    string phone; //电话
-    address wallet; // 钱包地址
-    UserType userType; // 用户类型
-    uint orgId; // 关联机构ID
-    bool isProfileSet; // 是否注册信息
-    RoleType roleId; // 角色类型
-    uint[] petIds; // 拥有的宠物ID列表
-    uint registeredAt; // 注册时间
-    string avatar; // 用户头像
+    string name; // 姓名 0
+    string email; // 邮箱 1
+    string phone; //电话 2
+    address wallet; // 钱包地址 3
+    UserType userType; // 用户类型 4
+    uint orgId; // 关联机构ID 5
+    bool isProfileSet; // 是否注册信息 6
+    RoleType roleId; // 角色类型 7
+    uint[] petIds; // 拥有的宠物ID列表 8
+    uint registeredAt; // 注册时间 9
+    string avatar; // 用户头像 10
   }
 
   // 宠物结构体

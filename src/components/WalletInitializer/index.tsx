@@ -15,10 +15,9 @@ const WalletInitializer: React.FC<WalletInitializerProps> = ({ children }) => {
   const {
     initContract,
     setWalletAddress,
-    checkRegisteredAddress,
-    isRegistered,
     getUserInfo,
     contract,
+    userContract,
     setLoading,
   } = useGlobalStore()
 
@@ -52,10 +51,11 @@ const WalletInitializer: React.FC<WalletInitializerProps> = ({ children }) => {
 
   useEffect(() => {
     const checkUserStatus = async () => {
-      if (!contract || !isConnected) return
+      if (!userContract || !isConnected) return
 
       try {
-        const isUserRegistered = await checkRegisteredAddress()
+        const isUserRegistered =
+          await userContract.checkUserIsRegistered(address)
         if (isUserRegistered) {
           await getUserInfo()
         } else if (router.pathname !== "/profile") {
@@ -68,7 +68,7 @@ const WalletInitializer: React.FC<WalletInitializerProps> = ({ children }) => {
     }
 
     checkUserStatus()
-  }, [contract, isConnected, checkRegisteredAddress, getUserInfo, router])
+  }, [userContract, isConnected, address, getUserInfo, router])
 
   return <>{children}</>
 }

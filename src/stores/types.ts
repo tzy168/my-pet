@@ -32,16 +32,15 @@ export enum PetAdoptionStatus {
 
 // 用户信息接口
 export interface UserInfo {
-  id: number
   name: string
   email: string
   phone: string
   wallet: string
   userType: UserType
   orgId: number
-  orgName: string
-  orgType: InstitutionType
+  isProfileSet: boolean
   roleId: RoleType
+  petIds: number[]
   registeredAt: number
   avatar: string
 }

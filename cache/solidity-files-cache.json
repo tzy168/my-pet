@@ -78,8 +78,8 @@
       ]
     },
     "D:\\ABMS\\my-pet\\contracts\\interfaces\\IMyPetBase.sol": {
-      "lastModificationDate": 1743218087367,
-      "contentHash": "dc50d0051ae65d57963ba573ba4f485b",
+      "lastModificationDate": 1743236541856,
+      "contentHash": "2d20435092b58a662542842693573670",
       "sourceName": "contracts/interfaces/IMyPetBase.sol",
       "solcConfig": {
         "version": "0.8.19",

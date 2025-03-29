@@ -36,6 +36,7 @@ import {
 import { useRouter } from "next/router"
 import { ContractConfig } from "../config/contracts"
 import { ethers } from "ethers"
+import { InstitutionType } from "../stores/types"
 
 const Admin: React.FC = observer(() => {
   const router = useRouter()
@@ -48,6 +49,7 @@ const Admin: React.FC = observer(() => {
     userContract,
     addInstitution,
     setLoading,
+    getAllInstitutions,
   } = useGlobalStore()
   const [institutions, setInstitutions] = useState<any[]>([])
   const [selectedInstitution, setSelectedInstitution] = useState<any>(null)
@@ -57,6 +59,8 @@ const Admin: React.FC = observer(() => {
     name: "",
     institutionType: 0,
     responsiblePerson: "",
+    address: "",
+    concatInfo: "",
   })
   const [staffList, setStaffList] = useState<string[]>([])
   const [snackbar, setSnackbar] = useState({
@@ -73,17 +77,10 @@ const Admin: React.FC = observer(() => {
 
   const fetchInstitutions = async () => {
     try {
-      const result = await contract?.getAllInstitutions()
-      if (result && result.length >= 4) {
-        const [ids, names, types, wallets] = result
-        const formattedInstitutions = ids.map((id: any, index: number) => ({
-          id: Number(id),
-          name: names[index],
-          type: Number(types[index]),
-          wallet: wallets[index],
-        }))
-        setInstitutions(formattedInstitutions)
-      }
+      const result = await getAllInstitutions()
+      console.log("org", result)
+
+      setInstitutions(result)
     } catch (error: any) {
       console.error("获取机构列表失败:", error)
       setSnackbar({
@@ -123,6 +120,8 @@ const Admin: React.FC = observer(() => {
       name: "",
       institutionType: 0,
       responsiblePerson: "",
+      address: "",
+      concatInfo: "",
     })
     setOpenDialog(true)
   }
@@ -133,6 +132,8 @@ const Admin: React.FC = observer(() => {
       name: institution.name,
       institutionType: institution.type,
       responsiblePerson: institution.responsiblePerson,
+      address: institution.address,
+      concatInfo: "",
     })
     setSelectedInstitution(institution)
     setOpenDialog(true)
@@ -199,16 +200,13 @@ const Admin: React.FC = observer(() => {
           return
         }
         // 直接调用合约方法，不使用可选链，以便更好地捕获错误
-        await contract.addInstitution(
+        await addInstitution(
           institutionData.name.trim(),
           institutionData.institutionType,
-          institutionData.responsiblePerson.trim()
+          institutionData.responsiblePerson.trim(),
+          institutionData.address.trim(),
+          institutionData.concatInfo
         )
-        setSnackbar({
-          open: true,
-          message: "添加机构成功",
-          severity: "success",
-        })
       } else {
         // 更新机构
         await contract?.updateInstitution(
@@ -297,7 +295,10 @@ const Admin: React.FC = observer(() => {
     const matchName = searchName
       ? institution.name.toLowerCase().includes(searchName.toLowerCase())
       : true
-    const matchType = filterType !== "" ? institution.type === filterType : true
+    const matchType =
+      filterType !== ""
+        ? Number(institution.institutionType) === filterType
+        : true
     return matchId && matchName && matchType
   })
 
@@ -360,14 +361,16 @@ const Admin: React.FC = observer(() => {
               <TableCell sx={{ width: "10%" }}>ID</TableCell>
               <TableCell sx={{ width: "10%" }}>名称</TableCell>
               <TableCell sx={{ width: "10%" }}>类型</TableCell>
-              <TableCell sx={{ width: "60%" }}>负责人钱包地址</TableCell>
-              <TableCell sx={{ width: "10%" }}>操作</TableCell>
+              <TableCell sx={{ width: "50%" }}>负责人钱包地址</TableCell>
+              <TableCell sx={{ width: "20%" }}>操作</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {filteredInstitutions.map((institution) => (
               <TableRow key={institution.id}>
-                <TableCell sx={{ width: "10%" }}>{institution.id}</TableCell>
+                <TableCell sx={{ width: "10%" }}>
+                  {Number(institution.id)}
+                </TableCell>
                 <TableCell
                   sx={{
                     width: "10%",
@@ -379,19 +382,22 @@ const Admin: React.FC = observer(() => {
                   {institution.name}
                 </TableCell>
                 <TableCell sx={{ width: "10%" }}>
-                  {institution.type === 0 ? "宠物医院" : "宠物收容所"}
+                  {Number(institution.institutionType) ===
+                  InstitutionType.Hospital
+                    ? "宠物医院"
+                    : "宠物收容所"}
                 </TableCell>
                 <TableCell
                   sx={{
-                    width: "60%",
+                    width: "40%",
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                   }}
                 >
-                  {institution.wallet}
+                  {institution.responsiblePerson}
                 </TableCell>
-                <TableCell sx={{ width: "10%" }}>
+                <TableCell sx={{ width: "20%" }}>
                   {isContractDeployer && (
                     <IconButton
                       onClick={() => handleEditInstitution(institution)}
@@ -462,6 +468,30 @@ const Admin: React.FC = observer(() => {
               setInstitutionData({
                 ...institutionData,
                 responsiblePerson: e.target.value,
+              })
+            }
+          />
+          <TextField
+            margin="dense"
+            label="地址"
+            fullWidth
+            value={institutionData.address}
+            onChange={(e) =>
+              setInstitutionData({
+                ...institutionData,
+                address: e.target.value,
+              })
+            }
+          />
+          <TextField
+            margin="dense"
+            label="联系方式"
+            fullWidth
+            value={institutionData.concatInfo}
+            onChange={(e) =>
+              setInstitutionData({
+                ...institutionData,
+                concatInfo: e.target.value,
               })
             }
           />

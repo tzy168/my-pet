@@ -5,15 +5,15 @@ import InstitutionManagerArtifact from "../../artifacts/contracts/InstitutionMan
 export const ContractConfig = {
   contractDeployerAddress: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
   PetManager: {
-    address: '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707',
+    address: '0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0',
     abi: PetManagerArtifact.abi,
   },
   UserManager: {
-    address: '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9',
+    address: '0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e',
     abi: UserManagerArtifact.abi,
   },
   InstitutionManager: {
-    address: '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9',
+    address: '0x610178dA211FEF7D417bC0e6FeD39F05609AD788',
     abi: InstitutionManagerArtifact.abi,
   },
 }
