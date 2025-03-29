@@ -102,7 +102,7 @@ const Home: NextPage = () => {
               fontSize: { xs: "1.1rem", md: "1.3rem" },
             }}
           >
-            您的宠物管理平台😃
+            您的宠物管理平台🥳
           </Typography>
         </Fade>
       </Box>

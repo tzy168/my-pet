@@ -5,6 +5,9 @@
 /.pnp
 .pnp.js
 
+# build output
+/artifacts
+
 # testing
 /coverage
 
@@ -36,3 +39,4 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
