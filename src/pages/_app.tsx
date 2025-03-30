@@ -12,9 +12,9 @@ import WalletInitializer from "../components/WalletInitializer"
 import Spin from "../components/Spin"
 import { useGlobalStore } from "../stores/global"
 import { useEffect } from "react"
+import Head from "next/head"
 
 const client = new QueryClient()
-
 function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter()
   const { setLoading } = useGlobalStore()
@@ -36,10 +36,18 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={client}>
-        <RainbowKitProvider>
+        <RainbowKitProvider
+          appInfo={{
+            appName: "Rainbowkit Demo",
+          }}
+        >
           <WalletInitializer>
             <Spin />
             <Header />
+            <Head>
+              <title>My Pet</title>
+              <link rel="icon" href="/favicon.ico" />
+            </Head>
             <div
               style={{
                 width: "100%",
