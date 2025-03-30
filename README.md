@@ -1,3 +1,17 @@
+# 基于区块链的宠物管理系统
+
+## 项目概述
+
+本项目是一个基于区块链技术的宠物管理系统，旨在利用区块链的去中心化、不可篡改等特性，构建一个透明、安全、可信的宠物生命周期管理平台。系统支持宠物信息登记、健康状态追踪、领养流程管理、医疗记录存储等功能，并通过智能合约实现宠物所有权的安全转移和验证。
+
+主要功能包括：
+- 宠物信息管理：登记、更新和查询宠物基本信息
+- 用户身份认证：基于区块链钱包的用户注册和权限管理
+- 机构管理：宠物医院和救助站的注册与管理
+- 宠物领养市场：发布、申请和处理领养请求
+- 医疗记录管理：记录和查询宠物医疗历史
+- 救助请求处理：发布和响应宠物救助需求
+
 ## Getting Started
 
 ```bash
@@ -7,6 +21,15 @@ npm run compile
 npm run ipfs
 npm run dev
 ```
+
+## 技术架构
+
+本系统采用前后端分离架构，结合区块链技术实现：
+
+- **前端技术栈**：Next.js + React + TypeScript + MobX
+- **区块链技术**：Ethereum + Solidity + Hardhat
+- **存储方案**：IPFS分布式存储（用于宠物图片等非结构化数据）
+- **钱包集成**：RainbowKit + wagmi（用于以太坊钱包连接和交互）
 
 ## 核心模块说明
 
@@ -23,6 +46,11 @@ npm run dev
   - 钱包地址注册/认证
   - 用户权限控制
   - 机构关联管理
+
+- `InstitutionManager.sol` 机构管理
+  - 医院/救助站注册与认证
+  - 机构人员管理
+  - 机构资质验证
 
 - `interfaces/` 合约接口
   - 标准化交互方法定义
@@ -53,35 +81,68 @@ npm run dev
   - 交易状态提示
   - 路由切换过渡
 
-Account #0: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 (10000 ETH)
+## 创新点
+
+1. **区块链赋能宠物管理**：利用区块链不可篡改特性，确保宠物信息和所有权记录的真实性和可追溯性
+2. **NFT化宠物身份**：将宠物作为NFT进行管理，实现宠物数字身份的唯一性和所有权的安全转移
+3. **多角色协作机制**：通过智能合约实现个人用户、医院和救助站等多方协作的权限管理和流程控制
+4. **IPFS分布式存储**：采用IPFS存储宠物图片等数据，提高系统的去中心化程度和数据持久性
+
+## 完善建议
+
+### 文档完善
+1. **系统架构图**：添加系统整体架构图和模块关系图，更直观地展示系统设计
+2. **用户手册**：编写详细的用户操作指南，包括各类角色的功能使用说明
+3. **API文档**：完善智能合约接口文档，便于开发者理解和二次开发
+
+### 功能增强
+1. **宠物芯片集成**：考虑与实体宠物芯片技术集成，实现线上线下身份统一
+2. **数据分析功能**：添加宠物健康数据分析和可视化功能，为用户和机构提供决策支持
+3. **多链支持**：考虑支持多条区块链，降低Gas费用和提高交易速度
+4. **社区功能**：增加宠物社区模块，促进用户交流和知识分享
+
+### 技术优化
+1. **合约安全审计**：进行专业的智能合约安全审计，防止潜在漏洞
+2. **前端性能优化**：优化前端加载速度和交互体验
+3. **测试覆盖率提升**：增加单元测试和集成测试，提高代码质量
+4. **Gas优化**：优化智能合约代码，降低交易Gas消耗
+
+### 部署与运维
+1. **部署文档**：编写详细的部署文档，包括测试网和主网部署步骤
+2. **监控系统**：添加系统监控和告警机制，及时发现和解决问题
+3. **升级机制**：设计合约升级机制，便于后续功能迭代和Bug修复
+
+## 测试账号
+
+Account #0: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 (10000 ETH)  
 Private Key: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 
-Account #1: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 (10000 ETH)
+Account #1: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 (10000 ETH)  
 Private Key: 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
 
-Account #2: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC (10000 ETH)
+Account #2: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC (10000 ETH)  
 Private Key: 0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
 
-Account #3: 0x90F79bf6EB2c4f870365E785982E1f101E93b906 (10000 ETH)
+Account #3: 0x90F79bf6EB2c4f870365E785982E1f101E93b906 (10000 ETH)  
 Private Key: 0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6
 
-Account #4: 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65 (10000 ETH)
+Account #4: 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65 (10000 ETH)  
 Private Key: 0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a
 
-Account #5: 0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc (10000 ETH)
+Account #5: 0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc (10000 ETH)  
 Private Key: 0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba
 
-Account #6: 0x976EA74026E726554dB657fA54763abd0C3a0aa9 (10000 ETH)
+Account #6: 0x976EA74026E726554dB657fA54763abd0C3a0aa9 (10000 ETH)  
 Private Key: 0x92db14e403b83dfe3df233f83dfa3a0d7096f21ca9b0d6d6b8d88b2b4ec1564e
 
-Account #7: 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955 (10000 ETH)
+Account #7: 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955 (10000 ETH)  
 Private Key: 0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356
 
-Account #8: 0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f (10000 ETH)
+Account #8: 0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f (10000 ETH)  
 Private Key: 0xdbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b97
 
-Account #9: 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720 (10000 ETH)
+Account #9: 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720 (10000 ETH)  
 Private Key: 0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6
 
-Account #10: 0xBcd4042DE499D14e55001CcbB24a551F3b954096 (10000 ETH)
+Account #10: 0xBcd4042DE499D14e55001CcbB24a551F3b954096 (10000 ETH)  
 Private Key: 0xf214f2b2cd398c806f84e317254e0f0b801d0643303237d97a22a48e01628897

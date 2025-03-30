@@ -61,6 +61,7 @@ const RescueRequests: React.FC = observer(() => {
     getUserRescueRequests,
     getAllRescueRequests,
     addRescueRequest,
+    updateRescueRequestStatus,
     contract,
   } = useGlobalStore()
   const [rescueRequests, setRescueRequests] = useState<RescueRequest[]>([])
@@ -84,6 +85,7 @@ const RescueRequests: React.FC = observer(() => {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState("")
   const [activeTab, setActiveTab] = useState(0)
+  const [statusTab, setStatusTab] = useState(0) // 添加状态筛选标签页
   const [isShelterStaff, setIsShelterStaff] = useState(false)
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
@@ -98,7 +100,7 @@ const RescueRequests: React.FC = observer(() => {
     if (userInfo) {
       fetchRescueRequests()
     }
-  }, [userInfo, activeTab])
+  }, [userInfo, activeTab, statusTab])
 
   useEffect(() => {
     // 检查用户是否为救助站工作人员
@@ -141,15 +143,29 @@ const RescueRequests: React.FC = observer(() => {
     try {
       setIsLoading(true)
       // 根据当前标签页和用户角色获取救助请求数据
+      let requests: RescueRequest[] = []
+      
       if (activeTab === 0 || !isShelterStaff) {
         // 我的救助请求标签页 - 获取用户自己的救助请求
-        const requests = await getUserRescueRequests()
-        setRescueRequests(requests)
+        requests = await getUserRescueRequests()
       } else if (activeTab === 1 && isShelterStaff) {
         // 所有救助请求标签页 - 只有救助站工作人员可以查看所有请求
-        const requests = await getAllRescueRequests()
-        setRescueRequests(requests)
+        requests = await getAllRescueRequests()
       }
+      
+      // 根据状态标签筛选请求
+      if (statusTab > 0) {
+        const statusMap = {
+          1: "pending",      // 待处理
+          2: "in_progress", // 进行中
+          3: "completed",   // 已完成
+          4: "cancelled"    // 已取消
+        }
+        const selectedStatus = statusMap[statusTab as keyof typeof statusMap]
+        requests = requests.filter(req => req.status.toLowerCase() === selectedStatus)
+      }
+      
+      setRescueRequests(requests)
     } catch (error) {
       console.error("获取救助请求失败:", error)
       setSnackbar({
@@ -294,8 +310,8 @@ const RescueRequests: React.FC = observer(() => {
     if (!selectedRequest) return
 
     try {
-      // 使用全局store中的updateRescueRequestStatus方法，它内部已经处理了loading状态
-      await useGlobalStore().updateRescueRequestStatus(
+      // 使用组件顶层已获取的全局store实例，而不是在函数内部调用useGlobalStore
+      await updateRescueRequestStatus(
         selectedRequest.id,
         updateForm.status,
         updateForm.responderOrgId
@@ -337,6 +353,21 @@ const RescueRequests: React.FC = observer(() => {
         return "default"
     }
   }
+  
+  const getStatusLabel = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "pending":
+        return "待处理"
+      case "in_progress":
+        return "进行中"
+      case "completed":
+        return "已完成"
+      case "cancelled":
+        return "已取消"
+      default:
+        return status
+    }
+  }
 
   const getUrgencyLabel = (level: number) => {
     switch (level) {
@@ -376,8 +407,8 @@ const RescueRequests: React.FC = observer(() => {
         </Button>
       </Box>
 
-      {/* 标签页 */}
-      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+      {/* 主标签页 - 我的/所有请求 */}
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
         <Tabs
           value={activeTab}
           onChange={(_, newValue) => setActiveTab(newValue)}
@@ -386,6 +417,24 @@ const RescueRequests: React.FC = observer(() => {
         >
           <Tab label="我的救助请求" />
           {isShelterStaff && <Tab label="所有救助请求" />}
+        </Tabs>
+      </Box>
+      
+      {/* 状态筛选标签页 */}
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+        <Tabs
+          value={statusTab}
+          onChange={(_, newValue) => setStatusTab(newValue)}
+          variant={isMobile ? "scrollable" : "standard"}
+          scrollButtons={isMobile ? "auto" : false}
+          centered={!isMobile}
+          sx={{ minHeight: "36px" }}
+        >
+          <Tab label="全部" />
+          <Tab label="待处理" />
+          <Tab label="进行中" />
+          <Tab label="已完成" />
+          <Tab label="已取消" />
         </Tabs>
       </Box>
 
@@ -428,7 +477,7 @@ const RescueRequests: React.FC = observer(() => {
                           icon={<UrgentIcon />}
                         />
                         <Chip
-                          label={request.status}
+                          label={getStatusLabel(request.status)}
                           color={
                             getStatusColor(request.status) as
                               | "warning"
@@ -486,7 +535,7 @@ const RescueRequests: React.FC = observer(() => {
                     <Divider sx={{ my: 1 }} />
 
                     <Typography variant="body2" color="text.secondary">
-                      响应机构ID: {request.responderOrgId || "暂无"}
+                      响应机构ID: {Number(request.responderOrgId) || "暂无"}
                     </Typography>
 
                     <Typography variant="body2" color="text.secondary">
