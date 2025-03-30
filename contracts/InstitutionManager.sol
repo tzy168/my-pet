@@ -57,9 +57,9 @@ contract InstitutionManager is IInstitutionManager {
   // 更新机构信息
   function updateInstitution(
     uint _orgId,
-    string memory _name,
-    string memory _orgAddress,
-    string memory _contactInfo
+    string memory _name, // 名称
+    string memory _orgAddress, // 机构地址
+    string memory _contactInfo //联系方式
   ) external override {
     require(_isInstitutionExists(_orgId), "Institution does not exist");
     Institution storage inst = institutions[_orgId - 1];

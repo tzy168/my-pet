@@ -125,7 +125,7 @@ const Admin: React.FC = observer(() => {
     setDialogMode("edit")
     setInstitutionData({
       name: institution.name,
-      institutionType: institution.institutionType,
+      institutionType: Number(institution.institutionType),
       responsiblePerson: institution.responsiblePerson,
       address: institution.orgAddress,
       concatInfo: institution.contactInfo,
@@ -194,10 +194,10 @@ const Admin: React.FC = observer(() => {
         )
       } else {
         await contract?.updateInstitution(
-          selectedInstitution.id,
+          Number(selectedInstitution.id),
           institutionData.name.trim(),
-          institutionData.institutionType,
-          institutionData.responsiblePerson.trim()
+          institutionData.address.trim(),
+          institutionData.concatInfo.trim()
         )
         setSnackbar({
           open: true,
@@ -384,6 +384,7 @@ const Admin: React.FC = observer(() => {
             <Select
               value={Number(institutionData.institutionType)}
               label="机构类型"
+              disabled={dialogMode === "edit"}
               onChange={(e) =>
                 setInstitutionData({
                   ...institutionData,
@@ -395,6 +396,7 @@ const Admin: React.FC = observer(() => {
               <MenuItem value={1}>宠物收容所</MenuItem>
             </Select>
           </FormControl>
+
           <TextField
             margin="dense"
             label="负责人钱包地址"
@@ -406,7 +408,9 @@ const Admin: React.FC = observer(() => {
                 responsiblePerson: e.target.value,
               })
             }
+            disabled={dialogMode === "edit"}
           />
+
           <TextField
             margin="dense"
             label="地址"

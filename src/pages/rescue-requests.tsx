@@ -42,6 +42,7 @@ import {
 import styles from "../styles/MyPets.module.css"
 import { addToIpfs } from "../utils/ipfs"
 import { RescueRequest, RoleType } from "../stores/types"
+// import { set } from "mobx"
 
 // interface RescueRequest {
 //   id: number
@@ -108,7 +109,7 @@ const RescueRequests: React.FC = observer(() => {
       if (!contract || !walletAddress) return
       try {
         // 检查用户角色
-        if (userInfo?.roleId === RoleType.Shelter) {
+        if (Number(userInfo?.roleId) === RoleType.Shelter) {
           setIsShelterStaff(true)
           return
         }
@@ -139,7 +140,6 @@ const RescueRequests: React.FC = observer(() => {
       })
       return
     }
-
     try {
       setIsLoading(true)
       // 根据当前标签页和用户角色获取救助请求数据
@@ -164,7 +164,6 @@ const RescueRequests: React.FC = observer(() => {
           (req) => req.status.toLowerCase() === selectedStatus
         )
       }
-
       setRescueRequests(requests)
     } catch (error) {
       console.error("获取救助请求失败:", error)
@@ -245,7 +244,6 @@ const RescueRequests: React.FC = observer(() => {
       })
       return
     }
-
     try {
       setIsLoading(true)
 
@@ -308,14 +306,22 @@ const RescueRequests: React.FC = observer(() => {
 
   const handleUpdateSubmit = async () => {
     if (!selectedRequest) return
-
     try {
       // 使用组件顶层已获取的全局store实例，而不是在函数内部调用useGlobalStore
+      if (Number(userInfo?.orgId) === 0 || Number(userInfo?.orgId) !== 3) {
+        setSnackbar({
+          open: true,
+          message: "无权限",
+          severity: "error",
+        })
+        return
+      }
       await updateRescueRequestStatus(
         selectedRequest.id,
         updateForm.status,
-        updateForm.responderOrgId
+        Number(userInfo?.orgId)
       )
+      console.log(111)
 
       // 刷新救助请求列表
       await fetchRescueRequests()
@@ -749,7 +755,7 @@ const RescueRequests: React.FC = observer(() => {
                 <MenuItem value="cancelled">已取消</MenuItem>
               </Select>
             </FormControl>
-            <TextField
+            {/* <TextField
               margin="dense"
               name="responderOrgId"
               label="响应机构ID"
@@ -760,7 +766,7 @@ const RescueRequests: React.FC = observer(() => {
               InputProps={{
                 style: { fontSize: isMobile ? "14px" : "16px" },
               }}
-            />
+            /> */}
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: isMobile ? 2 : 1 }}>

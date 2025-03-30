@@ -690,15 +690,16 @@ class GlobalStore {
     if (!this.petContract) {
       return { success: false, error: "宠物合约未初始化" }
     }
-
     try {
       this.setLoading(true)
+      console.log("res")
+
       const tx = await this.petContract.updateRescueRequestStatus(
         requestId,
         status,
         responderOrgId
       )
-      await tx.wait()
+      const res = await tx.wait()
       await this.getUserRescueRequests()
       return { success: true }
     } catch (error: any) {
