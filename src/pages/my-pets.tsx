@@ -325,7 +325,7 @@ const MyPets: React.FC = observer(() => {
   return (
     <Box className={styles.container}>
       <Box className={styles.header}>
-        <Typography variant="h5">我的宠物</Typography>
+        <Typography variant="h5">我的宠物🐾</Typography>
         <Button variant="contained" onClick={handleAddPet}>
           添加宠物
         </Button>

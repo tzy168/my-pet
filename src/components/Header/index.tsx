@@ -146,7 +146,7 @@ const Header: React.FC = observer(() => {
             router.push("/")
           }}
         >
-          MyPet🐾🐾
+          MyPet
         </div>
         {<Navigation />}
       </div>

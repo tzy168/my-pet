@@ -222,10 +222,10 @@ const MedicalRecords: React.FC = observer(() => {
   return (
     <Box className={styles.container}>
       <Box className={styles.header}>
-        <Typography variant="h5">医疗记录</Typography>
+        <Typography variant="h5">医疗记录⚕️</Typography>
         {Number(userInfo?.roleId) === 2 && (
           <Typography variant="subtitle1" color="primary">
-            所属医院: {staffStatus.institutionName}(ID:
+            所属医院:🏥 {staffStatus.institutionName}(ID:
             {staffStatus.institutionId})
           </Typography>
         )}

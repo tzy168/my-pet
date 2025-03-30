@@ -257,7 +257,7 @@ const Admin: React.FC = observer(() => {
         </Button>
       </Box>
       <Typography variant="h6" sx={{ mb: 2 }}>
-        机构管理
+        机构管理🏛️
       </Typography>
       <Box sx={{ mb: 3, display: "flex", gap: 2 }}>
         <TextField

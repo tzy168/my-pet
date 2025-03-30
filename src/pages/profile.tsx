@@ -353,7 +353,7 @@ const Profile: React.FC = observer(() => {
                 </Typography>
               )}
             </Box>
-            {Number(formData.userType) === UserType.Institutional && (
+            {Number(formData.userType) !== UserType.Personal && (
               <Box className={styles.infoItem}>
                 <Typography variant="subtitle1">所属机构：</Typography>
                 {isEditing ? (

@@ -25,25 +25,44 @@ import {
   ListItem,
   ListItemText,
   Chip,
+  CardMedia,
+  Stack,
+  Rating,
+  Tabs,
+  Tab,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material"
 import {
   Pets as PetsIcon,
   LocationOn as LocationIcon,
+  Image as ImageIcon,
+  PriorityHigh as UrgentIcon,
 } from "@mui/icons-material"
 import styles from "../styles/MyPets.module.css"
+import { addToIpfs } from "../utils/ipfs"
+import { RescueRequest, RoleType } from "../stores/types"
 
-interface RescueRequest {
-  id: number
-  location: string
-  description: string
-  status: string
-  responderOrgId: number
-  timestamp: number
-}
+// interface RescueRequest {
+//   id: number
+//   location: string
+//   description: string
+//   status: string
+//   responderOrgId: number
+//   timestamp: number
+// }
 
 const RescueRequests: React.FC = observer(() => {
-  const { userInfo, petContract, walletAddress, isContractDeployer } =
-    useGlobalStore()
+  const {
+    userInfo,
+    petContract,
+    walletAddress,
+    isContractDeployer,
+    getUserRescueRequests,
+    getAllRescueRequests,
+    addRescueRequest,
+    contract,
+  } = useGlobalStore()
   const [rescueRequests, setRescueRequests] = useState<RescueRequest[]>([])
   const [openDialog, setOpenDialog] = useState(false)
   const [openUpdateDialog, setOpenUpdateDialog] = useState(false)
@@ -53,16 +72,25 @@ const RescueRequests: React.FC = observer(() => {
   const [rescueForm, setRescueForm] = useState({
     location: "",
     description: "",
+    images: [] as string[],
+    urgencyLevel: 1,
   })
   const [updateForm, setUpdateForm] = useState({
     status: "",
     responderOrgId: 0,
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState("")
+  const [activeTab, setActiveTab] = useState(0)
+  const [isShelterStaff, setIsShelterStaff] = useState(false)
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
-    severity: "success" as "success" | "error",
+    severity: "success" as "success" | "error" | "info" | "warning",
   })
 
   useEffect(() => {
@@ -70,7 +98,35 @@ const RescueRequests: React.FC = observer(() => {
     if (userInfo) {
       fetchRescueRequests()
     }
-  }, [userInfo])
+  }, [userInfo, activeTab])
+
+  useEffect(() => {
+    // 检查用户是否为救助站工作人员
+    const checkShelterStaffStatus = async () => {
+      if (!contract || !walletAddress) return
+      try {
+        // 检查用户角色
+        if (userInfo?.roleId === RoleType.Shelter) {
+          setIsShelterStaff(true)
+          return
+        }
+
+        // 检查用户是否为救助站工作人员
+        const institutionId = await contract.staffToInstitution(walletAddress)
+        if (institutionId > 0) {
+          const institution = await contract.getInstitutionDetail(institutionId)
+          if (institution && Number(institution.institutionType) === 1) {
+            // 1 = Shelter
+            setIsShelterStaff(true)
+          }
+        }
+      } catch (error) {
+        console.error("检查救助站工作人员状态失败:", error)
+      }
+    }
+
+    checkShelterStaffStatus()
+  }, [contract, walletAddress, userInfo])
 
   const fetchRescueRequests = async () => {
     if (!petContract) {
@@ -83,17 +139,17 @@ const RescueRequests: React.FC = observer(() => {
     }
 
     try {
-      // 使用全局loading状态，不再使用局部loading
-      // 从合约获取救助请求数据
-      const requests = []
-      const requestCount = await petContract.rescueRequestIdCounter()
-
-      for (let i = 1; i < requestCount; i++) {
-        const request = await petContract.rescueRequests(i - 1)
-        requests.push(request)
+      setIsLoading(true)
+      // 根据当前标签页和用户角色获取救助请求数据
+      if (activeTab === 0 || !isShelterStaff) {
+        // 我的救助请求标签页 - 获取用户自己的救助请求
+        const requests = await getUserRescueRequests()
+        setRescueRequests(requests)
+      } else if (activeTab === 1 && isShelterStaff) {
+        // 所有救助请求标签页 - 只有救助站工作人员可以查看所有请求
+        const requests = await getAllRescueRequests()
+        setRescueRequests(requests)
       }
-
-      setRescueRequests(requests)
     } catch (error) {
       console.error("获取救助请求失败:", error)
       setSnackbar({
@@ -101,6 +157,8 @@ const RescueRequests: React.FC = observer(() => {
         message: "获取救助请求失败",
         severity: "error",
       })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -108,7 +166,11 @@ const RescueRequests: React.FC = observer(() => {
     setRescueForm({
       location: "",
       description: "",
+      images: [],
+      urgencyLevel: 1,
     })
+    setImagePreview("")
+    setImageFile(null)
     setOpenDialog(true)
   }
 
@@ -123,6 +185,8 @@ const RescueRequests: React.FC = observer(() => {
 
   const handleCloseDialog = () => {
     setOpenDialog(false)
+    setImagePreview("")
+    setImageFile(null)
   }
 
   const handleCloseUpdateDialog = () => {
@@ -135,6 +199,13 @@ const RescueRequests: React.FC = observer(() => {
     setRescueForm((prev) => ({
       ...prev,
       [name]: value,
+    }))
+  }
+
+  const handleUrgencyChange = (newValue: number | null) => {
+    setRescueForm((prev) => ({
+      ...prev,
+      urgencyLevel: newValue || 1,
     }))
   }
 
@@ -158,36 +229,64 @@ const RescueRequests: React.FC = observer(() => {
       })
       return
     }
-    if (!petContract) {
-      setSnackbar({
-        open: true,
-        message: "合约未初始化，请刷新页面或重新连接钱包",
-        severity: "error",
-      })
-      return
-    }
+
     try {
-      // 使用全局store中的addRescueRequest方法，它内部已经处理了loading状态
-      await useGlobalStore().addRescueRequest(
+      setIsLoading(true)
+
+      // 处理图片上传
+      let imageUrls = [...rescueForm.images]
+      if (imageFile) {
+        try {
+          setIsUploading(true)
+          const uploadedUrl = await addToIpfs(imageFile)
+          if (uploadedUrl) {
+            imageUrls.push(uploadedUrl)
+          }
+        } catch (error) {
+          console.error("上传图片失败:", error)
+          setSnackbar({
+            open: true,
+            message: "上传图片失败，但您仍可以提交救助请求",
+            severity: "warning",
+          })
+        } finally {
+          setIsUploading(false)
+        }
+      }
+
+      // 使用全局store中的addRescueRequest方法
+      const result = await addRescueRequest(
         rescueForm.location,
-        rescueForm.description
+        rescueForm.description,
+        imageUrls,
+        rescueForm.urgencyLevel
       )
 
-      // 刷新救助请求列表
-      await fetchRescueRequests()
-      handleCloseDialog()
-      setSnackbar({
-        open: true,
-        message: "添加救助请求成功",
-        severity: "success",
-      })
-    } catch (error) {
+      if (result && result.success) {
+        // 刷新救助请求列表
+        await fetchRescueRequests()
+        handleCloseDialog()
+        setSnackbar({
+          open: true,
+          message: "添加救助请求成功",
+          severity: "success",
+        })
+      } else {
+        setSnackbar({
+          open: true,
+          message: "添加救助请求失败",
+          severity: "error",
+        })
+      }
+    } catch (error: any) {
       console.error("添加救助请求失败:", error)
       setSnackbar({
         open: true,
-        message: "添加救助请求失败",
+        message: error.message || "添加救助请求失败",
         severity: "error",
       })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -221,7 +320,7 @@ const RescueRequests: React.FC = observer(() => {
   }
 
   const formatDate = (timestamp: number) => {
-    return new Date(Number(timestamp) * 1000).toLocaleString()
+    return new Date(Number(timestamp) * 1000).toLocaleString("zh-CN")
   }
 
   const getStatusColor = (status: string) => {
@@ -239,17 +338,55 @@ const RescueRequests: React.FC = observer(() => {
     }
   }
 
+  const getUrgencyLabel = (level: number) => {
+    switch (level) {
+      case 3:
+        return "紧急"
+      case 2:
+        return "中等"
+      case 1:
+      default:
+        return "普通"
+    }
+  }
+
+  const getUrgencyColor = (level: number) => {
+    switch (level) {
+      case 3:
+        return "error"
+      case 2:
+        return "warning"
+      case 1:
+      default:
+        return "info"
+    }
+  }
+
   return (
     <Box className={styles.container}>
       <Box className={styles.header}>
-        <Typography variant="h5">动物救助请求</Typography>
+        <Typography variant="h5">动物救助请求🆘</Typography>
         <Button
           variant="contained"
           startIcon={<PetsIcon />}
           onClick={handleAddRescueRequest}
+          size={isMobile ? "small" : "medium"}
         >
           发起救助请求
         </Button>
+      </Box>
+
+      {/* 标签页 */}
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+        <Tabs
+          value={activeTab}
+          onChange={(_, newValue) => setActiveTab(newValue)}
+          variant={isMobile ? "fullWidth" : "standard"}
+          centered={!isMobile}
+        >
+          <Tab label="我的救助请求" />
+          {isShelterStaff && <Tab label="所有救助请求" />}
+        </Tabs>
       </Box>
 
       {isLoading && rescueRequests.length === 0 ? (
@@ -257,61 +394,115 @@ const RescueRequests: React.FC = observer(() => {
           <CircularProgress />
         </Box>
       ) : (
-        <Grid container spacing={3}>
+        <Grid container spacing={isMobile ? 2 : 3}>
           {rescueRequests.length > 0 ? (
             rescueRequests.map((request) => (
-              <Grid item xs={12} md={6} key={request.id}>
-                <Card>
+              <Grid item xs={12} sm={6} md={6} key={request.id}>
+                <Card sx={{ height: "100%" }}>
                   <CardContent>
                     <Box
                       sx={{
                         display: "flex",
+                        flexDirection: isMobile ? "column" : "row",
                         justifyContent: "space-between",
-                        alignItems: "center",
+                        alignItems: isMobile ? "flex-start" : "center",
                         mb: 2,
                       }}
                     >
-                      <Typography variant="h6">
+                      <Typography
+                        variant={isMobile ? "subtitle1" : "h6"}
+                        sx={{ mb: isMobile ? 1 : 0 }}
+                      >
                         救助请求 #{request.id}
                       </Typography>
-                      <Chip
-                        label={request.status}
-                        color={
-                          getStatusColor(request.status) as
-                            | "warning"
-                            | "info"
-                            | "success"
-                            | "error"
-                            | "default"
-                        }
-                      />
+                      <Box sx={{ display: "flex", gap: 1 }}>
+                        <Chip
+                          label={getUrgencyLabel(request.urgencyLevel)}
+                          color={
+                            getUrgencyColor(request.urgencyLevel) as
+                              | "error"
+                              | "warning"
+                              | "info"
+                          }
+                          size="small"
+                          icon={<UrgentIcon />}
+                        />
+                        <Chip
+                          label={request.status}
+                          color={
+                            getStatusColor(request.status) as
+                              | "warning"
+                              | "info"
+                              | "success"
+                              | "error"
+                              | "default"
+                          }
+                          size="small"
+                        />
+                      </Box>
                     </Box>
 
                     <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
                       <LocationIcon fontSize="small" sx={{ mr: 1 }} />
-                      <Typography variant="body1">
+                      <Typography variant={isMobile ? "body2" : "body1"}>
                         {request.location}
                       </Typography>
                     </Box>
 
-                    <Typography variant="body1" sx={{ my: 2 }}>
+                    <Typography
+                      variant={isMobile ? "body2" : "body1"}
+                      sx={{ my: 2 }}
+                    >
                       {request.description}
                     </Typography>
 
+                    {request.images && request.images.length > 0 && (
+                      <Box sx={{ mt: 2, mb: 2 }}>
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                          <ImageIcon
+                            fontSize="small"
+                            sx={{ mr: 1, verticalAlign: "middle" }}
+                          />
+                          附件图片:
+                        </Typography>
+                        <Grid container spacing={1}>
+                          {request.images.map((img, index) => (
+                            <Grid item xs={4} key={index}>
+                              <CardMedia
+                                component="img"
+                                image={img}
+                                alt={`救助图片 ${index + 1}`}
+                                sx={{
+                                  height: isMobile ? 80 : 100,
+                                  borderRadius: 1,
+                                }}
+                              />
+                            </Grid>
+                          ))}
+                        </Grid>
+                      </Box>
+                    )}
+
                     <Divider sx={{ my: 1 }} />
 
-                    <Typography variant="body2" color="textSecondary">
+                    <Typography variant="body2" color="text.secondary">
                       响应机构ID: {request.responderOrgId || "暂无"}
                     </Typography>
 
-                    <Typography variant="body2" color="textSecondary">
+                    <Typography variant="body2" color="text.secondary">
+                      请求人:{" "}
+                      {`${request.requester.slice(0, 6)}...${request.requester.slice(-4)}`}
+                    </Typography>
+
+                    <Typography variant="body2" color="text.secondary">
                       提交时间: {formatDate(request.timestamp)}
                     </Typography>
 
-                    {isContractDeployer && (
+                    {(isContractDeployer || isShelterStaff) && (
                       <Box sx={{ mt: 2 }}>
                         <Button
                           variant="outlined"
+                          size={isMobile ? "small" : "medium"}
                           onClick={() => handleUpdateRescueRequest(request)}
                         >
                           更新状态
@@ -336,12 +527,23 @@ const RescueRequests: React.FC = observer(() => {
         onClose={handleCloseDialog}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
       >
-        <DialogTitle>发起救助请求</DialogTitle>
+        <DialogTitle>
+          {isMobile && (
+            <Button
+              onClick={handleCloseDialog}
+              sx={{ position: "absolute", right: 8, top: 8 }}
+            >
+              取消
+            </Button>
+          )}
+          发起救助请求
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             <TextField
-              autoFocus
+              autoFocus={!isMobile}
               margin="dense"
               name="location"
               label="救助位置"
@@ -349,6 +551,9 @@ const RescueRequests: React.FC = observer(() => {
               required
               value={rescueForm.location}
               onChange={handleChange}
+              InputProps={{
+                style: { fontSize: isMobile ? "14px" : "16px" },
+              }}
             />
             <TextField
               margin="dense"
@@ -357,24 +562,105 @@ const RescueRequests: React.FC = observer(() => {
               fullWidth
               required
               multiline
-              rows={4}
+              rows={isMobile ? 3 : 4}
               value={rescueForm.description}
               onChange={handleChange}
               placeholder="请详细描述动物的情况、需要的帮助等信息"
+              InputProps={{
+                style: { fontSize: isMobile ? "14px" : "16px" },
+              }}
             />
+
+            <Box sx={{ mt: 2, mb: 2 }}>
+              <Typography variant="body2" gutterBottom>
+                紧急程度
+              </Typography>
+              <Rating
+                name="urgencyLevel"
+                value={rescueForm.urgencyLevel}
+                onChange={(_, newValue) => handleUrgencyChange(newValue)}
+                max={3}
+                size={isMobile ? "small" : "medium"}
+              />
+              <Typography variant="caption" color="text.secondary">
+                {rescueForm.urgencyLevel === 1 && "普通"}
+                {rescueForm.urgencyLevel === 2 && "中等紧急"}
+                {rescueForm.urgencyLevel === 3 && "非常紧急"}
+              </Typography>
+            </Box>
+
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2" gutterBottom>
+                上传图片
+              </Typography>
+              <input
+                accept="image/*"
+                style={{ display: "none" }}
+                id="rescue-image-upload"
+                type="file"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) {
+                    setImageFile(file)
+                    const reader = new FileReader()
+                    reader.onloadend = () => {
+                      setImagePreview(reader.result as string)
+                    }
+                    reader.readAsDataURL(file)
+                  }
+                }}
+              />
+              <label htmlFor="rescue-image-upload">
+                <Box
+                  sx={{
+                    width: "100%",
+                    height: isMobile ? 120 : 150,
+                    border: "2px dashed #ccc",
+                    borderRadius: 1,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    cursor: "pointer",
+                    mb: 2,
+                    backgroundImage: imagePreview
+                      ? `url(${imagePreview})`
+                      : "none",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                >
+                  {!imagePreview && (
+                    <Typography fontSize={isMobile ? "0.875rem" : "1rem"}>
+                      {isMobile ? "点击拍照或上传" : "点击上传图片"}
+                    </Typography>
+                  )}
+                </Box>
+              </label>
+            </Box>
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={isLoading}>
-            取消
-          </Button>
+        <DialogActions sx={{ p: isMobile ? 2 : 1 }}>
+          {!isMobile && (
+            <Button
+              onClick={handleCloseDialog}
+              disabled={isLoading || isUploading}
+            >
+              取消
+            </Button>
+          )}
           <Button
             onClick={handleSubmit}
             variant="contained"
-            disabled={isLoading}
-            startIcon={isLoading ? <CircularProgress size={20} /> : null}
+            disabled={isLoading || isUploading}
+            fullWidth={isMobile}
+            size={isMobile ? "large" : "medium"}
+            startIcon={
+              isLoading || isUploading ? (
+                <CircularProgress size={isMobile ? 16 : 20} />
+              ) : null
+            }
           >
-            {isLoading ? "提交中..." : "提交"}
+            {isLoading || isUploading ? "提交中..." : "提交"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -385,8 +671,19 @@ const RescueRequests: React.FC = observer(() => {
         onClose={handleCloseUpdateDialog}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
       >
-        <DialogTitle>更新救助请求状态</DialogTitle>
+        <DialogTitle>
+          {isMobile && (
+            <Button
+              onClick={handleCloseUpdateDialog}
+              sx={{ position: "absolute", right: 8, top: 8 }}
+            >
+              取消
+            </Button>
+          )}
+          更新救助请求状态
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             <FormControl fullWidth margin="dense">
@@ -396,6 +693,7 @@ const RescueRequests: React.FC = observer(() => {
                 value={updateForm.status}
                 label="状态"
                 onChange={handleUpdateChange as any}
+                sx={{ fontSize: isMobile ? "14px" : "16px" }}
               >
                 <MenuItem value="pending">待处理</MenuItem>
                 <MenuItem value="in_progress">处理中</MenuItem>
@@ -411,18 +709,27 @@ const RescueRequests: React.FC = observer(() => {
               fullWidth
               value={updateForm.responderOrgId}
               onChange={handleUpdateChange as any}
+              InputProps={{
+                style: { fontSize: isMobile ? "14px" : "16px" },
+              }}
             />
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseUpdateDialog} disabled={isLoading}>
-            取消
-          </Button>
+        <DialogActions sx={{ p: isMobile ? 2 : 1 }}>
+          {!isMobile && (
+            <Button onClick={handleCloseUpdateDialog} disabled={isLoading}>
+              取消
+            </Button>
+          )}
           <Button
             onClick={handleUpdateSubmit}
             variant="contained"
             disabled={isLoading}
-            startIcon={isLoading ? <CircularProgress size={20} /> : null}
+            fullWidth={isMobile}
+            size={isMobile ? "large" : "medium"}
+            startIcon={
+              isLoading ? <CircularProgress size={isMobile ? 16 : 20} /> : null
+            }
           >
             {isLoading ? "更新中..." : "更新"}
           </Button>

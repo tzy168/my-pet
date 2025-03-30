@@ -665,6 +665,48 @@ class GlobalStore {
     }
   }
 
+  getAllRescueRequests = async () => {
+    if (!this.petContract) {
+      return []
+    }
+
+    try {
+      this.setLoading(true)
+      const requests = await this.petContract.getAllRescueRequests()
+      return requests
+    } catch (error) {
+      console.error("获取所有救助请求失败:", error)
+      return []
+    } finally {
+      this.setLoading(false)
+    }
+  }
+
+  updateRescueRequestStatus = async (
+    requestId: number,
+    status: string,
+    responderOrgId: number
+  ) => {
+    if (!this.petContract) {
+      return { success: false, error: "宠物合约未初始化" }
+    }
+
+    try {
+      this.setLoading(true)
+      const tx = await this.petContract.updateRescueRequestStatus(
+        requestId,
+        status,
+        responderOrgId
+      )
+      await tx.wait()
+      await this.getUserRescueRequests()
+      return { success: true }
+    } catch (error: any) {
+      this.setLoading(false)
+      return this.handleContractError(error)
+    }
+  }
+
   // 错误处理
   private handleContractError = (error: any) => {
     const errorMessage = error.message || ""
