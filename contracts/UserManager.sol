@@ -54,12 +54,6 @@ contract UserManager is IUserManager {
         _orgId < institutionManager.institutionIdCounter(),
         "Associated institution does not exist"
       );
-
-      // 验证用户是否是该机构的员工
-      // require(
-      //   institutionManager.isStaffInInstitution(_orgId, msg.sender),
-      //   "User is not a staff member of the specified institution"
-      // );
     } else {
       require(
         _orgId == 0,
@@ -69,7 +63,6 @@ contract UserManager is IUserManager {
 
     // 确定用户角色
     RoleType roleId;
-
     // 检查是否是合约部署者
     if (msg.sender == deployer) {
       roleId = RoleType.Admin;
@@ -79,7 +72,6 @@ contract UserManager is IUserManager {
         institutionManagerAddress
       );
       Institution memory inst = institutionManager.getInstitutionDetail(_orgId);
-
       if (inst.institutionType == InstitutionType.Hospital) {
         roleId = RoleType.Hospital;
       } else if (inst.institutionType == InstitutionType.Shelter) {
@@ -96,7 +88,7 @@ contract UserManager is IUserManager {
       userIds[msg.sender] = userIdCounter;
       users.push();
       uint index = users.length - 1;
-
+      // 关联机构push此地址
       // 创建空的宠物ID数组
       uint[] memory emptyPetIds = new uint[](0);
 
@@ -109,6 +101,7 @@ contract UserManager is IUserManager {
       newUser.orgId = _orgId;
       newUser.isProfileSet = true;
       newUser.roleId = roleId; // 设置角色ID
+
       newUser.petIds = emptyPetIds; // 设置空的宠物ID数组
       newUser.registeredAt = block.timestamp; // 设置注册时间
       newUser.avatar = _avatar; // 设置头像URL
@@ -127,11 +120,25 @@ contract UserManager is IUserManager {
     }
   }
 
+  function isUserInInstitutionStaffList(
+    address _user
+  ) external view returns (bool) {
+    require(_isUserRegistered(_user), "User not registered");
+    uint userId = userIds[_user];
+    User storage user = users[userId - 1];
+    if (user.userType == UserType.Institutional && user.orgId != 0) {
+      IInstitutionManager institutionManager = IInstitutionManager(
+        institutionManagerAddress
+      );
+      return institutionManager.isStaffInInstitution(user.orgId, _user);
+    }
+    return false;
+  }
+
   // 更新用户角色
   function updateUserRole(address _user, RoleType _roleId) external override {
     require(msg.sender == deployer, "Only deployer can update user roles");
     require(_isUserRegistered(_user), "User not registered");
-
     uint userId = userIds[_user];
     User storage user = users[userId - 1];
     user.roleId = _roleId;

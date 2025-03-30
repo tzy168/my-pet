@@ -65,7 +65,7 @@ const MedicalRecords: React.FC = observer(() => {
   })
   const [userSOrg, setUserSOrg] = useState({})
   const [staffStatus, setStaffStatus] = useState({
-    isStaff: Number(userInfo?.orgId) === 2,
+    isStaff: Number(userInfo?.roleId) === 2,
     institutionId: Number(userInfo?.orgId),
     institutionName: "",
   })
@@ -77,7 +77,7 @@ const MedicalRecords: React.FC = observer(() => {
         const institutionId = await contract.staffToInstitution(walletAddress)
         if (institutionId > 0) {
           const institution = await contract.getInstitutionDetail(institutionId)
-          if (institution.institutionType === 0) {
+          if (Number(institution.institutionType) === 0) {
             // Hospital type
             setStaffStatus({
               isStaff: true,
@@ -146,23 +146,22 @@ const MedicalRecords: React.FC = observer(() => {
       })
       return
     }
-
-    if (!staffStatus.isStaff) {
+    if (Number(userInfo?.roleId) === 2 || Number(userInfo?.roleId) === 0) {
+      setMedicalForm({
+        diagnosis: "",
+        treatment: "",
+        cost: 0,
+        attachments: [],
+      })
+      setOpenDialog(true)
+      return
+    } else {
       setSnackbar({
         open: true,
-        message: "只有医院工作人员才能添加医疗记录",
+        message: "只有医院工作人员或系统管理员才能添加医疗记录",
         severity: "error",
       })
-      return
     }
-
-    setMedicalForm({
-      diagnosis: "",
-      treatment: "",
-      cost: 0,
-      attachments: [],
-    })
-    setOpenDialog(true)
   }
 
   const handleSubmit = async () => {
@@ -224,7 +223,7 @@ const MedicalRecords: React.FC = observer(() => {
     <Box className={styles.container}>
       <Box className={styles.header}>
         <Typography variant="h5">医疗记录</Typography>
-        {staffStatus.isStaff && (
+        {Number(userInfo?.roleId) === 2 && (
           <Typography variant="subtitle1" color="primary">
             所属医院: {staffStatus.institutionName}(ID:
             {staffStatus.institutionId})
@@ -237,7 +236,9 @@ const MedicalRecords: React.FC = observer(() => {
         sx={{ mb: 3 }}
       >
         <Tab label="我的宠物" />
-        {Number(userInfo?.roleId) === 2 && <Tab label="所有宠物" />}
+        {(Number(userInfo?.roleId) === 2 || Number(userInfo?.roleId) === 0) && (
+          <Tab label="所有宠物" />
+        )}
       </Tabs>
 
       {activeTab === 1 && (
@@ -319,15 +320,17 @@ const MedicalRecords: React.FC = observer(() => {
               {selectedPet && String(selectedPet?.name) + "的"}
               医疗记录 {selectedPet && "ID:" + String(selectedPet?.id)}
             </Typography>
-            {selectedPet && Number(userInfo?.roleId) === 2 && (
-              <Button
-                variant="contained"
-                startIcon={<HospitalIcon />}
-                onClick={handleOpenDialog}
-              >
-                添加记录
-              </Button>
-            )}
+            {selectedPet &&
+              (Number(userInfo?.roleId) === 2 ||
+                Number(userInfo?.roleId) === 0) && (
+                <Button
+                  variant="contained"
+                  startIcon={<HospitalIcon />}
+                  onClick={handleOpenDialog}
+                >
+                  添加记录
+                </Button>
+              )}
           </Box>
 
           {isLoading ? (
@@ -461,6 +464,7 @@ const MedicalRecords: React.FC = observer(() => {
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert
           onClose={() => setSnackbar({ ...snackbar, open: false })}

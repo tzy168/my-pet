@@ -343,7 +343,7 @@ const Home: NextPage = () => {
                 },
               }}
             >
-              <CardActionArea>
+              <CardActionArea onClick={() => handleNavigate("/admin")}>
                 <Box
                   sx={{
                     height: "8px",

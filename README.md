@@ -1,10 +1,12 @@
 ## Getting Started
 
 ```bash
+# 依次启动hardhat节点，部署合约，启动IPFS，启动前端
+npm run hardhat
+npm run compile
+npm run ipfs
 npm run dev
 ```
-
-http://localhost:3000
 
 ## 核心模块说明
 

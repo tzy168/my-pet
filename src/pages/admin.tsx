@@ -42,12 +42,15 @@ const Admin: React.FC = observer(() => {
   const {
     contract,
     isLoading,
+    userInfo,
     isContractDeployer,
     addInstitution,
     setLoading,
     getAllInstitutions,
+    addStaffToInstitution,
   } = useGlobalStore()
   const [institutions, setInstitutions] = useState<any[]>([])
+  const [newStaffAddress, setNewStaffAddress] = useState("")
   const [selectedInstitution, setSelectedInstitution] = useState<any>(null)
   const [openDialog, setOpenDialog] = useState(false)
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add")
@@ -440,10 +443,12 @@ const Admin: React.FC = observer(() => {
         open={snackbar.open}
         autoHideDuration={3000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert
           onClose={() => setSnackbar({ ...snackbar, open: false })}
           severity={snackbar.severity}
+          variant="filled"
         >
           {snackbar.message}
         </Alert>
@@ -491,10 +496,9 @@ const Admin: React.FC = observer(() => {
                         component="div"
                         sx={{ fontFamily: "monospace" }}
                       >
-                        {staffAddress}
+                        {`员工 #${index + 1}:` + staffAddress}
                       </Typography>
                     }
-                    secondary={`员工 #${index + 1}`}
                   />
                 </ListItem>
               ))}
@@ -504,12 +508,71 @@ const Admin: React.FC = observer(() => {
               <Typography color="text.secondary">暂无员工信息</Typography>
             </Box>
           )}
+          {(Number(userInfo?.roleId) === 0 ||
+            userInfo?.wallet === selectedInstitution?.responsiblePerson) && (
+            <div>
+              <TextField
+                margin="dense"
+                label="新员工地址"
+                fullWidth
+                value={newStaffAddress}
+                onChange={(e) => setNewStaffAddress(e.target.value)}
+              />
+              <Button
+                onClick={async () => {
+                  try {
+                    if (ethers.isAddress(newStaffAddress)) {
+                      const result = await addStaffToInstitution(
+                        selectedInstitution.id,
+                        newStaffAddress
+                      )
+                      if (result.success) {
+                        setSnackbar({
+                          open: true,
+                          message: "员工添加成功",
+                          severity: "success",
+                        })
+                        fetchInstitutionDetail(selectedInstitution.id)
+                      } else {
+                        setSnackbar({
+                          open: true,
+                          message: "员工添加失败，请检查员工地址是否正确",
+                          severity: "error",
+                        })
+                      }
+                    } else {
+                      setSnackbar({
+                        open: true,
+                        message: "请输入有效的员工地址",
+                        severity: "error",
+                      })
+                    }
+                    // 关闭弹窗
+                    setStaffListOpen(false)
+                    setNewStaffAddress("")
+                  } catch (error) {
+                    console.error(error)
+                    setSnackbar({
+                      open: true,
+                      message: "添加员工失败，请检查员工地址是否正确",
+                      severity: "error",
+                    })
+                  }
+                }}
+                variant="contained"
+                sx={{ mt: 2 }}
+              >
+                添加员工
+              </Button>
+            </div>
+          )}
         </DialogContent>
         <DialogActions>
           <Button
             onClick={() => {
               setSelectedInstitution(null)
               setStaffListOpen(false)
+              setNewStaffAddress("")
             }}
             variant="contained"
           >

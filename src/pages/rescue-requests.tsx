@@ -158,7 +158,14 @@ const RescueRequests: React.FC = observer(() => {
       })
       return
     }
-
+    if (!petContract) {
+      setSnackbar({
+        open: true,
+        message: "合约未初始化，请刷新页面或重新连接钱包",
+        severity: "error",
+      })
+      return
+    }
     try {
       // 使用全局store中的addRescueRequest方法，它内部已经处理了loading状态
       await useGlobalStore().addRescueRequest(
@@ -426,10 +433,12 @@ const RescueRequests: React.FC = observer(() => {
         open={snackbar.open}
         autoHideDuration={3000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert
           onClose={() => setSnackbar({ ...snackbar, open: false })}
           severity={snackbar.severity}
+          variant="filled"
         >
           {snackbar.message}
         </Alert>

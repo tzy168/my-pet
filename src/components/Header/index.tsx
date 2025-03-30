@@ -313,11 +313,13 @@ const Header: React.FC = observer(() => {
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
       >
         <Alert
           onClose={() => setSnackbar({ ...snackbar, open: false })}
           severity={snackbar.severity}
+          variant="filled"
           sx={{ width: "100%" }}
         >
           {snackbar.message}

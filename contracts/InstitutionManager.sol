@@ -34,10 +34,8 @@ contract InstitutionManager is IInstitutionManager {
       staffToInstitution[_responsiblePerson] == 0,
       "Address already associated with an institution"
     );
-
     uint newId = institutionIdCounter;
     institutionIdCounter++;
-
     institutions.push();
     Institution storage inst = institutions[newId - 1];
     inst.id = newId;
