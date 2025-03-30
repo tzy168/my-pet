@@ -144,7 +144,6 @@ const RescueRequests: React.FC = observer(() => {
       setIsLoading(true)
       // 根据当前标签页和用户角色获取救助请求数据
       let requests: RescueRequest[] = []
-      
       if (activeTab === 0 || !isShelterStaff) {
         // 我的救助请求标签页 - 获取用户自己的救助请求
         requests = await getUserRescueRequests()
@@ -152,19 +151,20 @@ const RescueRequests: React.FC = observer(() => {
         // 所有救助请求标签页 - 只有救助站工作人员可以查看所有请求
         requests = await getAllRescueRequests()
       }
-      
       // 根据状态标签筛选请求
       if (statusTab > 0) {
         const statusMap = {
-          1: "pending",      // 待处理
+          1: "pending", // 待处理
           2: "in_progress", // 进行中
-          3: "completed",   // 已完成
-          4: "cancelled"    // 已取消
+          3: "completed", // 已完成
+          4: "cancelled", // 已取消
         }
         const selectedStatus = statusMap[statusTab as keyof typeof statusMap]
-        requests = requests.filter(req => req.status.toLowerCase() === selectedStatus)
+        requests = requests.filter(
+          (req) => req.status.toLowerCase() === selectedStatus
+        )
       }
-      
+
       setRescueRequests(requests)
     } catch (error) {
       console.error("获取救助请求失败:", error)
@@ -353,7 +353,6 @@ const RescueRequests: React.FC = observer(() => {
         return "default"
     }
   }
-  
   const getStatusLabel = (status: string) => {
     switch (status.toLowerCase()) {
       case "pending":
@@ -419,7 +418,7 @@ const RescueRequests: React.FC = observer(() => {
           {isShelterStaff && <Tab label="所有救助请求" />}
         </Tabs>
       </Box>
-      
+
       {/* 状态筛选标签页 */}
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
         <Tabs
