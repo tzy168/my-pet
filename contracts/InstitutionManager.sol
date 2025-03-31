@@ -6,6 +6,7 @@ import "./interfaces/IInstitutionManager.sol";
 contract InstitutionManager is IInstitutionManager {
   // 机构存储
   Institution[] public institutions;
+  // 员工地址到机构ID的映射
   mapping(address => uint) public staffToInstitution;
   uint256 public institutionIdCounter = 1;
 

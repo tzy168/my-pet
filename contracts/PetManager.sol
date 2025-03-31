@@ -227,9 +227,7 @@ contract PetManager is IPetManager {
     );
 
     // 获取用户信息，包括角色ID
-    (, , , , , , , , , RoleType roleId, , ) = userManager.getUserInfo(
-      msg.sender
-    );
+    (, , , , , , , , , RoleType roleId, ) = userManager.getUserInfo(msg.sender);
 
     // 检查用户角色是否为管理员或医院人员
     require(

@@ -61,7 +61,6 @@ interface IMyPetBase {
     bool isProfileSet; // 是否注册信息 6
     RoleType roleId; // 角色类型 7
     uint[] petIds; // 拥有的宠物ID列表 8
-    uint registeredAt; // 注册时间 9
     string avatar; // 用户头像 10
   }
 

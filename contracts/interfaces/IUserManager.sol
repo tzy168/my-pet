@@ -46,7 +46,6 @@ interface IUserManager is IMyPetBase {
       string memory orgName,
       InstitutionType orgType,
       RoleType roleId,
-      uint registeredAt,
       string memory avatar
     );
 
@@ -54,8 +53,12 @@ interface IUserManager is IMyPetBase {
   function getAllUsers() external view returns (User[] memory);
 
   // 获取特定角色的用户
-  function getUsersByRole(RoleType _roleId) external view returns (User[] memory);
+  function getUsersByRole(
+    RoleType _roleId
+  ) external view returns (User[] memory);
 
   // 获取特定机构的用户
-  function getUsersByInstitution(uint _orgId) external view returns (User[] memory);
+  function getUsersByInstitution(
+    uint _orgId
+  ) external view returns (User[] memory);
 }

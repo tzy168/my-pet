@@ -15,10 +15,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   CircularProgress,
   Divider,
   CardMedia,
@@ -51,6 +47,7 @@ const AdoptionMarket: React.FC = observer(() => {
     walletAddress,
     contract,
     getPetById,
+    // getPetsByAdoptionStatus,
   } = useGlobalStore()
 
   const [pets, setPets] = useState<Pet[]>([])
@@ -107,6 +104,7 @@ const AdoptionMarket: React.FC = observer(() => {
     try {
       const allPets = await getAllPets()
       setPets(allPets)
+      console.log("获取到的宠物列表:", allPets)
     } catch (error) {
       console.error("获取宠物列表失败:", error)
       setSnackbar({

@@ -8,6 +8,7 @@ contract UserManager is IUserManager {
   // 用户存储
   mapping(address => uint) public userIds;
   User[] public users;
+  mapping(address => User[]) public userAddress;
   uint256 public userIdCounter = 1;
 
   // InstitutionManager合约地址
@@ -103,7 +104,6 @@ contract UserManager is IUserManager {
       newUser.roleId = roleId; // 设置角色ID
 
       newUser.petIds = emptyPetIds; // 设置空的宠物ID数组
-      newUser.registeredAt = block.timestamp; // 设置注册时间
       newUser.avatar = _avatar; // 设置头像URL
       userIdCounter++;
     } else {
@@ -221,7 +221,6 @@ contract UserManager is IUserManager {
       string memory orgName,
       InstitutionType orgType,
       RoleType roleId,
-      uint registeredAt,
       string memory avatar
     )
   {
@@ -238,7 +237,6 @@ contract UserManager is IUserManager {
     userType = user.userType;
     orgId = user.orgId;
     roleId = user.roleId;
-    registeredAt = user.registeredAt;
     avatar = user.avatar;
 
     if (userType == UserType.Institutional && orgId != 0) {
