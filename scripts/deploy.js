@@ -26,16 +26,25 @@ async function main() {
   const petManagerAddress = await petManager.getAddress();
   console.log("PetManager合约已部署到:", petManagerAddress);
 
+  // 部署PetNFT合约
+  const PetNFT = await hre.ethers.getContractFactory("PetNFT");
+  const petNFT = await PetNFT.deploy(userManagerAddress, institutionManagerAddress);
+  await petNFT.waitForDeployment();
+  const petNFTAddress = await petNFT.getAddress();
+  console.log("PetNFT合约已部署到:", petNFTAddress);
+
   console.log("\n合约部署完成！");
   console.log("UserManager:", userManagerAddress);
   console.log("InstitutionManager:", institutionManagerAddress);
   console.log("PetManager:", petManagerAddress);
+  console.log("PetNFT:", petNFTAddress);
 
   // 更新合约配置文件
   updateContractConfig({
     institutionManagerAddress,
     userManagerAddress,
-    petManagerAddress
+    petManagerAddress,
+    petNFTAddress
   });
 
   // 如果不是本地网络，则进行合约验证
@@ -46,7 +55,8 @@ async function main() {
     try {
       await hre.run("verify:verify", {
         address: userManagerAddress,
-        contract: "contracts/UserManager.sol:UserManager"
+        contract: "contracts/UserManager.sol:UserManager",
+        constructorArguments: [institutionManagerAddress]
       });
       await hre.run("verify:verify", {
         address: institutionManagerAddress,
@@ -54,7 +64,13 @@ async function main() {
       });
       await hre.run("verify:verify", {
         address: petManagerAddress,
-        contract: "contracts/PetManager.sol:PetManager"
+        contract: "contracts/PetManager.sol:PetManager",
+        constructorArguments: [userManagerAddress, institutionManagerAddress]
+      });
+      await hre.run("verify:verify", {
+        address: petNFTAddress,
+        contract: "contracts/PetNFT.sol:PetNFT",
+        constructorArguments: [userManagerAddress, institutionManagerAddress]
       });
       console.log("合约验证完成！");
     } catch (error) {
@@ -64,7 +80,7 @@ async function main() {
 }
 
 // 更新合约配置文件
-function updateContractConfig({ institutionManagerAddress, userManagerAddress, petManagerAddress }) {
+function updateContractConfig({ institutionManagerAddress, userManagerAddress, petManagerAddress, petNFTAddress }) {
   const configPath = path.join(__dirname, "../src/config/contracts.ts");
   
   // 读取现有配置文件
@@ -85,6 +101,30 @@ function updateContractConfig({ institutionManagerAddress, userManagerAddress, p
     /InstitutionManager:\s*{[\s\S]*?address:\s*['"](.*?)['"]/, 
     `InstitutionManager: {\n    address: '${institutionManagerAddress}'`
   );
+  
+  // 检查是否已存在PetNFT配置，如果不存在则添加
+  if (!configContent.includes("PetNFT:")) {
+    // 在最后一个配置项后添加PetNFT配置
+    const lastBraceIndex = configContent.lastIndexOf("}");
+    if (lastBraceIndex !== -1) {
+      const beforeLastBrace = configContent.substring(0, lastBraceIndex);
+      const afterLastBrace = configContent.substring(lastBraceIndex);
+      configContent = beforeLastBrace + ",\n  PetNFT: {\n    address: '" + petNFTAddress + "',\n    abi: PetNFTArtifact.abi,\n  }" + afterLastBrace;
+      
+      // 添加PetNFT的导入语句
+      const importStatement = "import PetNFTArtifact from \"../../artifacts/contracts/PetNFT.sol/PetNFT.json\"\n";
+      const firstImportIndex = configContent.indexOf("import");
+      if (firstImportIndex !== -1) {
+        configContent = configContent.substring(0, firstImportIndex) + importStatement + configContent.substring(firstImportIndex);
+      }
+    }
+  } else {
+    // 如果已存在PetNFT配置，则更新地址
+    configContent = configContent.replace(
+      /PetNFT:\s*{[\s\S]*?address:\s*['"](.*?)['"]/, 
+      `PetNFT: {\n    address: '${petNFTAddress}'`
+    );
+  }
   
   // 写入更新后的配置
   fs.writeFileSync(configPath, configContent);
