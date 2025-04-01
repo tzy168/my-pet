@@ -41,7 +41,6 @@ const Admin: React.FC = observer(() => {
   const router = useRouter()
   const {
     contract,
-    isLoading,
     userInfo,
     isContractDeployer,
     addInstitution,
@@ -73,7 +72,7 @@ const Admin: React.FC = observer(() => {
     if (contract) {
       fetchInstitutions()
     }
-  }, [contract])
+  }, [contract, userInfo])
 
   const fetchInstitutions = async () => {
     try {
@@ -255,9 +254,18 @@ const Admin: React.FC = observer(() => {
         >
           查看系统信息
         </Button>
+        {Number(userInfo?.roleId) === 0 && (
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => router.push("/user-management")}
+          >
+            用户管理
+          </Button>
+        )}
       </Box>
       <Typography variant="h6" sx={{ mb: 2 }}>
-        机构管理🏛️
+        机构🏛️
       </Typography>
       <Box sx={{ mb: 3, display: "flex", gap: 2 }}>
         <TextField

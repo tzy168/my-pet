@@ -263,11 +263,7 @@ const MedicalRecords: React.FC = observer(() => {
           <Typography variant="h6" gutterBottom>
             宠物列表
           </Typography>
-          {isLoading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : filteredPets.length > 0 ? (
+          {filteredPets.length > 0 ? (
             <Grid container spacing={2}>
               {filteredPets.map((pet) => (
                 <Grid item xs={12} sm={6} key={pet.id}>
@@ -333,11 +329,7 @@ const MedicalRecords: React.FC = observer(() => {
               )}
           </Box>
 
-          {isLoading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : selectedPet ? (
+          {selectedPet ? (
             medicalEvents.length > 0 ? (
               medicalEvents.map((event, index) => (
                 <Card key={index} sx={{ mb: 2 }}>
@@ -426,20 +418,6 @@ const MedicalRecords: React.FC = observer(() => {
               ),
             }}
           />
-          <Button
-            startIcon={<AttachFileIcon />}
-            sx={{ mt: 2 }}
-            onClick={() => {
-              // TODO: 实现文件上传功能
-              setSnackbar({
-                open: true,
-                message: "文件上传功能开发中",
-                severity: "info",
-              })
-            }}
-          >
-            添加附件
-          </Button>
 
           {isSubmitting && (
             <WalletConfirmationGuide actionName="添加医疗记录" />

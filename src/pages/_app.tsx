@@ -13,6 +13,7 @@ import Spin from "../components/Spin"
 import { useGlobalStore } from "../stores/global"
 import { useEffect } from "react"
 import Head from "next/head"
+import { observer } from "mobx-react-lite"
 
 const client = new QueryClient()
 function MyApp({ Component, pageProps }: AppProps) {
@@ -67,4 +68,4 @@ function MyApp({ Component, pageProps }: AppProps) {
   )
 }
 
-export default MyApp
+export default observer(MyApp)

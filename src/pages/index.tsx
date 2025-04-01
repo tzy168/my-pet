@@ -83,26 +83,10 @@ const Home: NextPage = () => {
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               letterSpacing: "-0.5px",
-              fontSize: { xs: "2.5rem", md: "3.5rem" },
+              fontSize: { xs: "18rem", md: "18rem" },
             }}
           >
-            欢迎使用 MyPet
-          </Typography>
-        </Fade>
-        <Fade in={true} timeout={1500}>
-          <Typography
-            variant="h5"
-            className={styles.description}
-            sx={{
-              color: "text.secondary",
-              mb: 4,
-              maxWidth: "700px",
-              mx: "auto",
-              lineHeight: 1.6,
-              fontSize: { xs: "1.1rem", md: "1.3rem" },
-            }}
-          >
-            您的宠物管理平台
+            MyPet
           </Typography>
         </Fade>
         <Typography

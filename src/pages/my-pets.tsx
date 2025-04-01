@@ -35,19 +35,6 @@ const MyPets: React.FC = observer(() => {
   const [pets, setPets] = useState<Pet[]>([])
   const [openDialog, setOpenDialog] = useState(false)
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null)
-  // id: number
-  // name: string
-  // species: string
-  // breed: string
-  // gender: string
-  // age: number
-  // description: string
-  // image: string
-  // healthStatus: PetHealthStatus
-  // adoptionStatus: PetAdoptionStatus
-  // owner: string
-  // medicalRecordIds: number[]
-  // lastUpdatedAt: number
   const [petForm, setPetForm] = useState({
     name: "",
     species: "",

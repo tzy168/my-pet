@@ -30,7 +30,14 @@ import {
 
 const Profile: React.FC = observer(() => {
   const router = useRouter()
-  const { userInfo, setUserProfile, getAllInstitutions } = useGlobalStore()
+  const {
+    userInfo,
+    setUserProfile,
+    getAllInstitutions,
+    getUserInfo,
+    walletAddress,
+    userContract,
+  } = useGlobalStore()
   const [isEditing, setIsEditing] = useState(false)
   const [isNewUser, setIsNewUser] = useState(false)
   const [formData, setFormData] = useState<Partial<UserInfo>>({
@@ -53,6 +60,21 @@ const Profile: React.FC = observer(() => {
     severity: "success" as "success" | "error" | "info" | "warning",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // 添加一个新的useEffect来处理钱包地址变化时获取用户信息
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      if (walletAddress && userContract) {
+        try {
+          await getUserInfo()
+        } catch (error) {
+          console.error("获取用户信息失败:", error)
+        }
+      }
+    }
+
+    fetchUserInfo()
+  }, [walletAddress, userContract, getUserInfo])
 
   useEffect(() => {
     const checkUserStatus = async () => {
@@ -99,7 +121,7 @@ const Profile: React.FC = observer(() => {
       }
     }
     fetchInstitutions()
-  }, [])
+  }, [getAllInstitutions])
 
   const checkWalletBeforeSubmit = async () => {
     try {

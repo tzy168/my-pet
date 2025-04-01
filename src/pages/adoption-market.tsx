@@ -283,7 +283,8 @@ const AdoptionMarket: React.FC = observer(() => {
       >
         <Tab label="可领养" />
         <Tab label="处理中" />
-        {staffStatus.isShelterStaff && <Tab label="我的上架" />}
+        {staffStatus.isShelterStaff ||
+          (Number(userInfo?.roleId) === 0 && <Tab label="我的上架" />)}
       </Tabs>
 
       <TextField

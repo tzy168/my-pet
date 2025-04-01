@@ -92,11 +92,6 @@
               "type": "uint256[]"
             },
             {
-              "internalType": "uint256",
-              "name": "registeredAt",
-              "type": "uint256"
-            },
-            {
               "internalType": "string",
               "name": "avatar",
               "type": "string"
@@ -169,11 +164,6 @@
           "internalType": "enum IMyPetBase.RoleType",
           "name": "roleId",
           "type": "uint8"
-        },
-        {
-          "internalType": "uint256",
-          "name": "registeredAt",
-          "type": "uint256"
         },
         {
           "internalType": "string",
@@ -261,11 +251,6 @@
               "type": "uint256[]"
             },
             {
-              "internalType": "uint256",
-              "name": "registeredAt",
-              "type": "uint256"
-            },
-            {
               "internalType": "string",
               "name": "avatar",
               "type": "string"
@@ -335,11 +320,6 @@
               "internalType": "uint256[]",
               "name": "petIds",
               "type": "uint256[]"
-            },
-            {
-              "internalType": "uint256",
-              "name": "registeredAt",
-              "type": "uint256"
             },
             {
               "internalType": "string",

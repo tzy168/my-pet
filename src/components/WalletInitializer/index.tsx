@@ -46,12 +46,15 @@ const WalletInitializer: React.FC<WalletInitializerProps> = ({ children }) => {
   useEffect(() => {
     if (isConnected && address) {
       setWalletAddress(address)
+    } else if (!isConnected) {
+      // 当钱包断开连接时，清除钱包地址
+      setWalletAddress("")
     }
   }, [isConnected, address, setWalletAddress])
 
   useEffect(() => {
     const checkUserStatus = async () => {
-      if (!userContract || !isConnected) return
+      if (!userContract || !address) return
 
       try {
         const isUserRegistered =
@@ -68,7 +71,7 @@ const WalletInitializer: React.FC<WalletInitializerProps> = ({ children }) => {
     }
 
     checkUserStatus()
-  }, [userContract, isConnected, address, getUserInfo, router])
+  }, [userContract, address, getUserInfo, router])
 
   return <>{children}</>
 }

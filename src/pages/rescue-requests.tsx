@@ -32,26 +32,18 @@ import {
   Tab,
   useMediaQuery,
   useTheme,
+  InputAdornment,
 } from "@mui/material"
 import {
   Pets as PetsIcon,
   LocationOn as LocationIcon,
   Image as ImageIcon,
   PriorityHigh as UrgentIcon,
+  AccountCircle,
 } from "@mui/icons-material"
 import styles from "../styles/MyPets.module.css"
 import { addToIpfs } from "../utils/ipfs"
 import { RescueRequest, RoleType } from "../stores/types"
-// import { set } from "mobx"
-
-// interface RescueRequest {
-//   id: number
-//   location: string
-//   description: string
-//   status: string
-//   responderOrgId: number
-//   timestamp: number
-// }
 
 const RescueRequests: React.FC = observer(() => {
   const {
@@ -95,6 +87,7 @@ const RescueRequests: React.FC = observer(() => {
     message: "",
     severity: "success" as "success" | "error" | "info" | "warning",
   })
+  const [openMap, setOpenMap] = useState(false)
 
   useEffect(() => {
     // 当用户信息加载完成后，获取救助请求列表
@@ -308,7 +301,22 @@ const RescueRequests: React.FC = observer(() => {
     if (!selectedRequest) return
     try {
       // 使用组件顶层已获取的全局store实例，而不是在函数内部调用useGlobalStore
-      if (Number(userInfo?.orgId) === 0 || Number(userInfo?.orgId) !== 3) {
+      if (Number(userInfo?.roleId) === 0 || Number(userInfo?.roleId) === 3) {
+        await updateRescueRequestStatus(
+          selectedRequest.id,
+          updateForm.status,
+          Number(userInfo?.orgId)
+        )
+
+        // 刷新救助请求列表
+        await fetchRescueRequests()
+        handleCloseUpdateDialog()
+        setSnackbar({
+          open: true,
+          message: "更新救助请求状态成功",
+          severity: "success",
+        })
+      } else {
         setSnackbar({
           open: true,
           message: "无权限",
@@ -316,21 +324,6 @@ const RescueRequests: React.FC = observer(() => {
         })
         return
       }
-      await updateRescueRequestStatus(
-        selectedRequest.id,
-        updateForm.status,
-        Number(userInfo?.orgId)
-      )
-      console.log(111)
-
-      // 刷新救助请求列表
-      await fetchRescueRequests()
-      handleCloseUpdateDialog()
-      setSnackbar({
-        open: true,
-        message: "更新救助请求状态成功",
-        severity: "success",
-      })
     } catch (error) {
       console.error("更新救助请求状态失败:", error)
       setSnackbar({
@@ -411,7 +404,6 @@ const RescueRequests: React.FC = observer(() => {
           发起救助请求
         </Button>
       </Box>
-
       {/* 主标签页 - 我的/所有请求 */}
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
         <Tabs
@@ -424,7 +416,6 @@ const RescueRequests: React.FC = observer(() => {
           {isShelterStaff && <Tab label="所有救助请求" />}
         </Tabs>
       </Box>
-
       {/* 状态筛选标签页 */}
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
         <Tabs
@@ -442,7 +433,6 @@ const RescueRequests: React.FC = observer(() => {
           <Tab label="已取消" />
         </Tabs>
       </Box>
-
       {isLoading && rescueRequests.length === 0 ? (
         <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
           <CircularProgress />
@@ -574,7 +564,6 @@ const RescueRequests: React.FC = observer(() => {
           )}
         </Grid>
       )}
-
       {/* 添加救助请求对话框 */}
       <Dialog
         open={openDialog}
@@ -605,6 +594,26 @@ const RescueRequests: React.FC = observer(() => {
               required
               value={rescueForm.location}
               onChange={handleChange}
+              placeholder="点击选择位置"
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LocationIcon
+                        sx={{
+                          cursor: "pointer",
+                          "&:hover": {
+                            color: "primary.main",
+                          },
+                        }}
+                        onClick={() => {
+                          setOpenMap(true)
+                        }}
+                      />
+                    </InputAdornment>
+                  ),
+                },
+              }}
               InputProps={{
                 style: { fontSize: isMobile ? "14px" : "16px" },
               }}
@@ -718,7 +727,6 @@ const RescueRequests: React.FC = observer(() => {
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* 更新救助请求状态对话框 */}
       <Dialog
         open={openUpdateDialog}
@@ -789,7 +797,6 @@ const RescueRequests: React.FC = observer(() => {
           </Button>
         </DialogActions>
       </Dialog>
-
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
