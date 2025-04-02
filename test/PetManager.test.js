@@ -427,7 +427,7 @@ describe("PetManager", function () {
     });
 
     it("应该能够按领养状态获取宠物", async function () {
-      // 添加两只宠物，领养状态不同
+      // 添加四只宠物，每只宠物有不同的领养状态
       await petManager.connect(addr1).addPet(
         "小白",
         "狗",
@@ -451,6 +451,30 @@ describe("PetManager", function () {
         0, // Healthy
         1  // Adopted
       );
+      
+      await petManager.connect(addr1).addPet(
+        "小黑",
+        "狗",
+        "拉布拉多",
+        "公",
+        3,
+        "友善的大狗",
+        "ipfs://QmZZZ",
+        0, // Healthy
+        2  // Processing
+      );
+      
+      await petManager.connect(addr1).addPet(
+        "小灰",
+        "猫",
+        "英短",
+        "公",
+        2,
+        "安静的小猫",
+        "ipfs://QmAAA",
+        0, // Healthy
+        3  // NotAvailable
+      );
 
       // 获取领养状态为Available的宠物
       const availablePets = await petManager.getPetsByAdoptionStatus(0);
@@ -461,6 +485,16 @@ describe("PetManager", function () {
       const adoptedPets = await petManager.getPetsByAdoptionStatus(1);
       expect(adoptedPets.length).to.equal(1);
       expect(adoptedPets[0].name).to.equal("小花");
+      
+      // 获取领养状态为Processing的宠物
+      const processingPets = await petManager.getPetsByAdoptionStatus(2);
+      expect(processingPets.length).to.equal(1);
+      expect(processingPets[0].name).to.equal("小黑");
+      
+      // 获取领养状态为NotAvailable的宠物
+      const notAvailablePets = await petManager.getPetsByAdoptionStatus(3);
+      expect(notAvailablePets.length).to.equal(1);
+      expect(notAvailablePets[0].name).to.equal("小灰");
     });
   });
 
@@ -677,6 +711,40 @@ describe("PetManager", function () {
       const rescueRequest = await petManager.getRescueRequest(1);
       expect(rescueRequest.status).to.equal("processing");
       expect(rescueRequest.responderOrgId).to.equal(2);
+    });
+
+    it("非救助站用户不应该能够更新救助请求状态", async function () {
+      // 添加救助请求
+      const images = ["ipfs://QmRescue1"];
+      await petManager.connect(addr1).addRescueRequest(
+        "北京市海淀区中关村",
+        "发现一只受伤的流浪猫",
+        images,
+        4
+      );
+
+      // 非救助站用户（普通用户addr2）尝试更新救助请求状态，应该被拒绝
+      await expect(
+        petManager.connect(addr2).updateRescueRequestStatus(
+          1,
+          "processing",
+          2 // 救助站机构ID
+        )
+      ).to.be.revertedWith("Caller is not a staff member of any institution");
+
+      // 非救助站用户（医院用户addr3）尝试更新救助请求状态，应该被拒绝
+      await expect(
+        petManager.connect(addr3).updateRescueRequestStatus(
+          1,
+          "processing",
+          2 // 救助站机构ID
+        )
+      ).to.be.revertedWith("Only shelter staff can update rescue request status");
+
+      // 验证救助请求状态未被更改
+      const rescueRequest = await petManager.getRescueRequest(1);
+      expect(rescueRequest.status).to.equal("pending");
+      expect(rescueRequest.responderOrgId).to.equal(0);
     });
 
     it("非救助站用户不应该能够更新救助请求状态", async function () {

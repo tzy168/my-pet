@@ -164,41 +164,6 @@ contract InstitutionManager is IInstitutionManager {
     return institutions[_orgId - 1].staffList;
   }
 
-  // 获取特定类型的机构
-  function getInstitutionsByType(
-    InstitutionType _type
-  ) external view override returns (Institution[] memory) {
-    // 计算特定类型的机构数量
-    uint count = 0;
-    for (uint i = 0; i < institutions.length; i++) {
-      if (institutions[i].institutionType == _type) {
-        count++;
-      }
-    }
-
-    // 创建结果数组
-    Institution[] memory result = new Institution[](count);
-    uint currentIndex = 0;
-
-    // 填充结果数组
-    for (uint i = 0; i < institutions.length; i++) {
-      if (institutions[i].institutionType == _type) {
-        result[currentIndex] = institutions[i];
-        currentIndex++;
-      }
-    }
-
-    return result;
-  }
-
-  // 获取机构创建时间
-  function getInstitutionCreationTime(
-    uint _orgId
-  ) external view override returns (uint) {
-    require(_isInstitutionExists(_orgId), "Institution does not exist");
-    return institutions[_orgId - 1].createdAt;
-  }
-
   // 更新机构负责人
   function updateInstitutionResponsiblePerson(
     uint _orgId,
@@ -224,5 +189,23 @@ contract InstitutionManager is IInstitutionManager {
 
     // 更新负责人
     inst.responsiblePerson = _newResponsiblePerson;
+  }
+
+  // 删除机构
+  function deleteInstitution(uint _orgId) external override {
+    require(_isInstitutionExists(_orgId), "Institution does not exist");
+    Institution storage inst = institutions[_orgId - 1];
+    require(msg.sender == deployer, "Only deployer can delete institution");
+
+    // 清除所有员工与该机构的关联
+    for (uint i = 0; i < inst.staffList.length; i++) {
+      address staffAddr = inst.staffList[i];
+      if (staffToInstitution[staffAddr] == _orgId) {
+        staffToInstitution[staffAddr] = 0;
+      }
+    }
+
+    // 清空机构数据但保留ID位置（避免影响其他机构的索引）
+    delete institutions[_orgId - 1];
   }
 }

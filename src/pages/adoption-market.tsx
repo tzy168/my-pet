@@ -42,11 +42,12 @@ const AdoptionMarket: React.FC = observer(() => {
   const {
     userInfo,
     isLoading,
-    getAllPets,
     updatePetAdoptionStatus,
     walletAddress,
     contract,
+    petContract,
     getPetById,
+    addAdoptionEvent,
     // getPetsByAdoptionStatus,
   } = useGlobalStore()
 
@@ -102,9 +103,13 @@ const AdoptionMarket: React.FC = observer(() => {
 
   const fetchPets = async () => {
     try {
-      const allPets = await getAllPets()
-      setPets(allPets)
-      console.log("获取到的宠物列表:", allPets)
+      // setIsLoading(true)y
+      const availablePets = await petContract?.getPetsByAdoptionStatus(
+        Number(PetAdoptionStatus.Available)
+      )
+      if (availablePets) {
+        setPets(availablePets)
+      }
     } catch (error) {
       console.error("获取宠物列表失败:", error)
       setSnackbar({
@@ -264,6 +269,26 @@ const AdoptionMarket: React.FC = observer(() => {
     }
   }
 
+  const handleTabChange = async (value: any) => {
+    setActiveTab(value)
+    switch (value) {
+      case 0:
+        const res = await petContract?.getPetsByAdoptionStatus(
+          Number(PetAdoptionStatus.Available)
+        )
+        if (res) {
+          setPets(res)
+        }
+      case 1:
+        const availablePets = await petContract?.getPetsByAdoptionStatus(
+          Number(PetAdoptionStatus.Available)
+        )
+        if (availablePets) {
+          setPets(availablePets)
+        }
+    }
+  }
+
   return (
     <Box className={styles.container}>
       <Box className={styles.header}>
@@ -278,7 +303,7 @@ const AdoptionMarket: React.FC = observer(() => {
 
       <Tabs
         value={activeTab}
-        onChange={(_, value) => setActiveTab(value)}
+        onChange={(_, value) => handleTabChange(value)}
         sx={{ mb: 3 }}
       >
         <Tab label="可领养" />
@@ -531,11 +556,57 @@ const AdoptionMarket: React.FC = observer(() => {
                     color="primary"
                     startIcon={<FavoriteIcon />}
                     onClick={() => {
-                      setSnackbar({
-                        open: true,
-                        message: "请联系救助站进行领养申请",
-                        severity: "info",
-                      })
+                      // 调用合约的addAdoptionEvent方法进行领养
+                      if (walletAddress && selectedPet) {
+                        // 确认用户想要领养
+                        if (
+                          window.confirm(`确定要领养${selectedPet.name}吗？`)
+                        ) {
+                          // 调用全局状态中的addAdoptionEvent方法
+                          const institutionId =
+                            selectedPet.owner === walletAddress
+                              ? 0
+                              : staffStatus.institutionId
+                          addAdoptionEvent(
+                            selectedPet.id,
+                            walletAddress,
+                            "用户通过领养市场领养",
+                            institutionId
+                          )
+                            .then((result) => {
+                              if (result.success) {
+                                setSnackbar({
+                                  open: true,
+                                  message: "领养成功！宠物已经是您的了",
+                                  severity: "success",
+                                })
+                                // 关闭对话框并刷新宠物列表
+                                setSelectedPet(null)
+                                fetchPets()
+                              } else {
+                                setSnackbar({
+                                  open: true,
+                                  message: "领养失败，请稍后再试",
+                                  severity: "error",
+                                })
+                              }
+                            })
+                            .catch((error) => {
+                              console.error("领养过程中出错:", error)
+                              setSnackbar({
+                                open: true,
+                                message: "领养过程中出错，请稍后再试",
+                                severity: "error",
+                              })
+                            })
+                        }
+                      } else {
+                        setSnackbar({
+                          open: true,
+                          message: "请先连接钱包",
+                          severity: "warning",
+                        })
+                      }
                     }}
                   >
                     我想领养
@@ -560,7 +631,7 @@ const AdoptionMarket: React.FC = observer(() => {
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             <Typography variant="h6" gutterBottom>
-              {selectedPet?.name} (ID: {selectedPet?.id})
+              {selectedPet?.name} (ID: {Number(selectedPet?.id)})
             </Typography>
             <Typography variant="body1" gutterBottom>
               当前状态:{" "}

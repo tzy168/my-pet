@@ -32,7 +32,7 @@ describe("InstitutionManager", function () {
   describe("添加机构", function () {
     it("部署者应该能够添加机构", async function () {
       await institutionManager.addInstitution(
-        "宠物医院A", 
+        "宠物医院A",
         0, // Hospital类型
         addr1.address,
         "北京市海淀区",
@@ -57,8 +57,8 @@ describe("InstitutionManager", function () {
     it("非部署者不应该能够添加机构", async function () {
       await expect(
         institutionManager.connect(addr1).addInstitution(
-          "宠物医院B", 
-          0, 
+          "宠物医院B",
+          0,
           addr2.address,
           "上海市浦东新区",
           "021-87654321"
@@ -68,8 +68,8 @@ describe("InstitutionManager", function () {
 
     it("不应该允许将同一地址添加为多个机构的负责人", async function () {
       await institutionManager.addInstitution(
-        "宠物医院A", 
-        0, 
+        "宠物医院A",
+        0,
         addr1.address,
         "北京市海淀区",
         "010-12345678"
@@ -77,8 +77,8 @@ describe("InstitutionManager", function () {
 
       await expect(
         institutionManager.addInstitution(
-          "宠物医院B", 
-          0, 
+          "宠物医院B",
+          0,
           addr1.address,
           "上海市浦东新区",
           "021-87654321"
@@ -89,8 +89,8 @@ describe("InstitutionManager", function () {
     it("应该能够添加不同类型的机构", async function () {
       // 添加医院类型机构
       await institutionManager.addInstitution(
-        "宠物医院A", 
-        0, 
+        "宠物医院A",
+        0,
         addr1.address,
         "北京市海淀区",
         "010-12345678"
@@ -98,8 +98,8 @@ describe("InstitutionManager", function () {
 
       // 添加救助站类型机构
       await institutionManager.addInstitution(
-        "救助站B", 
-        1, 
+        "救助站B",
+        1,
         addr2.address,
         "广州市天河区",
         "020-98765432"
@@ -118,8 +118,8 @@ describe("InstitutionManager", function () {
     beforeEach(async function () {
       // 添加一个机构用于测试
       await institutionManager.addInstitution(
-        "宠物医院A", 
-        0, 
+        "宠物医院A",
+        0,
         addr1.address,
         "北京市海淀区",
         "010-12345678"
@@ -168,8 +168,8 @@ describe("InstitutionManager", function () {
     beforeEach(async function () {
       // 添加一个机构用于测试
       await institutionManager.addInstitution(
-        "宠物医院A", 
-        0, 
+        "宠物医院A",
+        0,
         addr1.address,
         "北京市海淀区",
         "010-12345678"
@@ -178,13 +178,10 @@ describe("InstitutionManager", function () {
 
     it("机构负责人应该能够添加员工", async function () {
       await institutionManager.connect(addr1).addStaffToInstitution(1, addr2.address);
-
       // 验证员工是否被添加
       expect(await institutionManager.isStaffInInstitution(1, addr2.address)).to.be.true;
-
       // 验证员工映射关系
       expect(await institutionManager.staffToInstitution(addr2.address)).to.equal(1);
-
       // 验证员工是否添加到机构的员工列表中
       const staffList = await institutionManager.getInstitutionStaff(1);
       expect(staffList).to.include(addr2.address);
@@ -233,16 +230,16 @@ describe("InstitutionManager", function () {
     beforeEach(async function () {
       // 添加两个机构用于测试
       await institutionManager.addInstitution(
-        "宠物医院A", 
-        0, 
+        "宠物医院A",
+        0,
         addr1.address,
         "北京市海淀区",
         "010-12345678"
       );
-      
+
       await institutionManager.addInstitution(
-        "救助站B", 
-        1, 
+        "救助站B",
+        1,
         addr2.address,
         "广州市天河区",
         "020-98765432"
@@ -256,11 +253,11 @@ describe("InstitutionManager", function () {
       const institutions = await institutionManager.getAllInstitutions();
 
       expect(institutions.length).to.equal(2);
-      
+
       expect(institutions[0].id).to.equal(1);
       expect(institutions[0].name).to.equal("宠物医院A");
       expect(institutions[0].institutionType).to.equal(0); // Hospital
-      
+
       expect(institutions[1].id).to.equal(2);
       expect(institutions[1].name).to.equal("救助站B");
       expect(institutions[1].institutionType).to.equal(1); // Shelter
@@ -298,7 +295,7 @@ describe("InstitutionManager", function () {
       const hospitals = await institutionManager.getInstitutionsByType(0);
       expect(hospitals.length).to.equal(1);
       expect(hospitals[0].name).to.equal("宠物医院A");
-      
+
       const shelters = await institutionManager.getInstitutionsByType(1);
       expect(shelters.length).to.equal(1);
       expect(shelters[0].name).to.equal("救助站B");
@@ -315,30 +312,30 @@ describe("InstitutionManager", function () {
     beforeEach(async function () {
       // 添加一个机构用于测试
       await institutionManager.addInstitution(
-        "宠物医院A", 
-        0, 
+        "宠物医院A",
+        0,
         addr1.address,
         "北京市海淀区",
         "010-12345678"
       );
-      
+
       // 添加员工
       await institutionManager.connect(addr1).addStaffToInstitution(1, addr2.address);
     });
 
     it("机构负责人应该能够更新负责人为现有员工", async function () {
       await institutionManager.connect(addr1).updateInstitutionResponsiblePerson(1, addr2.address);
-      
+
       const institutionDetail = await institutionManager.getInstitutionDetail(1);
       expect(institutionDetail.responsiblePerson).to.equal(addr2.address);
     });
 
     it("机构负责人应该能够更新负责人为新人员", async function () {
       await institutionManager.connect(addr1).updateInstitutionResponsiblePerson(1, addr3.address);
-      
+
       const institutionDetail = await institutionManager.getInstitutionDetail(1);
       expect(institutionDetail.responsiblePerson).to.equal(addr3.address);
-      
+
       // 验证新负责人是否被添加为员工
       expect(await institutionManager.isStaffInInstitution(1, addr3.address)).to.be.true;
       expect(await institutionManager.staffToInstitution(addr3.address)).to.equal(1);
@@ -346,7 +343,7 @@ describe("InstitutionManager", function () {
 
     it("部署者应该能够更新任何机构的负责人", async function () {
       await institutionManager.connect(owner).updateInstitutionResponsiblePerson(1, addr3.address);
-      
+
       const institutionDetail = await institutionManager.getInstitutionDetail(1);
       expect(institutionDetail.responsiblePerson).to.equal(addr3.address);
     });
@@ -360,13 +357,13 @@ describe("InstitutionManager", function () {
     it("不应该能够将已关联其他机构的人员设为负责人", async function () {
       // 创建第二个机构
       await institutionManager.addInstitution(
-        "救助站B", 
-        1, 
+        "救助站B",
+        1,
         addr3.address,
         "广州市天河区",
         "020-98765432"
       );
-      
+
       // 尝试将第二个机构的负责人设为第一个机构的负责人
       await expect(
         institutionManager.connect(addr1).updateInstitutionResponsiblePerson(1, addr3.address)

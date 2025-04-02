@@ -220,7 +220,6 @@ class GlobalStore {
     if (!this.contract) {
       return { success: false, error: "合约未初始化" }
     }
-
     try {
       this.setLoading(true)
       const tx = await this.contract.addStaffToInstitution(orgId, staff)

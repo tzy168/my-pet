@@ -322,6 +322,17 @@ const MyPets: React.FC = observer(() => {
         <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
           <CircularProgress />
         </Box>
+      ) : pets.length === 0 ? (
+        <Box sx={{ textAlign: "center", my: 4 }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>快去领养宠物吧！</Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            href="/adoption-market"
+          >
+            前往领养市场
+          </Button>
+        </Box>
       ) : (
         <Grid container spacing={3}>
           {pets.map((pet: Pet) => (

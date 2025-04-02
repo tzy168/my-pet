@@ -35,7 +35,7 @@ import {
 } from "@mui/icons-material"
 import { useRouter } from "next/router"
 import { ethers } from "ethers"
-import { InstitutionType } from "../stores/types"
+import { Institution, InstitutionType } from "../stores/types"
 
 const Admin: React.FC = observer(() => {
   const router = useRouter()
@@ -77,7 +77,8 @@ const Admin: React.FC = observer(() => {
   const fetchInstitutions = async () => {
     try {
       const result = await getAllInstitutions()
-      setInstitutions(result)
+      const res = result.filter((item: Institution) => Number(item.id) !== 0)
+      setInstitutions(res)
     } catch (error: any) {
       console.error("获取机构列表失败:", error)
       setSnackbar({
@@ -136,7 +137,7 @@ const Admin: React.FC = observer(() => {
 
   const handleDeleteInstitution = async (id: number) => {
     try {
-      await contract?.deleteInstitution(id)
+      await contract?.deleteInstitution(Number(id))
       setSnackbar({
         open: true,
         message: "删除机构成功",

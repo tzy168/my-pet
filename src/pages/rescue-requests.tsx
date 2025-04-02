@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react"
 import { observer } from "mobx-react-lite"
 import { useGlobalStore } from "../stores/global"
+import { useRouter } from "next/router"
 import {
   Box,
   Card,
@@ -40,12 +41,21 @@ import {
   Image as ImageIcon,
   PriorityHigh as UrgentIcon,
   AccountCircle,
+  Storefront as StorefrontIcon,
 } from "@mui/icons-material"
 import styles from "../styles/MyPets.module.css"
 import { addToIpfs } from "../utils/ipfs"
-import { RescueRequest, RoleType } from "../stores/types"
+import {
+  RescueRequest,
+  RoleType,
+  PetAdoptionStatus,
+  PetHealthStatus,
+  Pet,
+} from "../stores/types"
+import { set } from "mobx"
 
 const RescueRequests: React.FC = observer(() => {
+  const router = useRouter()
   const {
     userInfo,
     petContract,
@@ -56,13 +66,16 @@ const RescueRequests: React.FC = observer(() => {
     addRescueRequest,
     updateRescueRequestStatus,
     contract,
+    addPet,
   } = useGlobalStore()
   const [rescueRequests, setRescueRequests] = useState<RescueRequest[]>([])
   const [openDialog, setOpenDialog] = useState(false)
   const [openUpdateDialog, setOpenUpdateDialog] = useState(false)
+  const [openPetDialog, setOpenPetDialog] = useState(false) // 添加宠物对话框状态
   const [selectedRequest, setSelectedRequest] = useState<RescueRequest | null>(
     null
   )
+  const [selectedPet, setSelectedPet] = useState<Pet | null>(null) // 添加选中宠物状态
   const [rescueForm, setRescueForm] = useState({
     location: "",
     description: "",
@@ -72,6 +85,19 @@ const RescueRequests: React.FC = observer(() => {
   const [updateForm, setUpdateForm] = useState({
     status: "",
     responderOrgId: 0,
+  })
+  // 添加宠物表单状态
+  const [petForm, setPetForm] = useState({
+    name: "",
+    species: "",
+    breed: "",
+    gender: "",
+    age: "",
+    description: "",
+    imageUrl: "",
+    healthStatus: PetHealthStatus.Healthy,
+    adoptionStatus: PetAdoptionStatus.Available,
+    lastUpdatedAt: 0,
   })
   const [isLoading, setIsLoading] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -87,7 +113,7 @@ const RescueRequests: React.FC = observer(() => {
     message: "",
     severity: "success" as "success" | "error" | "info" | "warning",
   })
-  const [openMap, setOpenMap] = useState(false)
+  const [openPushDialog, setOpenPushDialog] = useState(false)
 
   useEffect(() => {
     // 当用户信息加载完成后，获取救助请求列表
@@ -192,9 +218,11 @@ const RescueRequests: React.FC = observer(() => {
   }
 
   const handleCloseDialog = () => {
+    setOpenPushDialog(false)
     setOpenDialog(false)
     setImagePreview("")
     setImageFile(null)
+    setSelectedPet(null)
   }
 
   const handleCloseUpdateDialog = () => {
@@ -202,30 +230,111 @@ const RescueRequests: React.FC = observer(() => {
     setSelectedRequest(null)
   }
 
+  // 处理宠物表单变更
+  const handlePetFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setPetForm({
+      ...petForm,
+      [name]: value,
+    })
+  }
+
+  // 处理宠物表单提交
+  const handlePetSubmit = async () => {
+    try {
+      if (
+        !petForm.name ||
+        !petForm.species ||
+        !petForm.gender ||
+        !petForm.age ||
+        !userInfo
+      ) {
+        setSnackbar({
+          open: true,
+          message: !userInfo ? "请先完成用户注册" : "请填写必填字段",
+          severity: "error",
+        })
+        return
+      }
+
+      let imageUrl = petForm.imageUrl
+      if (imageFile) {
+        try {
+          setIsUploading(true)
+          const uploadedUrl = await addToIpfs(imageFile)
+          imageUrl = uploadedUrl!
+          setSnackbar({
+            open: true,
+            message: "上传成功",
+            severity: "success",
+          })
+        } catch (error) {
+          console.log("error", error)
+          setSnackbar({
+            open: true,
+            message: "上传图片失败，请重试",
+            severity: "error",
+          })
+          return
+        } finally {
+          setIsUploading(false)
+          setOpenPushDialog(false)
+        }
+      }
+
+      // 添加宠物
+      await addPet(
+        petForm.name,
+        petForm.species,
+        petForm.breed,
+        petForm.gender,
+        parseInt(petForm.age),
+        petForm.description,
+        imageUrl,
+        petForm.healthStatus,
+        petForm.adoptionStatus
+      )
+
+      handleCloseDialog()
+      setSnackbar({
+        open: true,
+        message: "宠物已成功添加到领养市场",
+        severity: "success",
+      })
+
+      // 可以选择跳转到领养市场页面
+      // router.push('/adoption-market')
+    } catch (error: any) {
+      console.log("error", error)
+      setSnackbar({
+        open: true,
+        message: error.error || "操作失败，请重试",
+        severity: "error",
+      })
+    }
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setRescueForm((prev) => ({
-      ...prev,
+    setRescueForm({
+      ...rescueForm,
       [name]: value,
-    }))
+    })
+  }
+
+  const handleUpdateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setUpdateForm({
+      ...updateForm,
+      [name]: value,
+    })
   }
 
   const handleUrgencyChange = (newValue: number | null) => {
-    setRescueForm((prev) => ({
-      ...prev,
+    setRescueForm({
+      ...rescueForm,
       urgencyLevel: newValue || 1,
-    }))
-  }
-
-  const handleUpdateChange = (
-    e: React.ChangeEvent<{ name?: string; value: unknown }>
-  ) => {
-    const name = e.target.name as string
-    const value = e.target.value as string
-    setUpdateForm((prev) => ({
-      ...prev,
-      [name]: name === "responderOrgId" ? parseInt(value) : value,
-    }))
+    })
   }
 
   const handleSubmit = async () => {
@@ -301,12 +410,25 @@ const RescueRequests: React.FC = observer(() => {
     if (!selectedRequest) return
     try {
       // 使用组件顶层已获取的全局store实例，而不是在函数内部调用useGlobalStore
-      if (Number(userInfo?.roleId) === 0 || Number(userInfo?.roleId) === 3) {
-        await updateRescueRequestStatus(
+      if (Number(userInfo?.roleId) === 3) {
+        //如果当前状态与要更新的状态相同，不允许更新
+        if (
+          updateForm.status.toLowerCase() ===
+          selectedRequest.status.toLowerCase()
+        ) {
+          setSnackbar({
+            open: true,
+            message: "新状态与当前状态相同，无法更新",
+            severity: "error",
+          })
+          return
+        }
+        const tx = await updateRescueRequestStatus(
           selectedRequest.id,
           updateForm.status,
           Number(userInfo?.orgId)
         )
+        console.log("tx", tx)
 
         // 刷新救助请求列表
         await fetchRescueRequests()
@@ -391,6 +513,35 @@ const RescueRequests: React.FC = observer(() => {
     }
   }
 
+  // 处理发布到领养市场的函数
+  const handlePublishToAdoptionMarket = (request: RescueRequest) => {
+    // 将救助请求信息预填充到宠物表单中
+    setPetForm({
+      name: request.location.split(" ")[0] || "救助宠物", // 使用救助位置的第一个词作为默认名称
+      species: "", // 物种需要用户填写
+      breed: "", // 品种需要用户填写
+      gender: "", // 性别需要用户填写
+      age: "1", // 默认年龄为1岁
+      description: `这是一个来自救助请求的宠物。\n原始救助描述: ${request.description}\n救助位置: ${request.location}`, // 使用救助请求的描述
+      imageUrl:
+        request.images && request.images.length > 0 ? request.images[0] : "", // 使用救助请求的第一张图片
+      healthStatus: PetHealthStatus.Recovering, // 默认为恢复中
+      adoptionStatus: PetAdoptionStatus.Available, // 默认为可领养
+      lastUpdatedAt: 0,
+    })
+
+    // 如果有图片，设置图片预览
+    if (request.images && request.images.length > 0) {
+      setImagePreview(request.images[0])
+    } else {
+      setImagePreview("")
+    }
+
+    // 打开添加宠物对话框
+    setSelectedPet(null)
+    setOpenPushDialog(true)
+  }
+
   return (
     <Box className={styles.container}>
       <Box className={styles.header}>
@@ -413,7 +564,9 @@ const RescueRequests: React.FC = observer(() => {
           centered={!isMobile}
         >
           <Tab label="我的救助请求" />
-          {isShelterStaff && <Tab label="所有救助请求" />}
+          {(isShelterStaff || Number(userInfo?.roleId) === 0) && (
+            <Tab label="所有救助请求" />
+          )}
         </Tabs>
       </Box>
       {/* 状态筛选标签页 */}
@@ -542,8 +695,10 @@ const RescueRequests: React.FC = observer(() => {
                       提交时间: {formatDate(request.timestamp)}
                     </Typography>
 
-                    {(isContractDeployer || isShelterStaff) && (
-                      <Box sx={{ mt: 2 }}>
+                    <Box
+                      sx={{ mt: 2, display: "flex", gap: 1, flexWrap: "wrap" }}
+                    >
+                      {(isContractDeployer || isShelterStaff) && (
                         <Button
                           variant="outlined"
                           size={isMobile ? "small" : "medium"}
@@ -551,8 +706,21 @@ const RescueRequests: React.FC = observer(() => {
                         >
                           更新状态
                         </Button>
-                      </Box>
-                    )}
+                      )}
+
+                      {/* 当救助状态为已完成时，显示发布到领养市场按钮 */}
+                      {request.status.toLowerCase() === "completed" && (
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          size={isMobile ? "small" : "medium"}
+                          startIcon={<StorefrontIcon />}
+                          onClick={() => handlePublishToAdoptionMarket(request)}
+                        >
+                          发布到领养市场
+                        </Button>
+                      )}
+                    </Box>
                   </CardContent>
                 </Card>
               </Grid>
@@ -599,17 +767,7 @@ const RescueRequests: React.FC = observer(() => {
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LocationIcon
-                        sx={{
-                          cursor: "pointer",
-                          "&:hover": {
-                            color: "primary.main",
-                          },
-                        }}
-                        onClick={() => {
-                          setOpenMap(true)
-                        }}
-                      />
+                      <LocationIcon />
                     </InputAdornment>
                   ),
                 },
@@ -797,6 +955,215 @@ const RescueRequests: React.FC = observer(() => {
           </Button>
         </DialogActions>
       </Dialog>
+      {/* 添加宠物对话框 */}
+      <Dialog
+        open={openPushDialog && selectedRequest === null}
+        onClose={handleCloseDialog}
+        maxWidth="sm"
+        fullWidth
+        fullScreen={isMobile}
+      >
+        <DialogTitle>
+          {isMobile && (
+            <Button
+              onClick={handleCloseDialog}
+              sx={{ position: "absolute", right: 8, top: 8 }}
+            >
+              取消
+            </Button>
+          )}
+          添加宠物到领养市场
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            <TextField
+              autoFocus={!isMobile}
+              margin="dense"
+              name="name"
+              label="宠物名称"
+              fullWidth
+              required
+              value={petForm.name}
+              onChange={handlePetFormChange}
+              InputProps={{
+                style: { fontSize: isMobile ? "14px" : "16px" },
+              }}
+            />
+            <TextField
+              margin="dense"
+              name="species"
+              label="物种"
+              fullWidth
+              required
+              value={petForm.species}
+              onChange={handlePetFormChange}
+              placeholder="例如：猫、狗、兔子等"
+              InputProps={{
+                style: { fontSize: isMobile ? "14px" : "16px" },
+              }}
+            />
+            <TextField
+              margin="dense"
+              name="breed"
+              label="品种"
+              fullWidth
+              value={petForm.breed}
+              onChange={handlePetFormChange}
+              placeholder="例如：金毛、橘猫等"
+              InputProps={{
+                style: { fontSize: isMobile ? "14px" : "16px" },
+              }}
+            />
+            <FormControl fullWidth margin="dense">
+              <InputLabel>性别</InputLabel>
+              <Select
+                name="gender"
+                value={petForm.gender}
+                label="性别"
+                onChange={handlePetFormChange as any}
+                sx={{ fontSize: isMobile ? "14px" : "16px" }}
+              >
+                <MenuItem value="公">公</MenuItem>
+                <MenuItem value="母">母</MenuItem>
+                <MenuItem value="未知">未知</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              margin="dense"
+              name="age"
+              label="年龄"
+              type="number"
+              fullWidth
+              required
+              value={petForm.age}
+              onChange={handlePetFormChange}
+              InputProps={{
+                style: { fontSize: isMobile ? "14px" : "16px" },
+              }}
+            />
+            <TextField
+              margin="dense"
+              name="description"
+              label="描述"
+              fullWidth
+              multiline
+              rows={isMobile ? 3 : 4}
+              value={petForm.description}
+              onChange={handlePetFormChange}
+              InputProps={{
+                style: { fontSize: isMobile ? "14px" : "16px" },
+              }}
+            />
+
+            <FormControl fullWidth margin="dense">
+              <InputLabel>健康状态</InputLabel>
+              <Select
+                name="healthStatus"
+                value={petForm.healthStatus}
+                label="健康状态"
+                onChange={handlePetFormChange as any}
+                sx={{ fontSize: isMobile ? "14px" : "16px" }}
+              >
+                <MenuItem value={PetHealthStatus.Healthy}>健康</MenuItem>
+                <MenuItem value={PetHealthStatus.Sick}>生病</MenuItem>
+                <MenuItem value={PetHealthStatus.Recovering}>恢复中</MenuItem>
+                <MenuItem value={PetHealthStatus.Critical}>危重</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth margin="dense">
+              <InputLabel>领养状态</InputLabel>
+              <Select
+                name="adoptionStatus"
+                value={petForm.adoptionStatus}
+                label="领养状态"
+                onChange={handlePetFormChange as any}
+                sx={{ fontSize: isMobile ? "14px" : "16px" }}
+              >
+                <MenuItem value={PetAdoptionStatus.Available}>可领养</MenuItem>
+                <MenuItem value={PetAdoptionStatus.Adopted}>已领养</MenuItem>
+                <MenuItem value={PetAdoptionStatus.Processing}>处理中</MenuItem>
+                <MenuItem value={PetAdoptionStatus.NotAvailable}>
+                  不可领养
+                </MenuItem>
+              </Select>
+            </FormControl>
+
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2" gutterBottom>
+                宠物图片
+              </Typography>
+              <input
+                accept="image/*"
+                style={{ display: "none" }}
+                id="pet-image-upload"
+                type="file"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) {
+                    setImageFile(file)
+                    const reader = new FileReader()
+                    reader.onloadend = () => {
+                      setImagePreview(reader.result as string)
+                    }
+                    reader.readAsDataURL(file)
+                  }
+                }}
+              />
+              <label htmlFor="pet-image-upload">
+                <Box
+                  sx={{
+                    width: "100%",
+                    height: isMobile ? 120 : 150,
+                    border: "2px dashed #ccc",
+                    borderRadius: 1,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    cursor: "pointer",
+                    mb: 2,
+                    backgroundImage: imagePreview
+                      ? `url(${imagePreview})`
+                      : "none",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                >
+                  {!imagePreview && (
+                    <Typography fontSize={isMobile ? "0.875rem" : "1rem"}>
+                      {isMobile ? "点击拍照或上传" : "点击上传图片"}
+                    </Typography>
+                  )}
+                </Box>
+              </label>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: isMobile ? 2 : 1 }}>
+          {!isMobile && (
+            <Button
+              onClick={handleCloseDialog}
+              disabled={isLoading || isUploading}
+            >
+              取消
+            </Button>
+          )}
+          <Button
+            onClick={handlePetSubmit}
+            variant="contained"
+            disabled={isLoading || isUploading}
+            fullWidth={isMobile}
+            size={isMobile ? "large" : "medium"}
+            startIcon={
+              isLoading || isUploading ? (
+                <CircularProgress size={isMobile ? 16 : 20} />
+              ) : null
+            }
+          >
+            {isLoading || isUploading ? "提交中..." : "提交"}
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
@@ -814,5 +1181,4 @@ const RescueRequests: React.FC = observer(() => {
     </Box>
   )
 })
-
 export default RescueRequests

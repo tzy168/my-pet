@@ -146,7 +146,7 @@ const MedicalRecords: React.FC = observer(() => {
       })
       return
     }
-    if (Number(userInfo?.roleId) === 2 || Number(userInfo?.roleId) === 0) {
+    if (Number(userInfo?.roleId) === 2) {
       setMedicalForm({
         diagnosis: "",
         treatment: "",
@@ -158,7 +158,7 @@ const MedicalRecords: React.FC = observer(() => {
     } else {
       setSnackbar({
         open: true,
-        message: "只有医院工作人员或系统管理员才能添加医疗记录",
+        message: "只有医院工作人员才能添加医疗记录",
         severity: "error",
       })
     }
@@ -316,17 +316,15 @@ const MedicalRecords: React.FC = observer(() => {
               {selectedPet && String(selectedPet?.name) + "的"}
               医疗记录 {selectedPet && "ID:" + String(selectedPet?.id)}
             </Typography>
-            {selectedPet &&
-              (Number(userInfo?.roleId) === 2 ||
-                Number(userInfo?.roleId) === 0) && (
-                <Button
-                  variant="contained"
-                  startIcon={<HospitalIcon />}
-                  onClick={handleOpenDialog}
-                >
-                  添加记录
-                </Button>
-              )}
+            {selectedPet && Number(userInfo?.roleId) === 2 && (
+              <Button
+                variant="contained"
+                startIcon={<HospitalIcon />}
+                onClick={handleOpenDialog}
+              >
+                添加记录
+              </Button>
+            )}
           </Box>
 
           {selectedPet ? (

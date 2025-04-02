@@ -282,11 +282,9 @@ contract PetManager is IPetManager {
         count++;
       }
     }
-
     // 创建结果数组
     Pet[] memory result = new Pet[](count);
     uint currentIndex = 0;
-
     // 填充结果数组
     for (uint i = 0; i < pets.length; i++) {
       if (pets[i].adoptionStatus == _status) {

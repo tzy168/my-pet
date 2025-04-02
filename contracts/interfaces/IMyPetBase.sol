@@ -5,7 +5,8 @@ interface IMyPetBase {
   // 定义机构类型：宠物医院 (Hospital) 和动物救助站 (Shelter)
   enum InstitutionType {
     Hospital,
-    Shelter
+    Shelter,
+    Admin
   }
 
   // 定义用户类型：个人用户 (Personal) 和 机构用户 (Institutional)

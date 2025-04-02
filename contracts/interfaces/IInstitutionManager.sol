@@ -52,12 +52,9 @@ interface IInstitutionManager is IMyPetBase {
     uint _orgId
   ) external view returns (address[] memory);
   
-  // 获取特定类型的机构
-  function getInstitutionsByType(InstitutionType _type) external view returns (Institution[] memory);
-  
-  // 获取机构创建时间
-  function getInstitutionCreationTime(uint _orgId) external view returns (uint);
-  
   // 更新机构负责人
   function updateInstitutionResponsiblePerson(uint _orgId, address _newResponsiblePerson) external;
+  
+  // 删除机构
+  function deleteInstitution(uint _orgId) external;
 }
