@@ -27,7 +27,7 @@ export const writeTransactionHashToIpfs = async (hash: string) => {
     const file = new TextEncoder().encode(hash)
     const added = await client.add(file)
     const cid = added.path
-    const url = `${IPFS_GATEWAY}${cid}`
+    const url = `${cid}`
     return url
   } catch (e) {
     console.error("IPFS上传错误:", e)
