@@ -104,6 +104,9 @@ interface IPetManager is IMyPetBase {
     string memory _status,
     uint _responderOrgId
   ) external;
+  
+  // 存储交易哈希
+  function storeTransactionHash(string memory _hash) external;
 
   // 获取救助请求
   function getRescueRequest(uint _requestId) external view returns (RescueRequest memory);

@@ -428,10 +428,10 @@ const RescueRequests: React.FC = observer(() => {
           updateForm.status,
           Number(userInfo?.orgId)
         )
-        console.log("tx", tx)
 
         // 刷新救助请求列表
         await fetchRescueRequests()
+
         handleCloseUpdateDialog()
         setSnackbar({
           open: true,

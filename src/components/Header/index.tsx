@@ -193,7 +193,7 @@ const Header: React.FC = observer(() => {
                 <span
                   className={`${styles.userType} ${userInfo.userType === 0 ? styles.personal : styles.institutional}`}
                 >
-                  {userInfo.userType === 0 ? "个人用户" : "机构用户"}
+                  {Number(userInfo.userType) === 0 ? "个人用户" : "机构用户"}
                 </span>
               )}
             </div>

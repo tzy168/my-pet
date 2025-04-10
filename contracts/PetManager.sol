@@ -5,6 +5,11 @@ import "./interfaces/IPetManager.sol";
 import "./interfaces/IInstitutionManager.sol";
 import "./interfaces/IUserManager.sol";
 
+/**
+ * @title PetManager
+ * @dev 宠物管理合约，负责宠物信息登记与更新、健康状态和领养状态管理、
+ * 领养事件记录、医疗事件记录和救助请求处理
+ */
 contract PetManager is IPetManager {
   // 宠物存储
   Pet[] public pets;
@@ -17,6 +22,10 @@ contract PetManager is IPetManager {
   uint public adoptionEventIdCounter = 1;
   uint public medicalEventIdCounter = 1;
   uint public rescueRequestIdCounter = 1;
+
+  // 交易哈希存储
+  mapping(uint256 => string) public transactionHashes;
+  uint256 public hashCount;
 
   // 用户宠物映射
   mapping(address => mapping(uint => bool)) private userPets;
@@ -449,6 +458,12 @@ contract PetManager is IPetManager {
     pet.lastUpdatedAt = block.timestamp;
 
     return newId;
+  }
+
+  // 存储交易哈希
+  function storeTransactionHash(string memory _hash) public {
+    transactionHashes[hashCount] = _hash;
+    hashCount++;
   }
 
   // 获取医疗事件

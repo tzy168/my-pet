@@ -411,6 +411,9 @@ const Home: NextPage = () => {
                   <Typography
                     variant="h5"
                     gutterBottom
+                    onClick={() => {
+                      router.push("./system-guide")
+                    }}
                     sx={{ fontWeight: 600 }}
                   >
                     使用指南

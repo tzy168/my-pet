@@ -108,7 +108,7 @@ const MedicalRecords: React.FC = observer(() => {
         const userPets = await getUserPets()
         setPets(userPets)
         const allPetsList = await getAllPets()
-        console.log("pet", allPetsList)
+        // console.log("pet", allPetsList)
         setAllPets(allPetsList)
       } catch (error) {
         console.error("获取宠物列表失败:", error)
@@ -200,6 +200,7 @@ const MedicalRecords: React.FC = observer(() => {
         severity: "error",
       })
     } finally {
+      setOpenDialog(false)
       setIsSubmitting(false)
     }
   }
@@ -217,7 +218,7 @@ const MedicalRecords: React.FC = observer(() => {
       String(pet.id).includes(searchTerm)
   )
 
-  console.log(filteredPets)
+  // console.log(filteredPets)
 
   return (
     <Box className={styles.container}>
@@ -226,7 +227,7 @@ const MedicalRecords: React.FC = observer(() => {
         {Number(userInfo?.roleId) === 2 && (
           <Typography variant="subtitle1" color="primary">
             所属医院:🏥 {staffStatus.institutionName}(ID:
-            {staffStatus.institutionId})
+            {Number(staffStatus.institutionId)})
           </Typography>
         )}
       </Box>

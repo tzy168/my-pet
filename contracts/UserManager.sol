@@ -4,6 +4,10 @@ pragma solidity ^0.8.0;
 import "./interfaces/IUserManager.sol";
 import "./interfaces/IInstitutionManager.sol";
 
+/**
+ * @title UserManager
+ * @dev 用户管理合约，负责用户注册、资料管理、角色分配和宠物所有权记录
+ */
 contract UserManager is IUserManager {
   // 用户存储
   mapping(address => uint) public userIds;

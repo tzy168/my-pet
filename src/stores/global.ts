@@ -15,6 +15,7 @@ import {
   InstitutionType,
 } from "./types"
 import { createContext, useContext } from "react"
+import { writeTransactionHashToIpfs } from "../utils/ipfs"
 
 class GlobalStore {
   contract: ethers.Contract | null = null
@@ -537,8 +538,16 @@ class GlobalStore {
         cost,
         attachments
       )
-      await tx.wait()
+      const res = await tx.wait()
+      console.log("tx", res)
+      // 将交易哈希写入IPFS并获取CID
+      const ipfsCid = await writeTransactionHashToIpfs(res.hash)
+      // 将CID存储到智能合约中
+      if (ipfsCid) {
+        await this.petContract.storeTransactionHash(ipfsCid)
+      }
       await this.getPetMedicalHistory(petId)
+      this.setLoading(false)
       return { success: true }
     } catch (error: any) {
       this.setLoading(false)
@@ -691,7 +700,7 @@ class GlobalStore {
     }
     try {
       this.setLoading(true)
-      console.log("res")
+      // console.log("res")
 
       const tx = await this.petContract.updateRescueRequestStatus(
         requestId,

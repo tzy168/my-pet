@@ -3,6 +3,11 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/IInstitutionManager.sol";
 
+/**
+ * @title InstitutionManager
+ * @dev 机构管理合约，负责医院和救助站的注册、认证与人员管理
+ * 包括机构信息更新、员工管理和机构负责人变更等功能
+ */
 contract InstitutionManager is IInstitutionManager {
   // 机构存储
   Institution[] public institutions;

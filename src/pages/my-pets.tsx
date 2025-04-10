@@ -247,7 +247,7 @@ const MyPets: React.FC = observer(() => {
             severity: "success",
           })
         } catch (error) {
-          console.log("error", error)
+          // console.log("error", error)
           setSnackbar({
             open: true,
             message: "上传图片失败，请重试",
@@ -301,7 +301,7 @@ const MyPets: React.FC = observer(() => {
         severity: "success",
       })
     } catch (error: any) {
-      console.log("error", error)
+      // console.log("error", error)
       setSnackbar({
         open: true,
         message: error.error || "操作失败，请重试",
@@ -324,12 +324,10 @@ const MyPets: React.FC = observer(() => {
         </Box>
       ) : pets.length === 0 ? (
         <Box sx={{ textAlign: "center", my: 4 }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>快去领养宠物吧！</Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            href="/adoption-market"
-          >
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            快去领养宠物吧！
+          </Typography>
+          <Button variant="contained" color="primary" href="/adoption-market">
             前往领养市场
           </Button>
         </Box>
