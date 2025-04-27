@@ -8,7 +8,8 @@
     "start": "next start",
     "test": "npx hardhat test",
     "hardhat": "npx hardhat node",
-    "compile": "npx hardhat run scripts/deploy.js --network localhost",
+    "compile:local": "npx hardhat run scripts/deploy.js --network localhost",
+    "compile:sepolia": "npx hardhat run scripts/deploy.js --network sepolia",
     "ipfs": "ipfs daemon",
     "lint": "eslint . --ext .ts,.tsx",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\""

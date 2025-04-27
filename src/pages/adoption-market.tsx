@@ -567,6 +567,7 @@ const AdoptionMarket: React.FC = observer(() => {
                             selectedPet.owner === walletAddress
                               ? 0
                               : staffStatus.institutionId
+                          //
                           addAdoptionEvent(
                             selectedPet.id,
                             walletAddress,

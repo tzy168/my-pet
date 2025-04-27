@@ -55,8 +55,7 @@ interface IPetManager is IMyPetBase {
   // 根据ID获取宠物
   function getPetById(uint _petId) external view returns (Pet memory);
 
-  // 根据健康状态获取宠物
-  function getPetsByHealthStatus(PetHealthStatus _status) external view returns (Pet[] memory);
+
 
   // 根据领养状态获取宠物
   function getPetsByAdoptionStatus(PetAdoptionStatus _status) external view returns (Pet[] memory);

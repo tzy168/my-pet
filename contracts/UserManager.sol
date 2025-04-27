@@ -9,6 +9,22 @@ import "./interfaces/IInstitutionManager.sol";
  * @dev 用户管理合约，负责用户注册、资料管理、角色分配和宠物所有权记录
  */
 contract UserManager is IUserManager {
+  // 事件定义
+  event UserProfileSet(
+    address indexed user,
+    string name,
+    UserType userType,
+    uint orgId,
+    uint timestamp
+  );
+  event UserRoleUpdated(
+    address indexed user,
+    RoleType oldRole,
+    RoleType newRole,
+    uint timestamp
+  );
+  event PetAddedToUser(address indexed user, uint petId, uint timestamp);
+  event PetRemovedFromUser(address indexed user, uint petId, uint timestamp);
   // 用户存储
   mapping(address => uint) public userIds;
   User[] public users;
@@ -37,35 +53,35 @@ contract UserManager is IUserManager {
 
   // 设置用户资料
   function setUserProfile(
-    string memory _name,
-    string memory _email,
-    string memory _phone,
-    UserType _userType,
-    uint _orgId,
-    string memory _avatar
+    string memory _name, // 姓名
+    string memory _email, // 邮箱
+    string memory _phone, //  电话
+    UserType _userType, // 用户类型
+    uint _orgId, // 机构ID
+    string memory _avatar // 头像URL
   ) external override {
     bool isNewUser = !_isUserRegistered(msg.sender);
     if (_userType == UserType.Institutional) {
+      // 验证机构ID是否有效
       require(
         _orgId != 0,
         "Institutional user must associate with an institution"
       );
-
-      // 验证机构是否存在
       IInstitutionManager institutionManager = IInstitutionManager(
         institutionManagerAddress
       );
+      // 验证机构是否存在
       require(
         _orgId < institutionManager.institutionIdCounter(),
         "Associated institution does not exist"
       );
     } else {
+      // 个人用户不允许关联机构
       require(
         _orgId == 0,
         "Personal user should not associate with an institution"
       );
     }
-
     // 确定用户角色
     RoleType roleId;
     // 检查是否是合约部署者
@@ -93,10 +109,8 @@ contract UserManager is IUserManager {
       userIds[msg.sender] = userIdCounter;
       users.push();
       uint index = users.length - 1;
-      // 关联机构push此地址
       // 创建空的宠物ID数组
       uint[] memory emptyPetIds = new uint[](0);
-
       User storage newUser = users[index];
       newUser.name = _name;
       newUser.email = _email;
@@ -106,7 +120,6 @@ contract UserManager is IUserManager {
       newUser.orgId = _orgId;
       newUser.isProfileSet = true;
       newUser.roleId = roleId; // 设置角色ID
-
       newUser.petIds = emptyPetIds; // 设置空的宠物ID数组
       newUser.avatar = _avatar; // 设置头像URL
       userIdCounter++;
@@ -122,21 +135,8 @@ contract UserManager is IUserManager {
       user.roleId = roleId; // 更新角色ID
       user.avatar = _avatar; // 更新头像URL
     }
-  }
-
-  function isUserInInstitutionStaffList(
-    address _user
-  ) external view returns (bool) {
-    require(_isUserRegistered(_user), "User not registered");
-    uint userId = userIds[_user];
-    User storage user = users[userId - 1];
-    if (user.userType == UserType.Institutional && user.orgId != 0) {
-      IInstitutionManager institutionManager = IInstitutionManager(
-        institutionManagerAddress
-      );
-      return institutionManager.isStaffInInstitution(user.orgId, _user);
-    }
-    return false;
+    // 触发用户资料设置事件
+    emit UserProfileSet(msg.sender, _name, _userType, _orgId, block.timestamp);
   }
 
   // 更新用户角色
@@ -145,27 +145,29 @@ contract UserManager is IUserManager {
     require(_isUserRegistered(_user), "User not registered");
     uint userId = userIds[_user];
     User storage user = users[userId - 1];
+    RoleType oldRole = user.roleId;
     user.roleId = _roleId;
+
+    // 触发用户角色更新事件
+    emit UserRoleUpdated(_user, oldRole, _roleId, block.timestamp);
   }
 
   // 添加宠物到用户
   function addPetToUser(address _user, uint _petId) external override {
-    // 只允许PetManager合约调用此函数
     // 这里可以添加更多的安全检查，例如验证调用者是否为PetManager合约
     require(_isUserRegistered(_user), "User not registered");
-
     uint userId = userIds[_user];
     User storage user = users[userId - 1];
-
     // 检查宠物ID是否已经在用户的宠物列表中
     for (uint i = 0; i < user.petIds.length; i++) {
       if (user.petIds[i] == _petId) {
         return; // 宠物ID已存在，直接返回
       }
     }
-
     // 添加宠物ID到用户的宠物列表
     user.petIds.push(_petId);
+    // 触发宠物添加到用户事件
+    emit PetAddedToUser(_user, _petId, block.timestamp);
   }
 
   // 从用户移除宠物
@@ -183,6 +185,9 @@ contract UserManager is IUserManager {
         // 将最后一个元素移到当前位置，然后删除最后一个元素
         user.petIds[i] = user.petIds[user.petIds.length - 1];
         user.petIds.pop();
+
+        // 触发宠物从用户移除事件
+        emit PetRemovedFromUser(_user, _petId, block.timestamp);
         break;
       }
     }
@@ -264,70 +269,7 @@ contract UserManager is IUserManager {
     return users;
   }
 
-  // 获取特定角色的用户
-  function getUsersByRole(
-    RoleType _roleId
-  ) external view override returns (User[] memory) {
-    require(msg.sender == deployer, "Only deployer can view users by role");
-
-    // 计算符合条件的用户数量
-    uint count = 0;
-    for (uint i = 0; i < users.length; i++) {
-      if (users[i].roleId == _roleId) {
-        count++;
-      }
-    }
-
-    // 创建结果数组
-    User[] memory result = new User[](count);
-    uint currentIndex = 0;
-
-    // 填充结果数组
-    for (uint i = 0; i < users.length; i++) {
-      if (users[i].roleId == _roleId) {
-        result[currentIndex] = users[i];
-        currentIndex++;
-      }
-    }
-
-    return result;
-  }
-
-  // 获取特定机构的用户
-  function getUsersByInstitution(
-    uint _orgId
-  ) external view override returns (User[] memory) {
-    // 验证调用者是否为该机构的负责人或管理员
-    IInstitutionManager institutionManager = IInstitutionManager(
-      institutionManagerAddress
-    );
-    Institution memory inst = institutionManager.getInstitutionDetail(_orgId);
-
-    require(
-      msg.sender == inst.responsiblePerson || msg.sender == deployer,
-      "Only institution responsible person or deployer can view institution users"
-    );
-
-    // 计算符合条件的用户数量
-    uint count = 0;
-    for (uint i = 0; i < users.length; i++) {
-      if (users[i].orgId == _orgId) {
-        count++;
-      }
-    }
-
-    // 创建结果数组
-    User[] memory result = new User[](count);
-    uint currentIndex = 0;
-
-    // 填充结果数组
-    for (uint i = 0; i < users.length; i++) {
-      if (users[i].orgId == _orgId) {
-        result[currentIndex] = users[i];
-        currentIndex++;
-      }
-    }
-
-    return result;
-  }
+  // 注意：以下函数已从合约中移除，因为它们未被前端使用
+  // - getUsersByRole
+  // - getUsersByInstitution
 }

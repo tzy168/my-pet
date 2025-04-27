@@ -52,8 +52,8 @@ interface IInstitutionManager is IMyPetBase {
     uint _orgId
   ) external view returns (address[] memory);
   
-  // 更新机构负责人
-  function updateInstitutionResponsiblePerson(uint _orgId, address _newResponsiblePerson) external;
+  // 注意：此函数已从接口中移除，因为它未被前端使用
+  // - updateInstitutionResponsiblePerson
   
   // 删除机构
   function deleteInstitution(uint _orgId) external;

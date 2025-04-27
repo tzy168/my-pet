@@ -709,17 +709,20 @@ const RescueRequests: React.FC = observer(() => {
                       )}
 
                       {/* 当救助状态为已完成时，显示发布到领养市场按钮 */}
-                      {request.status.toLowerCase() === "completed" && (
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          size={isMobile ? "small" : "medium"}
-                          startIcon={<StorefrontIcon />}
-                          onClick={() => handlePublishToAdoptionMarket(request)}
-                        >
-                          发布到领养市场
-                        </Button>
-                      )}
+                      {request.status.toLowerCase() === "completed" &&
+                        Number(userInfo?.roleId) === 3 && (
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            size={isMobile ? "small" : "medium"}
+                            startIcon={<StorefrontIcon />}
+                            onClick={() =>
+                              handlePublishToAdoptionMarket(request)
+                            }
+                          >
+                            发布到领养市场
+                          </Button>
+                        )}
                     </Box>
                   </CardContent>
                 </Card>

@@ -8,9 +8,7 @@ const client = create({
   protocol: "http",
 })
 
-export const addToIpfs = async (e: any) => {
-  console.log(e)
-  const file = e
+export const addToIpfs = async (file: any) => {
   try {
     const added = await client.add(file)
     const cid = added.path

@@ -10,7 +10,7 @@ module.exports = {
         enabled: true,
         runs: 200,
       },
-      viaIR: true, // 启用viaIR选项
+      viaIR: true,
     }
   },
   networks: {
@@ -19,7 +19,11 @@ module.exports = {
     },
     localhost: {
       url: "http://127.0.0.1:8545"
-    }
+    },
+    // sepolia: {
+    //   url: `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`, // 或者使用Alchemy
+    //   accounts: [process.env.PRIVATE_KEY]
+    // }
   },
   paths: {
     sources: "./contracts",

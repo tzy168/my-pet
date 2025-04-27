@@ -9,7 +9,39 @@ import "./interfaces/IInstitutionManager.sol";
  * 包括机构信息更新、员工管理和机构负责人变更等功能
  */
 contract InstitutionManager is IInstitutionManager {
-  // 机构存储
+  // 事件定义
+  event InstitutionAdded(
+    uint indexed institutionId,
+    string name,
+    InstitutionType institutionType,
+    address responsiblePerson,
+    uint timestamp
+  );
+  event InstitutionUpdated(
+    uint indexed institutionId,
+    string name,
+    string orgAddress,
+    string contactInfo,
+    uint timestamp
+  );
+  event StaffAddedToInstitution(
+    uint indexed institutionId,
+    address staff,
+    uint timestamp
+  );
+  event StaffRemovedFromInstitution(
+    uint indexed institutionId,
+    address staff,
+    uint timestamp
+  );
+  event InstitutionResponsiblePersonUpdated(
+    uint indexed institutionId,
+    address oldResponsiblePerson,
+    address newResponsiblePerson,
+    uint timestamp
+  );
+  event InstitutionDeleted(uint indexed institutionId, uint timestamp);
+  // 机构列表
   Institution[] public institutions;
   // 员工地址到机构ID的映射
   mapping(address => uint) public staffToInstitution;
@@ -27,7 +59,15 @@ contract InstitutionManager is IInstitutionManager {
     return _orgId > 0 && _orgId < institutionIdCounter;
   }
 
-  // 添加机构
+  /*
+   * @dev 添加机构
+   * @param _name 机构名称
+   * @param _institutionType 机构类型
+   * @param _responsiblePerson 机构负责人
+   * @param _orgAddress 机构地址
+   * @param _contactInfo 联系方式
+   * @return 机构ID
+   **/
   function addInstitution(
     string memory _name,
     InstitutionType _institutionType,
@@ -35,14 +75,18 @@ contract InstitutionManager is IInstitutionManager {
     string memory _orgAddress,
     string memory _contactInfo
   ) external override returns (uint) {
+    // 只允许部署者添加机构
     require(msg.sender == deployer, "Only deployer can add institutions");
+    // 检查机构负责人是否已存在
     require(
       staffToInstitution[_responsiblePerson] == 0,
       "Address already associated with an institution"
     );
     uint newId = institutionIdCounter;
     institutionIdCounter++;
+
     institutions.push();
+    // 初始化机构信息
     Institution storage inst = institutions[newId - 1];
     inst.id = newId;
     inst.name = _name;
@@ -57,39 +101,75 @@ contract InstitutionManager is IInstitutionManager {
     inst.staffList.push(_responsiblePerson);
     staffToInstitution[_responsiblePerson] = newId;
 
+    // 触发机构添加事件
+    emit InstitutionAdded(
+      newId,
+      _name,
+      _institutionType,
+      _responsiblePerson,
+      block.timestamp
+    );
+
+    // 返回机构ID
     return newId;
   }
 
-  // 更新机构信息
+  /*
+   * @dev 更新机构信息
+   * @param _orgId 机构ID
+   * @param _name 机构名称
+   * @param _orgAddress 机构地址
+   * @param _contactInfo 联系方式
+   **/
   function updateInstitution(
     uint _orgId,
-    string memory _name, // 名称
-    string memory _orgAddress, // 机构地址
-    string memory _contactInfo //联系方式
+    string memory _name,
+    string memory _orgAddress,
+    string memory _contactInfo
   ) external override {
+    // 检查机构是否存在
     require(_isInstitutionExists(_orgId), "Institution does not exist");
+    // 获取机构信息
     Institution storage inst = institutions[_orgId - 1];
+    // 只允许机构负责人或部署者更新机构信息
     require(
       msg.sender == inst.responsiblePerson || msg.sender == deployer,
       "Only responsible person or deployer can update institution"
     );
 
+    // 更新机构信息
     inst.name = _name;
     inst.orgAddress = _orgAddress;
     inst.contactInfo = _contactInfo;
+
+    // 触发机构更新事件
+    emit InstitutionUpdated(
+      _orgId,
+      _name,
+      _orgAddress,
+      _contactInfo,
+      block.timestamp
+    );
   }
 
-  // 添加员工到机构
+  /*
+   * @dev 添加员工到机构
+   * @param _orgId 机构ID
+   * @param _staff 员工地址
+   **/
   function addStaffToInstitution(
     uint _orgId,
     address _staff
   ) external override {
+    // 检查机构是否存在
     require(_isInstitutionExists(_orgId), "Institution does not exist");
     Institution storage inst = institutions[_orgId - 1];
+    // 只允许机构负责人添加员工
     require(
       msg.sender == inst.responsiblePerson,
       "Only institution responsible person can add staff"
     );
+    // 检查员工是否已存在
     require(
       staffToInstitution[_staff] == 0,
       "Staff already associated with an institution"
@@ -97,6 +177,9 @@ contract InstitutionManager is IInstitutionManager {
 
     staffToInstitution[_staff] = _orgId;
     inst.staffList.push(_staff); // 将员工添加到机构的员工列表中
+
+    // 触发员工添加到机构事件
+    emit StaffAddedToInstitution(_orgId, _staff, block.timestamp);
   }
 
   // 从机构移除员工
@@ -123,6 +206,9 @@ contract InstitutionManager is IInstitutionManager {
         // 将最后一个元素移到当前位置，然后删除最后一个元素
         inst.staffList[i] = inst.staffList[inst.staffList.length - 1];
         inst.staffList.pop();
+
+        // 触发员工从机构移除事件
+        emit StaffRemovedFromInstitution(_orgId, _staff, block.timestamp);
         break;
       }
     }
@@ -169,32 +255,8 @@ contract InstitutionManager is IInstitutionManager {
     return institutions[_orgId - 1].staffList;
   }
 
-  // 更新机构负责人
-  function updateInstitutionResponsiblePerson(
-    uint _orgId,
-    address _newResponsiblePerson
-  ) external override {
-    require(_isInstitutionExists(_orgId), "Institution does not exist");
-    Institution storage inst = institutions[_orgId - 1];
-    require(
-      msg.sender == inst.responsiblePerson || msg.sender == deployer,
-      "Only current responsible person or deployer can update responsible person"
-    );
-    require(
-      staffToInstitution[_newResponsiblePerson] == 0 ||
-        staffToInstitution[_newResponsiblePerson] == _orgId,
-      "New responsible person is associated with another institution"
-    );
-
-    // 如果新负责人不是当前机构的员工，则添加到员工列表
-    if (staffToInstitution[_newResponsiblePerson] == 0) {
-      staffToInstitution[_newResponsiblePerson] = _orgId;
-      inst.staffList.push(_newResponsiblePerson);
-    }
-
-    // 更新负责人
-    inst.responsiblePerson = _newResponsiblePerson;
-  }
+  // 注意：此函数已从合约中移除，因为它未被前端使用
+  // - updateInstitutionResponsiblePerson
 
   // 删除机构
   function deleteInstitution(uint _orgId) external override {
@@ -209,6 +271,9 @@ contract InstitutionManager is IInstitutionManager {
         staffToInstitution[staffAddr] = 0;
       }
     }
+
+    // 触发机构删除事件
+    emit InstitutionDeleted(_orgId, block.timestamp);
 
     // 清空机构数据但保留ID位置（避免影响其他机构的索引）
     delete institutions[_orgId - 1];
