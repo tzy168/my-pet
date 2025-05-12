@@ -1,7 +1,6 @@
 import PetManagerArtifact from "../../artifacts/contracts/PetManager.sol/PetManager.json"
 import UserManagerArtifact from "../../artifacts/contracts/UserManager.sol/UserManager.json"
 import InstitutionManagerArtifact from "../../artifacts/contracts/InstitutionManager.sol/InstitutionManager.json"
-
 export const ContractConfig = {
   contractDeployerAddress: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
   PetManager: {

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react"
+import { useRouter } from "next/router"
 import { observer } from "mobx-react-lite"
 import { useGlobalStore } from "../stores/global"
 import {
@@ -30,6 +31,7 @@ import { PetAdoptionStatus, PetHealthStatus, Pet } from "../stores/types"
 import { randomColor } from "../utils/RandomColor"
 
 const MyPets: React.FC = observer(() => {
+  const router = useRouter()
   const { userInfo, getUserPets, addPet, updatePet, removePet, walletAddress } =
     useGlobalStore()
   const [pets, setPets] = useState<Pet[]>([])
@@ -57,6 +59,10 @@ const MyPets: React.FC = observer(() => {
   const [isUploading, setIsUploading] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
+  const handlePetCardClick = (petId: string | number) => {
+    router.push(`/pet-detail/${petId}`)
+  }
+
   useEffect(() => {
     // 当用户信息加载完成后，获取用户的宠物列表
     if (userInfo) {
@@ -80,33 +86,6 @@ const MyPets: React.FC = observer(() => {
 
     loadPetsOnRefresh()
   }, [walletAddress, pets.length, userInfo]) // 添加更多依赖项以确保正确触发
-
-  // // 处理本地存储的图片URL
-  // useEffect(() => {
-  //   const processLocalImages = async () => {
-  //     if (pets.length === 0) return
-
-  //     const updatedPets = await Promise.all(
-  //       pets.map(async (pet) => {
-  //         // 如果图片URL以'local:'开头，从IndexedDB获取实际的Blob URL
-  //         if (pet.image && pet.image.startsWith("local:")) {
-  //           try {
-  //             const imageId = pet.image.substring(6) // 去掉'local:'前缀
-  //             return { ...pet, displayImage: blobUrl }
-  //           } catch (error) {
-  //             console.error("获取本地图片失败:", error)
-  //             return { ...pet, displayImage: "/images/pet-placeholder.png" }
-  //           }
-  //         }
-  //         return { ...pet, displayImage: pet.image }
-  //       })
-  //     )
-
-  //     setPets(updatedPets)
-  //   }
-
-  //   processLocalImages()
-  // }, [pets.length])
 
   const fetchPets = async () => {
     try {
@@ -162,12 +141,12 @@ const MyPets: React.FC = observer(() => {
       gender: pet.gender,
       age: pet.age.toString(),
       description: pet.description,
-      imageUrl: pet.image,
+      imageUrl: pet.image || "",
       healthStatus: pet.healthStatus,
       adoptionStatus: pet.adoptionStatus,
       lastUpdatedAt: pet.lastUpdatedAt,
     })
-    setImagePreview(pet.image)
+    setImagePreview(pet.image || "")
     setOpenDialog(true)
   }
 
@@ -336,7 +315,9 @@ const MyPets: React.FC = observer(() => {
           {pets.map((pet: Pet) => (
             <Grid item xs={12} sm={6} md={4} key={`pet-${pet.id}`}>
               <Card
+                onClick={() => handlePetCardClick(String(pet.id))} // Convert pet.id to string for URL
                 sx={{
+                  cursor: "pointer", // Add cursor pointer to indicate it's clickable
                   position: "relative",
                   height: 320,
                   overflow: "hidden",
@@ -346,7 +327,6 @@ const MyPets: React.FC = observer(() => {
                   background:
                     "linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)",
                   "&:hover": {
-                    // transform: "translateY(-5px)",
                     boxShadow: "0 12px 28px rgba(0,0,0,0.3)",
                   },
                 }}
@@ -354,7 +334,11 @@ const MyPets: React.FC = observer(() => {
                 <CardMedia
                   component="img"
                   height="320"
-                  image={pet.image || "/images/pet-placeholder.png"}
+                  image={
+                    pet.images && pet.images.length > 0
+                      ? pet.images[0].split("-")[0]
+                      : "/images/pet-placeholder.png"
+                  }
                   alt={pet.name}
                   sx={{
                     objectFit: "cover",

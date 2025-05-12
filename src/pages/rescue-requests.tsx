@@ -53,6 +53,7 @@ import {
   Pet,
 } from "../stores/types"
 import { set } from "mobx"
+import MediaRenderer from "../components/MediaRenderer"
 
 const RescueRequests: React.FC = observer(() => {
   const router = useRouter()
@@ -660,19 +661,16 @@ const RescueRequests: React.FC = observer(() => {
                             fontSize="small"
                             sx={{ mr: 1, verticalAlign: "middle" }}
                           />
-                          附件图片:
+                          附件媒体:
                         </Typography>
                         <Grid container spacing={1}>
                           {request.images.map((img, index) => (
                             <Grid item xs={4} key={index}>
-                              <CardMedia
-                                component="img"
-                                image={img}
-                                alt={`救助图片 ${index + 1}`}
-                                sx={{
-                                  height: isMobile ? 80 : 100,
-                                  borderRadius: 1,
-                                }}
+                              <MediaRenderer
+                                src={img}
+                                alt={`救助媒体 ${index + 1}`}
+                                height={isMobile ? 80 : 100}
+                                style={{ borderRadius: 1 }}
                               />
                             </Grid>
                           ))}

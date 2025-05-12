@@ -110,7 +110,7 @@ contract PetManager is IPetManager {
     string memory _gender, // 宠物性别
     uint _age, // 宠物年龄
     string memory _description, // 宠物描述
-    string memory _image, // 宠物图片
+    string[] memory _images, // 宠物图片数组
     PetHealthStatus _healthStatus, // 宠物健康状态
     PetAdoptionStatus _adoptionStatus // 宠物领养状态
   ) external override returns (uint) {
@@ -126,7 +126,7 @@ contract PetManager is IPetManager {
       gender: _gender,
       age: _age,
       description: _description,
-      image: _image,
+      images: _images,
       healthStatus: _healthStatus,
       adoptionStatus: _adoptionStatus,
       owner: msg.sender,
@@ -154,7 +154,7 @@ contract PetManager is IPetManager {
     string memory _gender, // 宠物性别
     uint _age, // 宠物年龄
     string memory _description, // 宠物描述
-    string memory _image, // 宠物图片
+    string[] memory _images, // 宠物图片数组
     PetHealthStatus _healthStatus, // 宠物健康状态
     PetAdoptionStatus _adoptionStatus // 宠物领养状态
   ) external override {
@@ -167,7 +167,7 @@ contract PetManager is IPetManager {
     pet.gender = _gender;
     pet.age = _age;
     pet.description = _description;
-    pet.image = _image;
+    pet.images = _images;
     pet.healthStatus = _healthStatus;
     pet.adoptionStatus = _adoptionStatus;
     pet.lastUpdatedAt = block.timestamp;
@@ -515,7 +515,7 @@ contract PetManager is IPetManager {
   }
 
   // 存储交易哈希
-  function storeTransactionHash(string memory _hash) external override {
+  function storeTransactionHash(string memory _hash) external {
     transactionHashes[hashCount] = _hash;
     hashCount++;
   }
@@ -659,7 +659,7 @@ contract PetManager is IPetManager {
   // 获取用户的救助请求
   function getUserRescueRequests(
     address _user
-  ) external view override returns (RescueRequest[] memory) {
+  ) external view returns (RescueRequest[] memory) {
     // 计算用户的救助请求数量
     uint count = 0;
     for (uint i = 0; i < rescueRequests.length; i++) {
@@ -681,5 +681,13 @@ contract PetManager is IPetManager {
     }
 
     return result;
+  }
+
+  // 添加交易哈希
+  function addTransactionHash(string memory _hash) external override returns (uint256) {
+    transactionHashes[hashCount] = _hash;
+    uint256 currentId = hashCount;
+    hashCount++;
+    return currentId;
   }
 }

@@ -54,7 +54,8 @@ export interface Pet {
   gender: string
   age: number
   description: string
-  image: string
+  images: string[] // 修改为图片/视频URL数组
+  image?: string // 保留向后兼容性
   healthStatus: PetHealthStatus
   adoptionStatus: PetAdoptionStatus
   owner: string

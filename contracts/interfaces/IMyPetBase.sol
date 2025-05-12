@@ -74,7 +74,7 @@ interface IMyPetBase {
     string gender; // 性别
     uint age; // 年龄
     string description; // 描述
-    string image; // 图片URL
+    string[] images; // 图片/视频URL列表
     PetHealthStatus healthStatus; // 健康状态
     PetAdoptionStatus adoptionStatus; // 领养状态
     address owner; // 拥有者地址

@@ -1,5 +1,6 @@
 import { create } from "ipfs-http-client"
 import { ethers } from "ethers"
+import { log } from "console"
 
 const IPFS_GATEWAY = "http://localhost:8080/ipfs/"
 const client = create({
@@ -12,10 +13,21 @@ export const addToIpfs = async (file: any) => {
   try {
     const added = await client.add(file)
     const cid = added.path
-    const url = `${IPFS_GATEWAY}${cid}`
+    const url = `${IPFS_GATEWAY}${cid}-${file.type}`
     return url
   } catch (e) {
     console.error("IPFS上传错误:", e)
+  }
+}
+
+export const addMultipleToIpfs = async (files: File[]) => {
+  try {
+    const uploadPromises = files.map((file) => addToIpfs(file))
+    const urls = await Promise.all(uploadPromises)
+    return urls.filter((url) => url !== undefined) as string[]
+  } catch (e) {
+    console.error("多文件IPFS上传错误:", e)
+    return []
   }
 }
 
