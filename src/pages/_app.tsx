@@ -22,7 +22,6 @@ function MyApp({ Component, pageProps }: AppProps) {
   useEffect(() => {
     const handleStart = () => setLoading(true)
     const handleComplete = () => setLoading(false)
-
     router.events.on("routeChangeStart", handleStart)
     router.events.on("routeChangeComplete", handleComplete)
     router.events.on("routeChangeError", handleComplete)

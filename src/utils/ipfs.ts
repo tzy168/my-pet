@@ -1,6 +1,5 @@
 import { create } from "ipfs-http-client"
 import { ethers } from "ethers"
-import { log } from "console"
 
 const IPFS_GATEWAY = "http://localhost:8080/ipfs/"
 const client = create({
@@ -11,9 +10,15 @@ const client = create({
 
 export const addToIpfs = async (file: any) => {
   try {
+    //上传文件
+    console.log("开始上传")
     const added = await client.add(file)
+    //返回文件cid
     const cid = added.path
+    console.log("返回的cid:", cid)
+    //拼接图片URL
     const url = `${IPFS_GATEWAY}${cid}-${file.type}`
+    console.log("访问图片的URL:", url)
     return url
   } catch (e) {
     console.error("IPFS上传错误:", e)

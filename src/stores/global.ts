@@ -305,7 +305,7 @@ class GlobalStore {
       }
 
       // 将单个图片转换为数组格式
-      const images = Array.isArray(image) ? image : [image];
+      const images = Array.isArray(image) ? image : [image]
 
       const tx = await this.petContract.addPet(
         name,
@@ -346,8 +346,8 @@ class GlobalStore {
     try {
       this.setLoading(true)
       // 将单个图片转换为数组格式
-      const images = Array.isArray(image) ? image : [image];
-      
+      const images = Array.isArray(image) ? image : [image]
+
       const tx = await this.petContract.updatePet(
         petId,
         name,
@@ -543,7 +543,6 @@ class GlobalStore {
         attachments
       )
       const res = await tx.wait()
-      console.log("tx", res)
       // 将交易哈希写入IPFS并获取CID
       const ipfsCid = await writeTransactionHashToIpfs(res.hash)
       // 将CID存储到智能合约中
@@ -704,7 +703,6 @@ class GlobalStore {
     }
     try {
       this.setLoading(true)
-      // console.log("res")
 
       const tx = await this.petContract.updateRescueRequestStatus(
         requestId,

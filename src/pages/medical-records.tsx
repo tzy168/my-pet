@@ -108,7 +108,6 @@ const MedicalRecords: React.FC = observer(() => {
         const userPets = await getUserPets()
         setPets(userPets)
         const allPetsList = await getAllPets()
-        // console.log("pet", allPetsList)
         setAllPets(allPetsList)
       } catch (error) {
         console.error("获取宠物列表失败:", error)
@@ -217,8 +216,7 @@ const MedicalRecords: React.FC = observer(() => {
       pet.breed.toLowerCase().includes(searchTerm.toLowerCase()) ||
       String(pet.id).includes(searchTerm)
   )
-
-  // console.log(filteredPets)
+  console.log(filteredPets, "filteredPets")
 
   return (
     <Box className={styles.container}>
@@ -266,45 +264,50 @@ const MedicalRecords: React.FC = observer(() => {
           </Typography>
           {filteredPets.length > 0 ? (
             <Grid container spacing={2}>
-              {filteredPets.map((pet) => (
-                <Grid item xs={12} sm={6} key={pet.id}>
-                  <Card
-                    onClick={() => handleSelectPet(pet)}
-                    sx={{
-                      cursor: "pointer",
-                      transition: "transform 0.2s",
-                      "&:hover": { transform: "translateY(-5px)" },
-                      border:
-                        selectedPet?.id === pet.id
-                          ? "2px solid #1976d2"
-                          : "none",
-                    }}
-                  >
-                    <CardMedia
-                      component="img"
-                      height="140"
-                      image={pet.image || "/images/pet-placeholder.png"}
-                      alt={pet.name}
-                    />
-                    <CardContent>
-                      <Typography variant="h6">{pet.name}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        ID: {Number(pet.id)}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {pet.species} / {pet.breed} / {pet.gender} /
-                        {Number(pet.age)}岁/{" "}
-                        {Number(pet.healthStatus) === 0 && "健康"}
-                        {Number(pet.healthStatus) === 1 && "生病"}
-                        {Number(pet.healthStatus) === 2 && "康复中"}
-                      </Typography>
-                      <Typography variant="body2">
-                        {`${pet.owner.slice(0, 5)}...${pet.owner.slice(-4)}`}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
+              {filteredPets.map((pet: any) => {
+                return (
+                  <Grid item xs={12} sm={6} key={pet.id}>
+                    <Card
+                      onClick={() => handleSelectPet(pet)}
+                      sx={{
+                        cursor: "pointer",
+                        transition: "transform 0.2s",
+                        "&:hover": { transform: "translateY(-5px)" },
+                        border:
+                          selectedPet?.id === pet.id
+                            ? "2px solid #1976d2"
+                            : "none",
+                      }}
+                    >
+                      <CardMedia
+                        component="img"
+                        height="140"
+                        image={
+                          pet[7][0]?.split("-")[0] ||
+                          "/images/pet-placeholder.png"
+                        }
+                        alt={pet.name}
+                      />
+                      <CardContent>
+                        <Typography variant="h6">{pet.name}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          ID: {Number(pet.id)}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {pet.species} / {pet.breed} / {pet.gender} /
+                          {Number(pet.age)}岁/{" "}
+                          {Number(pet.healthStatus) === 0 && "健康"}
+                          {Number(pet.healthStatus) === 1 && "生病"}
+                          {Number(pet.healthStatus) === 2 && "康复中"}
+                        </Typography>
+                        <Typography variant="body2">
+                          {`${pet.owner.slice(0, 5)}...${pet.owner.slice(-4)}`}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                )
+              })}
             </Grid>
           ) : (
             <Typography>暂无宠物数据</Typography>

@@ -302,9 +302,6 @@ const RescueRequests: React.FC = observer(() => {
         message: "宠物已成功添加到领养市场",
         severity: "success",
       })
-
-      // 可以选择跳转到领养市场页面
-      // router.push('/adoption-market')
     } catch (error: any) {
       console.log("error", error)
       setSnackbar({
@@ -664,16 +661,18 @@ const RescueRequests: React.FC = observer(() => {
                           附件媒体:
                         </Typography>
                         <Grid container spacing={1}>
-                          {request.images.map((img, index) => (
-                            <Grid item xs={4} key={index}>
-                              <MediaRenderer
-                                src={img}
-                                alt={`救助媒体 ${index + 1}`}
-                                height={isMobile ? 80 : 100}
-                                style={{ borderRadius: 1 }}
-                              />
-                            </Grid>
-                          ))}
+                          {request.images.map((img, index) => {
+                            return (
+                              <Grid item xs={4} key={index}>
+                                <MediaRenderer
+                                  src={img.split("-")[0] as string}
+                                  alt={`救助媒体 ${index + 1}`}
+                                  height={isMobile ? 80 : 100}
+                                  style={{ borderRadius: 1 }}
+                                />
+                              </Grid>
+                            )
+                          })}
                         </Grid>
                       </Box>
                     )}

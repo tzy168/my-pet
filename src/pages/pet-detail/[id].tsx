@@ -30,7 +30,6 @@ import {
 } from "@mui/icons-material"
 import { addMultipleToIpfs } from "../../utils/ipfs"
 import { Pet, PetAdoptionStatus, PetHealthStatus } from "../../stores/types" // 引入 Pet 类型和相关枚举
-import { log } from "console"
 
 const PetDetailPage = observer(() => {
   const router = useRouter()
@@ -153,9 +152,10 @@ const PetDetailPage = observer(() => {
   // 处理媒体文件选择
   const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
+      console.log("选择的文件:", e.target.files)
+
       const newFiles = Array.from(e.target.files)
       setMediaFiles([...mediaFiles, ...newFiles])
-
       // 生成预览和确定媒体类型
       const newPreviews: string[] = []
       const newTypes: string[] = []
@@ -225,20 +225,16 @@ const PetDetailPage = observer(() => {
   // 提交更新
   const handleSubmit = async () => {
     if (!pet) return
-
     try {
       setIsUploading(true)
-
       // 上传新媒体到IPFS
       let updatedImages = [...(pet.images || [])]
-
       if (mediaFiles.length > 0) {
         const uploadedUrls = await addMultipleToIpfs(mediaFiles)
         if (uploadedUrls.length > 0) {
           updatedImages = [...updatedImages, ...uploadedUrls]
         }
       }
-
       // 更新宠物信息
       await updatePet(
         pet.id,
@@ -315,7 +311,6 @@ const PetDetailPage = observer(() => {
   const renderMedia = (url: string, index: number) => {
     const mediaType = getMediaType(url)
     const _url = url.split("-")[0]
-    console.log(_url, "_url")
 
     if (mediaType === "video") {
       return (
@@ -681,14 +676,12 @@ const PetDetailPage = observer(() => {
                   最后更新时间:{" "}
                   {new Date(Number(pet.lastUpdatedAt) * 1000).toLocaleString()}
                 </Typography>
-                {/* TODO: 展示医疗记录 (pet.medicalRecordIds) 和其他相关信息 */}
               </CardContent>
             </Grid>
           </Grid>
         </Paper>
       </Container>
 
-      {/* 编辑对话框 */}
       <Dialog
         open={openDialog}
         onClose={handleCloseDialog}
@@ -864,94 +857,98 @@ const PetDetailPage = observer(() => {
                       backgroundColor: "rgba(0,0,0,0.02)",
                     }}
                   >
-                    {mediaPreviews.map((preview, index) => (
-                      <Box
-                        key={index}
-                        sx={{
-                          position: "relative",
-                          width: 120,
-                          height: 120,
-                          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                          borderRadius: "8px",
-                          overflow: "hidden",
-                        }}
-                      >
-                        {mediaTypes[index] === "video" ? (
-                          <>
-                            <video
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                              }}
-                              controls
-                            >
-                              <source src={preview} />
-                            </video>
-                            <Box
-                              sx={{
-                                position: "absolute",
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
-                                backgroundColor: "rgba(0,0,0,0.5)",
-                                color: "white",
-                                padding: "2px 4px",
-                                fontSize: "12px",
-                                textAlign: "center",
-                              }}
-                            >
-                              视频
-                            </Box>
-                          </>
-                        ) : (
-                          <>
-                            <img
-                              src={preview}
-                              alt={`新媒体 ${index + 1}`}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                              }}
-                            />
-                            <Box
-                              sx={{
-                                position: "absolute",
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
-                                backgroundColor: "rgba(0,0,0,0.5)",
-                                color: "white",
-                                padding: "2px 4px",
-                                fontSize: "12px",
-                                textAlign: "center",
-                              }}
-                            >
-                              图片
-                            </Box>
-                          </>
-                        )}
-                        <IconButton
-                          size="small"
-                          onClick={() => handleRemoveMedia(index)}
+                    {mediaPreviews.map((preview, index) => {
+                      console.log(preview, "preview")
+
+                      return (
+                        <Box
+                          key={index}
                           sx={{
-                            position: "absolute",
-                            top: 5,
-                            right: 5,
-                            backgroundColor: "rgba(255,0,0,0.7)",
-                            color: "white",
-                            width: "20px",
-                            height: "20px",
-                            "&:hover": {
-                              backgroundColor: "rgba(255,0,0,0.9)",
-                            },
+                            position: "relative",
+                            width: 120,
+                            height: 120,
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                            borderRadius: "8px",
+                            overflow: "hidden",
                           }}
                         >
-                          ×
-                        </IconButton>
-                      </Box>
-                    ))}
+                          {mediaTypes[index] === "video" ? (
+                            <>
+                              <video
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                }}
+                                controls
+                              >
+                                <source src={preview} />
+                              </video>
+                              <Box
+                                sx={{
+                                  position: "absolute",
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  backgroundColor: "rgba(0,0,0,0.5)",
+                                  color: "white",
+                                  padding: "2px 4px",
+                                  fontSize: "12px",
+                                  textAlign: "center",
+                                }}
+                              >
+                                视频
+                              </Box>
+                            </>
+                          ) : (
+                            <>
+                              <img
+                                src={preview}
+                                alt={`新媒体 ${index + 1}`}
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                }}
+                              />
+                              <Box
+                                sx={{
+                                  position: "absolute",
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  backgroundColor: "rgba(0,0,0,0.5)",
+                                  color: "white",
+                                  padding: "2px 4px",
+                                  fontSize: "12px",
+                                  textAlign: "center",
+                                }}
+                              >
+                                图片
+                              </Box>
+                            </>
+                          )}
+                          <IconButton
+                            size="small"
+                            onClick={() => handleRemoveMedia(index)}
+                            sx={{
+                              position: "absolute",
+                              top: 5,
+                              right: 5,
+                              backgroundColor: "rgba(255,0,0,0.7)",
+                              color: "white",
+                              width: "20px",
+                              height: "20px",
+                              "&:hover": {
+                                backgroundColor: "rgba(255,0,0,0.9)",
+                              },
+                            }}
+                          >
+                            ×
+                          </IconButton>
+                        </Box>
+                      )
+                    })}
                   </Box>
                 </Box>
               ) : (

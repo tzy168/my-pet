@@ -181,10 +181,6 @@ const Profile: React.FC = observer(() => {
         severity: "info",
       })
 
-      // console.log({
-      //   ...formData,
-      // })
-
       const result = await setUserProfile(
         formData.name!,
         formData.email!,
@@ -195,7 +191,6 @@ const Profile: React.FC = observer(() => {
         formData.orgId!,
         formData.avatar
       )
-      // console.log("res", result)
 
       if (result && !result.success) {
         setSnackbar({
