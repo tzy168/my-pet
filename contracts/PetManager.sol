@@ -363,6 +363,8 @@ contract PetManager is IPetManager {
 
     // 获取当前宠物所有者作为前任主人
     Pet storage pet = pets[_petId - 1];
+    // 检查宠物是否已被领养
+    require(pet.adoptionStatus != PetAdoptionStatus.Adopted, "Pet is already adopted");
     address previousOwner = pet.owner;
 
     uint newId = adoptionEventIdCounter;
