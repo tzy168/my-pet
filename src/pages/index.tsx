@@ -25,6 +25,7 @@ import {
   Security,
   Speed,
 } from "@mui/icons-material"
+import PetIconPlay from "../components/PetIconPlay"
 
 const Home: NextPage = () => {
   const router = useRouter()
@@ -97,77 +98,7 @@ const Home: NextPage = () => {
           🥳
         </Typography>
       </Box>
-
-      <div className={styles.headBox}>
-        <div className={styles.headContainer}>
-          <div className={styles.dwHead}>
-            <div>🐱</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🐶</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🐹</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🐰</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🐼</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🐥</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🦜</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🐸</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🐢</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🐠</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🐵</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🐱</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🐶</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🐹</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🐰</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🐼</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🐥</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🦜</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🐸</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🐢</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🐠</div>
-          </div>
-          <div className={styles.dwHead}>
-            <div>🐵</div>
-          </div>
-        </div>
-      </div>
+      <PetIconPlay />
       {/* 功能导航卡片 */}
       <Box sx={{ mb: 2, textAlign: "center" }}>
         <Typography
@@ -194,7 +125,6 @@ const Home: NextPage = () => {
           主要功能
         </Typography>
       </Box>
-
       <Grid container spacing={4} sx={{ mb: 8 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Zoom in={true} style={{ transitionDelay: "100ms" }}>
@@ -411,6 +341,9 @@ const Home: NextPage = () => {
                   <Typography
                     variant="h5"
                     gutterBottom
+                    onClick={() => {
+                      router.push("./system-guide")
+                    }}
                     sx={{ fontWeight: 600 }}
                   >
                     使用指南
@@ -428,7 +361,6 @@ const Home: NextPage = () => {
           </Zoom>
         </Grid>
       </Grid>
-
       {/* 系统介绍 */}
       <Box sx={{ mb: 2, textAlign: "center" }}>
         <Typography
@@ -455,7 +387,6 @@ const Home: NextPage = () => {
           关于MyPet
         </Typography>
       </Box>
-
       <Fade in={true} timeout={1000}>
         <Paper
           elevation={3}
@@ -654,7 +585,6 @@ const Home: NextPage = () => {
           </Box>
         </Paper>
       </Fade>
-
       {/* 技术优势 */}
       <Box
         sx={{
@@ -804,7 +734,6 @@ const Home: NextPage = () => {
           </Grid>
         </Grid>
       </Box>
-
       {/* 数据统计 */}
       <Box sx={{ mb: 2, textAlign: "center" }}>
         <Typography
@@ -831,7 +760,6 @@ const Home: NextPage = () => {
           平台数据
         </Typography>
       </Box>
-
       <Grid container spacing={4} sx={{ mb: 8 }}>
         <Grid item xs={12} md={4}>
           <Zoom in={true} style={{ transitionDelay: "100ms" }}>

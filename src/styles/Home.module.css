@@ -3,8 +3,8 @@
   padding: 1rem;
   display: flex;
   flex-direction: column;
-  /* justify-content: center; */
   align-items: center;
+  animation: fadeIn 0.5s ease;
 }
 
 .description {
@@ -29,48 +29,8 @@
     transform: translateY(0);
   }
 }
-.container {
-  animation: fadeIn 0.5s ease;
-}
-
-.headBox {
-  position: relative;
-  width: 100%;
-  height: 200px;
-  overflow: hidden;
-  margin-top: -20px;
-}
-
-@keyframes slide {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-2000px);
-  }
-}
 
 /* 修改动画实现方式，使用animation-play-state来控制动画速度 */
-.headContainer {
-  display: flex;
-  width: 4000px;
-  transform: translateX(0);
-  animation: slide 30s linear infinite;
-  transition: all 0.5s ease;
-}
-
-.headContainer:hover {
-  animation-play-state: paused;
-}
-
-.dwHead {
-  height: 200px;
-  width: 200px;
-  font-size: 80px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
 
 .headBox {
   margin-bottom: 120px;

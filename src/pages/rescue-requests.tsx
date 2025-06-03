@@ -53,6 +53,7 @@ import {
   Pet,
 } from "../stores/types"
 import { set } from "mobx"
+import MediaRenderer from "../components/MediaRenderer"
 
 const RescueRequests: React.FC = observer(() => {
   const router = useRouter()
@@ -301,9 +302,6 @@ const RescueRequests: React.FC = observer(() => {
         message: "宠物已成功添加到领养市场",
         severity: "success",
       })
-
-      // 可以选择跳转到领养市场页面
-      // router.push('/adoption-market')
     } catch (error: any) {
       console.log("error", error)
       setSnackbar({
@@ -428,10 +426,10 @@ const RescueRequests: React.FC = observer(() => {
           updateForm.status,
           Number(userInfo?.orgId)
         )
-        console.log("tx", tx)
 
         // 刷新救助请求列表
         await fetchRescueRequests()
+
         handleCloseUpdateDialog()
         setSnackbar({
           open: true,
@@ -660,22 +658,21 @@ const RescueRequests: React.FC = observer(() => {
                             fontSize="small"
                             sx={{ mr: 1, verticalAlign: "middle" }}
                           />
-                          附件图片:
+                          附件媒体:
                         </Typography>
                         <Grid container spacing={1}>
-                          {request.images.map((img, index) => (
-                            <Grid item xs={4} key={index}>
-                              <CardMedia
-                                component="img"
-                                image={img}
-                                alt={`救助图片 ${index + 1}`}
-                                sx={{
-                                  height: isMobile ? 80 : 100,
-                                  borderRadius: 1,
-                                }}
-                              />
-                            </Grid>
-                          ))}
+                          {request.images.map((img, index) => {
+                            return (
+                              <Grid item xs={4} key={index}>
+                                <MediaRenderer
+                                  src={img.split("-")[0] as string}
+                                  alt={`救助媒体 ${index + 1}`}
+                                  height={isMobile ? 80 : 100}
+                                  style={{ borderRadius: 1 }}
+                                />
+                              </Grid>
+                            )
+                          })}
                         </Grid>
                       </Box>
                     )}
@@ -709,17 +706,20 @@ const RescueRequests: React.FC = observer(() => {
                       )}
 
                       {/* 当救助状态为已完成时，显示发布到领养市场按钮 */}
-                      {request.status.toLowerCase() === "completed" && (
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          size={isMobile ? "small" : "medium"}
-                          startIcon={<StorefrontIcon />}
-                          onClick={() => handlePublishToAdoptionMarket(request)}
-                        >
-                          发布到领养市场
-                        </Button>
-                      )}
+                      {request.status.toLowerCase() === "completed" &&
+                        Number(userInfo?.roleId) === 3 && (
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            size={isMobile ? "small" : "medium"}
+                            startIcon={<StorefrontIcon />}
+                            onClick={() =>
+                              handlePublishToAdoptionMarket(request)
+                            }
+                          >
+                            发布到领养市场
+                          </Button>
+                        )}
                     </Box>
                   </CardContent>
                 </Card>

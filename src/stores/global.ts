@@ -15,6 +15,7 @@ import {
   InstitutionType,
 } from "./types"
 import { createContext, useContext } from "react"
+import { writeTransactionHashToIpfs } from "../utils/ipfs"
 
 class GlobalStore {
   contract: ethers.Contract | null = null
@@ -51,7 +52,6 @@ class GlobalStore {
   initContract = async (signer: ethers.Signer) => {
     try {
       this.setLoading(true)
-
       runInAction(() => {
         this.contract = new ethers.Contract(
           ContractConfig.InstitutionManager.address,
@@ -69,7 +69,6 @@ class GlobalStore {
           signer
         )
       })
-
       this.setLoading(false)
       return true
     } catch (error) {
@@ -287,7 +286,7 @@ class GlobalStore {
     gender: string,
     age: number,
     description: string,
-    image: string,
+    image: string | string[],
     healthStatus: PetHealthStatus,
     adoptionStatus: PetAdoptionStatus
   ) => {
@@ -305,6 +304,9 @@ class GlobalStore {
         return { success: false, error: "请先完成用户注册" }
       }
 
+      // 将单个图片转换为数组格式
+      const images = Array.isArray(image) ? image : [image]
+
       const tx = await this.petContract.addPet(
         name,
         species,
@@ -312,7 +314,7 @@ class GlobalStore {
         gender,
         age,
         description,
-        image,
+        images,
         healthStatus,
         adoptionStatus
       )
@@ -333,7 +335,7 @@ class GlobalStore {
     gender: string,
     age: number,
     description: string,
-    image: string,
+    image: string | string[],
     healthStatus: PetHealthStatus,
     adoptionStatus: PetAdoptionStatus
   ) => {
@@ -343,6 +345,9 @@ class GlobalStore {
 
     try {
       this.setLoading(true)
+      // 将单个图片转换为数组格式
+      const images = Array.isArray(image) ? image : [image]
+
       const tx = await this.petContract.updatePet(
         petId,
         name,
@@ -351,7 +356,7 @@ class GlobalStore {
         gender,
         age,
         description,
-        image,
+        images,
         healthStatus,
         adoptionStatus
       )
@@ -537,8 +542,15 @@ class GlobalStore {
         cost,
         attachments
       )
-      await tx.wait()
+      const res = await tx.wait()
+      // 将交易哈希写入IPFS并获取CID
+      const ipfsCid = await writeTransactionHashToIpfs(res.hash)
+      // 将CID存储到智能合约中
+      if (ipfsCid) {
+        await this.petContract.storeTransactionHash(ipfsCid)
+      }
       await this.getPetMedicalHistory(petId)
+      this.setLoading(false)
       return { success: true }
     } catch (error: any) {
       this.setLoading(false)
@@ -691,7 +703,6 @@ class GlobalStore {
     }
     try {
       this.setLoading(true)
-      console.log("res")
 
       const tx = await this.petContract.updateRescueRequestStatus(
         requestId,

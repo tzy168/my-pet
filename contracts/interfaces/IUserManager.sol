@@ -52,13 +52,7 @@ interface IUserManager is IMyPetBase {
   // 获取所有用户
   function getAllUsers() external view returns (User[] memory);
 
-  // 获取特定角色的用户
-  function getUsersByRole(
-    RoleType _roleId
-  ) external view returns (User[] memory);
-
-  // 获取特定机构的用户
-  function getUsersByInstitution(
-    uint _orgId
-  ) external view returns (User[] memory);
+  // 注意：以下函数已从接口中移除，因为它们未被前端使用
+  // - getUsersByRole
+  // - getUsersByInstitution
 }

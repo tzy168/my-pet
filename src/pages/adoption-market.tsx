@@ -334,7 +334,7 @@ const AdoptionMarket: React.FC = observer(() => {
       ) : (
         <Grid container spacing={3}>
           {filteredPets.length > 0 ? (
-            filteredPets.map((pet) => (
+            filteredPets.map((pet: any) => (
               <Grid item xs={12} sm={6} md={4} key={pet.id}>
                 <Card
                   sx={{
@@ -350,7 +350,10 @@ const AdoptionMarket: React.FC = observer(() => {
                   <CardMedia
                     component="img"
                     height="200"
-                    image={pet.image || "/images/pet-placeholder.png"}
+                    image={
+                      (pet[7][0].split("-")[0] as string) ||
+                      "/images/pet-placeholder.png"
+                    }
                     alt={pet.name}
                   />
                   <CardContent>
@@ -567,6 +570,7 @@ const AdoptionMarket: React.FC = observer(() => {
                             selectedPet.owner === walletAddress
                               ? 0
                               : staffStatus.institutionId
+                          //
                           addAdoptionEvent(
                             selectedPet.id,
                             walletAddress,

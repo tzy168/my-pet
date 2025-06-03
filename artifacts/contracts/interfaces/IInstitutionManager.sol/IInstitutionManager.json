@@ -309,24 +309,6 @@
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_orgId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "address",
-          "name": "_newResponsiblePerson",
-          "type": "address"
-        }
-      ],
-      "name": "updateInstitutionResponsiblePerson",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
     }
   ],
   "bytecode": "0x",

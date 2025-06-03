@@ -13,6 +13,7 @@ import {
   CircularProgress,
 } from "@mui/material"
 import { ContractConfig } from "../config/contracts"
+import TransactionList from "../components/TransactionList"
 
 const SystemInfo: React.FC = observer(() => {
   const router = useRouter()
@@ -176,6 +177,17 @@ const SystemInfo: React.FC = observer(() => {
               </Box>
             </Grid>
           </Grid>
+        </CardContent>
+      </Card>
+      
+      {/* 交易记录列表 */}
+      <Card sx={{ boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)" }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            交易记录
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+          <TransactionList />
         </CardContent>
       </Card>
     </Box>

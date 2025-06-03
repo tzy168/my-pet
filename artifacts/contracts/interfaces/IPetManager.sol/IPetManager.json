@@ -109,9 +109,9 @@
           "type": "string"
         },
         {
-          "internalType": "string",
-          "name": "_image",
-          "type": "string"
+          "internalType": "string[]",
+          "name": "_images",
+          "type": "string[]"
         },
         {
           "internalType": "enum IMyPetBase.PetHealthStatus",
@@ -159,6 +159,25 @@
         }
       ],
       "name": "addRescueRequest",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_hash",
+          "type": "string"
+        }
+      ],
+      "name": "addTransactionHash",
       "outputs": [
         {
           "internalType": "uint256",
@@ -267,9 +286,9 @@
               "type": "string"
             },
             {
-              "internalType": "string",
-              "name": "image",
-              "type": "string"
+              "internalType": "string[]",
+              "name": "images",
+              "type": "string[]"
             },
             {
               "internalType": "enum IMyPetBase.PetHealthStatus",
@@ -535,9 +554,9 @@
               "type": "string"
             },
             {
-              "internalType": "string",
-              "name": "image",
-              "type": "string"
+              "internalType": "string[]",
+              "name": "images",
+              "type": "string[]"
             },
             {
               "internalType": "enum IMyPetBase.PetHealthStatus",
@@ -687,95 +706,9 @@
               "type": "string"
             },
             {
-              "internalType": "string",
-              "name": "image",
-              "type": "string"
-            },
-            {
-              "internalType": "enum IMyPetBase.PetHealthStatus",
-              "name": "healthStatus",
-              "type": "uint8"
-            },
-            {
-              "internalType": "enum IMyPetBase.PetAdoptionStatus",
-              "name": "adoptionStatus",
-              "type": "uint8"
-            },
-            {
-              "internalType": "address",
-              "name": "owner",
-              "type": "address"
-            },
-            {
-              "internalType": "uint256[]",
-              "name": "medicalRecordIds",
-              "type": "uint256[]"
-            },
-            {
-              "internalType": "uint256",
-              "name": "lastUpdatedAt",
-              "type": "uint256"
-            }
-          ],
-          "internalType": "struct IMyPetBase.Pet[]",
-          "name": "",
-          "type": "tuple[]"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "enum IMyPetBase.PetHealthStatus",
-          "name": "_status",
-          "type": "uint8"
-        }
-      ],
-      "name": "getPetsByHealthStatus",
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "uint256",
-              "name": "id",
-              "type": "uint256"
-            },
-            {
-              "internalType": "string",
-              "name": "name",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "species",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "breed",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "gender",
-              "type": "string"
-            },
-            {
-              "internalType": "uint256",
-              "name": "age",
-              "type": "uint256"
-            },
-            {
-              "internalType": "string",
-              "name": "description",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "image",
-              "type": "string"
+              "internalType": "string[]",
+              "name": "images",
+              "type": "string[]"
             },
             {
               "internalType": "enum IMyPetBase.PetHealthStatus",
@@ -925,9 +858,9 @@
               "type": "string"
             },
             {
-              "internalType": "string",
-              "name": "image",
-              "type": "string"
+              "internalType": "string[]",
+              "name": "images",
+              "type": "string[]"
             },
             {
               "internalType": "enum IMyPetBase.PetHealthStatus",
@@ -956,72 +889,6 @@
             }
           ],
           "internalType": "struct IMyPetBase.Pet[]",
-          "name": "",
-          "type": "tuple[]"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_user",
-          "type": "address"
-        }
-      ],
-      "name": "getUserRescueRequests",
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "uint256",
-              "name": "id",
-              "type": "uint256"
-            },
-            {
-              "internalType": "string",
-              "name": "location",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "description",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "status",
-              "type": "string"
-            },
-            {
-              "internalType": "uint256",
-              "name": "responderOrgId",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "timestamp",
-              "type": "uint256"
-            },
-            {
-              "internalType": "address",
-              "name": "requester",
-              "type": "address"
-            },
-            {
-              "internalType": "string[]",
-              "name": "images",
-              "type": "string[]"
-            },
-            {
-              "internalType": "uint256",
-              "name": "urgencyLevel",
-              "type": "uint256"
-            }
-          ],
-          "internalType": "struct IMyPetBase.RescueRequest[]",
           "name": "",
           "type": "tuple[]"
         }
@@ -1080,9 +947,9 @@
           "type": "string"
         },
         {
-          "internalType": "string",
-          "name": "_image",
-          "type": "string"
+          "internalType": "string[]",
+          "name": "_images",
+          "type": "string[]"
         },
         {
           "internalType": "enum IMyPetBase.PetHealthStatus",

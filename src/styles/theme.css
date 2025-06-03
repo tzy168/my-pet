@@ -2,7 +2,7 @@
 :root {
   --primary-color: #3a9691; /* 柔和的蓝绿色作为主色调 */
   --secondary-color: #f8c537; /* 温暖的黄色作为辅助色 */
-  --background-color: #f9f9f9; /* 浅灰色背景 */
+  --background-color: #f9f9f9c3; /* 浅灰色背景 */
   --card-background: #ffffff; /* 卡片背景色 */
   --text-primary: #333333; /* 主要文字颜色 */
   --text-secondary: #666666; /* 次要文字颜色 */
@@ -21,7 +21,7 @@ body {
   background-color: var(--background-color);
   color: var(--text-primary);
   /* 添加宠物相关的背景图案 */
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233a9691' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  /* background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233a9691' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); */
 }
 
 /* 卡片样式 */
@@ -30,7 +30,9 @@ body {
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-color);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .card:hover {
@@ -60,7 +62,9 @@ button.secondary {
   border-radius: var(--radius-sm);
   padding: 8px 16px;
   cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 }
 
 button.secondary:hover {
@@ -69,7 +73,12 @@ button.secondary:hover {
 }
 
 /* 标题样式 */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   color: var(--primary-color);
   margin-bottom: 16px;
 }
@@ -80,10 +89,13 @@ h1, h2, h3, h4, h5, h6 {
   text-decoration: none;
   padding: 8px 16px;
   border-radius: var(--radius-sm);
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-link:hover,
+.nav-link.active {
   background-color: rgba(58, 150, 145, 0.1);
   color: var(--primary-color);
 }
@@ -96,7 +108,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .pet-card::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   right: 0;
@@ -109,7 +121,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* 表单元素样式 */
-input, select, textarea {
+input,
+select,
+textarea {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   padding: 8px 12px;
@@ -117,7 +131,9 @@ input, select, textarea {
   transition: border-color 0.2s;
 }
 
-input:focus, select:focus, textarea:focus {
+input:focus,
+select:focus,
+textarea:focus {
   border-color: var(--primary-color);
   outline: none;
 }
@@ -134,11 +150,11 @@ input:focus, select:focus, textarea:focus {
   .container {
     padding: 16px;
   }
-  
+
   h1 {
     font-size: 1.8rem;
   }
-  
+
   h2 {
     font-size: 1.5rem;
   }

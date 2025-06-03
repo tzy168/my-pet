@@ -34,7 +34,6 @@ const Header: React.FC = observer(() => {
     isLoading,
     contract,
   } = useGlobalStore()
-  console.log("user", userInfo)
 
   const router = useRouter()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
@@ -139,17 +138,15 @@ const Header: React.FC = observer(() => {
 
   return (
     <header className={styles.header}>
-      <div className={styles.leftSection}>
-        <div
-          className={styles.logo}
-          onClick={() => {
-            router.push("/")
-          }}
-        >
-          MyPet
-        </div>
-        {<Navigation />}
+      <div
+        className={styles.logo}
+        onClick={() => {
+          router.push("/")
+        }}
+      >
+        MyPet
       </div>
+      <div className={styles.leftSection}>{<Navigation />}</div>
       <div className={styles.rightSection}>
         <ConnectButton.Custom>
           {({ account, chain, authenticationStatus, mounted }) => {
@@ -193,7 +190,7 @@ const Header: React.FC = observer(() => {
                 <span
                   className={`${styles.userType} ${userInfo.userType === 0 ? styles.personal : styles.institutional}`}
                 >
-                  {userInfo.userType === 0 ? "个人用户" : "机构用户"}
+                  {Number(userInfo.userType) === 0 ? "个人用户" : "机构用户"}
                 </span>
               )}
             </div>

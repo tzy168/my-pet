@@ -12,7 +12,7 @@ interface IPetManager is IMyPetBase {
     string memory _gender,
     uint _age,
     string memory _description,
-    string memory _image,
+    string[] memory _images,
     PetHealthStatus _healthStatus,
     PetAdoptionStatus _adoptionStatus
   ) external returns (uint);
@@ -26,7 +26,7 @@ interface IPetManager is IMyPetBase {
     string memory _gender,
     uint _age,
     string memory _description,
-    string memory _image,
+    string[] memory _images,
     PetHealthStatus _healthStatus,
     PetAdoptionStatus _adoptionStatus
   ) external;
@@ -55,8 +55,7 @@ interface IPetManager is IMyPetBase {
   // 根据ID获取宠物
   function getPetById(uint _petId) external view returns (Pet memory);
 
-  // 根据健康状态获取宠物
-  function getPetsByHealthStatus(PetHealthStatus _status) external view returns (Pet[] memory);
+
 
   // 根据领养状态获取宠物
   function getPetsByAdoptionStatus(PetAdoptionStatus _status) external view returns (Pet[] memory);
@@ -111,6 +110,6 @@ interface IPetManager is IMyPetBase {
   // 获取所有救助请求
   function getAllRescueRequests() external view returns (RescueRequest[] memory);
 
-  // 获取用户的救助请求
-  function getUserRescueRequests(address _user) external view returns (RescueRequest[] memory);
+  // 添加交易哈希
+  function addTransactionHash(string memory _hash) external returns (uint256);
 }

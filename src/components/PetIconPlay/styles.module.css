@@ -1,0 +1,36 @@
+@keyframes slide {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-2000px);
+  }
+}
+.headContainer {
+  display: flex;
+  width: 4000px;
+  transform: translateX(0);
+  animation: slide 30s linear infinite;
+  transition: all 0.5s ease;
+}
+
+.headContainer:hover {
+  animation-play-state: paused;
+}
+
+.headBox {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  margin-top: -20px;
+}
+
+.dwHead {
+  height: 200px;
+  width: 200px;
+  font-size: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
