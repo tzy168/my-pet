@@ -1,5 +1,6 @@
 import "../styles/globals.css"
 import "../styles/theme.css"
+import "../styles/transitions.css"
 import "@rainbow-me/rainbowkit/styles.css"
 import type { AppProps } from "next/app"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
@@ -49,6 +50,7 @@ function MyApp({ Component, pageProps }: AppProps) {
               <link rel="icon" href="/favicon.ico" />
             </Head>
             <div
+              className="content-wrapper"
               style={{
                 width: "100%",
                 height: "calc(100vh - 64px)",
@@ -56,6 +58,8 @@ function MyApp({ Component, pageProps }: AppProps) {
                 padding: "10px",
                 borderRadius: "8px",
                 marginTop: "58px",
+                opacity: 1,
+                transition: "opacity 300ms ease-in-out",
               }}
             >
               <Component {...pageProps} />
