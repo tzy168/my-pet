@@ -1,0 +1,84 @@
+/* 页面过渡动画样式 */
+
+/* 应用于所有页面的基础过渡效果 */
+.page-transition-enter {
+  opacity: 0;
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transition: opacity 300ms ease-in-out;
+}
+
+.page-transition-exit {
+  opacity: 1;
+}
+
+.page-transition-exit-active {
+  opacity: 0;
+  transition: opacity 300ms ease-in-out;
+}
+
+/* 防止内容闪烁的样式 */
+.content-wrapper {
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  transform: translateZ(0);
+}
+
+/* 页面内容预加载样式 */
+.preload {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ffffff;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity 300ms ease-out;
+}
+
+.preload.loaded {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 修复Material-UI组件闪烁问题 */
+.mui-fixed {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* 修复页面切换时的布局偏移 */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* 防止滚动条闪烁 */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(155, 155, 155, 0.5) transparent;
+}
+
+html::-webkit-scrollbar {
+  width: 8px;
+}
+
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb {
+  background-color: rgba(155, 155, 155, 0.5);
+  border-radius: 20px;
+  border: 3px solid transparent;
+}

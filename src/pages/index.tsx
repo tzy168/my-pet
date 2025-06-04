@@ -29,19 +29,12 @@ import PetIconPlay from "../components/PetIconPlay"
 
 const Home: NextPage = () => {
   const router = useRouter()
-  const { userInfo, contract, petContract, userContract } = useGlobalStore()
+  const { contract, petContract, userContract } = useGlobalStore()
   const [stats, setStats] = useState({
     userCount: 0,
     petCount: 0,
     institutionCount: 0,
   })
-
-  useEffect(() => {
-    // 如果合约已初始化，获取统计数据
-    if (contract && userContract && petContract) {
-      fetchStats()
-    }
-  }, [contract, userContract, petContract])
 
   const fetchStats = async () => {
     try {
@@ -61,9 +54,13 @@ const Home: NextPage = () => {
     router.push(path)
   }
 
+  useEffect(() => {
+    if (contract && userContract && petContract) {
+      fetchStats()
+    }
+  }, [contract, userContract, petContract])
   return (
     <Container maxWidth="lg" className={styles.container}>
-      {/* 欢迎区域 */}
       <Box
         sx={{
           textAlign: "center",
